@@ -53,6 +53,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
   private final SignerConfiguration signerConfig;
@@ -138,6 +139,12 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       if (signerConfig.isSigningExtEnabled()) {
         params.add("--Xsigning-ext-enabled=true");
       }
+
+      signerConfig
+          .getCommitBoostParameters()
+          .ifPresent(
+              commitBoostParameters -> params.addAll(commitBoostOptions(commitBoostParameters)));
+
     } else if (signerConfig.getMode().equals("eth1")) {
       params.add("--downstream-http-port");
       params.add(Integer.toString(signerConfig.getDownstreamHttpPort()));
@@ -158,6 +165,15 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     }
 
     return params;
+  }
+
+  private static List<String> commitBoostOptions(final Pair<Path, Path> commitBoostParameters) {
+    return List.of(
+        "--commit-boost-api-enabled=true",
+        "--proxy-keystores-path",
+        commitBoostParameters.getLeft().toAbsolutePath().toString(),
+        "--proxy-keystores-password-file",
+        commitBoostParameters.getRight().toAbsolutePath().toString());
   }
 
   private static Consumer<KeystoresParameters> setV3KeystoresBulkloadParameters(

@@ -47,6 +47,7 @@ import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.Ethereum;
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
@@ -185,6 +186,34 @@ public class Signer {
 
   public Response callApiPublicKeys(final KeyType keyType) {
     return given().baseUri(getUrl()).get(publicKeysPath(keyType));
+  }
+
+  public Response callCommitBoostGetPubKeys() {
+    return given().baseUri(getUrl()).get("/signer/v1/get_pubkeys");
+  }
+
+  public Response callCommitBoostGenerateProxyKey(final String pubkey, final String scheme) {
+    return given()
+        .baseUri(getUrl())
+        .contentType(ContentType.JSON)
+        .body(new JsonObject().put("pubkey", pubkey).put("scheme", scheme).toString())
+        .post("/signer/v1/generate_proxy_key");
+  }
+
+  public Response callCommitBoostRequestForSignature(
+      final String signRequestType, final String pubkey, final Bytes32 objectRoot) {
+    return given()
+        .baseUri(getUrl())
+        .contentType(ContentType.JSON)
+        .log()
+        .all()
+        .body(
+            new JsonObject()
+                .put("type", signRequestType)
+                .put("pubkey", pubkey)
+                .put("object_root", objectRoot.toHexString())
+                .toString())
+        .post("/signer/v1/request_signature");
   }
 
   public List<String> listPublicKeys(final KeyType keyType) {
