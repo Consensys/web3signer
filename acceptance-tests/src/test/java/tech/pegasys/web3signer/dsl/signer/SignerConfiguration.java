@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Level;
 
 public class SignerConfiguration {
@@ -81,6 +82,7 @@ public class SignerConfiguration {
   private final Optional<KeystoresParameters> v3KeystoresBulkloadParameters;
 
   private final boolean signingExtEnabled;
+  private Optional<Pair<Path, Path>> commitBoostParameters;
 
   public SignerConfiguration(
       final String hostname,
@@ -128,7 +130,8 @@ public class SignerConfiguration {
       final Optional<ClientTlsOptions> downstreamTlsOptions,
       final ChainIdProvider chainIdProvider,
       final Optional<KeystoresParameters> v3KeystoresBulkloadParameters,
-      final boolean signingExtEnabled) {
+      final boolean signingExtEnabled,
+      final Optional<Pair<Path, Path>> commitBoostParameters) {
     this.hostname = hostname;
     this.logLevel = logLevel;
     this.httpRpcPort = httpRpcPort;
@@ -175,6 +178,7 @@ public class SignerConfiguration {
     this.chainIdProvider = chainIdProvider;
     this.v3KeystoresBulkloadParameters = v3KeystoresBulkloadParameters;
     this.signingExtEnabled = signingExtEnabled;
+    this.commitBoostParameters = commitBoostParameters;
   }
 
   public String hostname() {
@@ -367,5 +371,9 @@ public class SignerConfiguration {
 
   public boolean isSigningExtEnabled() {
     return signingExtEnabled;
+  }
+
+  public Optional<Pair<Path, Path>> getCommitBoostParameters() {
+    return commitBoostParameters;
   }
 }

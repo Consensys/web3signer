@@ -115,9 +115,9 @@ public class EthSignTransactionResultProviderTest {
     final BigInteger v = BigInteger.ONE;
     final BigInteger r = BigInteger.TWO;
     final BigInteger s = BigInteger.TEN;
-    doReturn(Optional.of(new SecpArtifactSignature(new Signature(v, r, s))))
+    doReturn(Optional.of(new SecpArtifactSignature(new Signature(v, r, s)).asHex()))
         .when(mockSignerForIdentifier)
-        .signAndGetArtifactSignature(any(String.class), any(Bytes.class));
+        .sign(any(String.class), any(Bytes.class));
     when(mockSignerForIdentifier.isSignerAvailable(any(String.class))).thenReturn(true);
     final EthSignTransactionResultProvider resultProvider =
         new EthSignTransactionResultProvider(chainId, mockSignerForIdentifier, jsonDecoder);
@@ -177,10 +177,10 @@ public class EthSignTransactionResultProviderTest {
     doAnswer(
             answer -> {
               Bytes data = answer.getArgument(1, Bytes.class);
-              return signDataForKey(data, cs.getEcKeyPair());
+              return signDataForKey(data, cs.getEcKeyPair()).map(SecpArtifactSignature::asHex);
             })
         .when(mockSignerForIdentifier)
-        .signAndGetArtifactSignature(any(String.class), any(Bytes.class));
+        .sign(any(String.class), any(Bytes.class));
 
     when(mockSignerForIdentifier.isSignerAvailable(any(String.class))).thenReturn(true);
 

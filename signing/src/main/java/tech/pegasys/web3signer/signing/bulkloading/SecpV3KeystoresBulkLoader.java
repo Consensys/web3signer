@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.signing.bulkloading;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
+import tech.pegasys.web3signer.signing.K256ArtifactSigner;
 import tech.pegasys.web3signer.signing.secp256k1.filebased.CredentialSigner;
 import tech.pegasys.web3signer.signing.secp256k1.util.JsonFilesUtil;
 
@@ -34,8 +35,38 @@ import org.web3j.crypto.exception.CipherException;
 public class SecpV3KeystoresBulkLoader {
   private static final Logger LOG = LogManager.getLogger();
 
+  /**
+   * Bulk-load Ethereum compatible SECP Artifact Signers from encrypted v3 keystores.
+   *
+   * @param keystoresPath Path to the directory containing the v3 keystores
+   * @param pwrdFileOrDirPath Path to the password file or directory containing the passwords for
+   *     the v3 keystores
+   * @return MappedResults containing the loaded ArtifactSigners
+   */
   public static MappedResults<ArtifactSigner> loadV3KeystoresUsingPasswordFileOrDir(
       final Path keystoresPath, final Path pwrdFileOrDirPath) {
+    return loadV3KeystoresUsingPasswordFileOrDir(keystoresPath, pwrdFileOrDirPath, true);
+  }
+
+  /**
+   * Bulk-load generic SECP Artifact Signers from encrypted v3 keystores that can be used by Commit
+   * Boost API. It uses compressed public key as identifier and apply SHA256 digest on the message
+   * before signing.
+   *
+   * @param keystoresPath Path to the directory containing the v3 keystores
+   * @param pwrdFileOrDirPath Path to the password file or directory containing the passwords for
+   *     the v3 keystores
+   * @return MappedResults containing the loaded ArtifactSigners
+   */
+  public static MappedResults<ArtifactSigner> loadECDSAProxyKeystores(
+      final Path keystoresPath, final Path pwrdFileOrDirPath) {
+    return loadV3KeystoresUsingPasswordFileOrDir(keystoresPath, pwrdFileOrDirPath, false);
+  }
+
+  private static MappedResults<ArtifactSigner> loadV3KeystoresUsingPasswordFileOrDir(
+      final Path keystoresPath,
+      final Path pwrdFileOrDirPath,
+      final boolean ethereumSECPCompatible) {
     if (!Files.exists(pwrdFileOrDirPath)) {
       LOG.error("Password file or directory doesn't exist.");
       return MappedResults.errorResult();
@@ -67,12 +98,16 @@ public class SecpV3KeystoresBulkLoader {
     }
 
     return keystoresFiles.parallelStream()
-        .map(keystoreFile -> createSecpArtifactSigner(keystoreFile, passwordReader))
+        .map(
+            keystoreFile ->
+                createSecpArtifactSigner(keystoreFile, passwordReader, ethereumSECPCompatible))
         .reduce(MappedResults.newSetInstance(), MappedResults::merge);
   }
 
   private static MappedResults<ArtifactSigner> createSecpArtifactSigner(
-      final Path v3KeystorePath, final PasswordReader passwordReader) {
+      final Path v3KeystorePath,
+      final PasswordReader passwordReader,
+      final boolean ethereumSECPCompatible) {
     try {
       final String fileNameWithoutExt =
           FilenameUtils.removeExtension(v3KeystorePath.getFileName().toString());
@@ -81,8 +116,11 @@ public class SecpV3KeystoresBulkLoader {
 
       final Credentials credentials =
           WalletUtils.loadCredentials(password, v3KeystorePath.toFile());
-      final EthSecpArtifactSigner artifactSigner =
-          new EthSecpArtifactSigner(new CredentialSigner(credentials));
+      final ArtifactSigner artifactSigner =
+          ethereumSECPCompatible
+              ? new EthSecpArtifactSigner(new CredentialSigner(credentials))
+              : new K256ArtifactSigner(credentials.getEcKeyPair());
+
       return MappedResults.newInstance(Set.of(artifactSigner), 0);
     } catch (final IOException | CipherException | RuntimeException e) {
       LOG.error("Error loading v3 keystore {}", v3KeystorePath, e);

@@ -33,6 +33,7 @@ import java.security.KeyPair;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -135,21 +136,22 @@ class DefaultArtifactSignerProviderTest {
     assertThatCode(() -> signerProvider.load().get()).doesNotThrowAnyException();
 
     // assert that the proxy keys are loaded correctly
-    final Map<KeyType, List<String>> key1ProxyPublicKeys =
+    final Map<KeyType, Set<String>> key1ProxyPublicKeys =
         signerProvider.getProxyIdentifiers(PUBLIC_KEY1);
 
     assertThat(key1ProxyPublicKeys.get(KeyType.BLS))
         .containsExactlyInAnyOrder(getPublicKeysArray(key1ProxyKeyPairs));
+    // proxy public keys are compressed
     assertThat(key1ProxyPublicKeys.get(KeyType.SECP256K1))
-        .containsExactlyInAnyOrder(getSecpPublicKeysArray(key1SecpKeyPairs));
+        .containsExactlyInAnyOrder(getCompressedSECPPublicKeysArray(key1SecpKeyPairs));
 
-    final Map<KeyType, List<String>> key2ProxyPublicKeys =
+    final Map<KeyType, Set<String>> key2ProxyPublicKeys =
         signerProvider.getProxyIdentifiers(PUBLIC_KEY2);
 
     assertThat(key2ProxyPublicKeys.get(KeyType.BLS))
         .containsExactlyInAnyOrder(getPublicKeysArray(key2ProxyKeyPairs));
     assertThat(key2ProxyPublicKeys.get(KeyType.SECP256K1))
-        .containsExactlyInAnyOrder(getSecpPublicKeysArray(key2SecpKeyPairs));
+        .containsExactlyInAnyOrder(getCompressedSECPPublicKeysArray(key2SecpKeyPairs));
   }
 
   @Test
@@ -172,7 +174,7 @@ class DefaultArtifactSignerProviderTest {
     assertThatCode(() -> signerProvider.load().get()).doesNotThrowAnyException();
 
     for (String identifier : List.of(PUBLIC_KEY1, PUBLIC_KEY2)) {
-      final Map<KeyType, List<String>> keyProxyPublicKeys =
+      final Map<KeyType, Set<String>> keyProxyPublicKeys =
           signerProvider.getProxyIdentifiers(identifier);
       assertThat(keyProxyPublicKeys).isEmpty();
     }
@@ -220,11 +222,12 @@ class DefaultArtifactSignerProviderTest {
         .toArray(String[]::new);
   }
 
-  private static String[] getSecpPublicKeysArray(final List<ECKeyPair> ecKeyPairs) {
+  private static String[] getCompressedSECPPublicKeysArray(final List<ECKeyPair> ecKeyPairs) {
+    // compressed public keys
     return ecKeyPairs.stream()
         .map(
             keyPair ->
-                EthPublicKeyUtils.toHexString(
+                EthPublicKeyUtils.toHexStringCompressed(
                     EthPublicKeyUtils.web3JPublicKeyToECPublicKey(keyPair.getPublicKey())))
         .toList()
         .toArray(String[]::new);

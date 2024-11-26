@@ -77,13 +77,13 @@ public class TransactionSerializer {
   }
 
   private SignatureData sign(final String eth1Address, final byte[] bytesToSign) {
-    final SecpArtifactSignature artifactSignature =
+    final String hexSignature =
         secpSigner
-            .<SecpArtifactSignature>signAndGetArtifactSignature(
-                normaliseIdentifier(eth1Address), Bytes.of(bytesToSign))
+            .sign(normaliseIdentifier(eth1Address), Bytes.of(bytesToSign))
             .orElseThrow(() -> new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT));
 
-    final Signature signature = artifactSignature.getSignatureData();
+    final Signature signature =
+        SecpArtifactSignature.fromBytes(Bytes.fromHexString(hexSignature)).getSignatureData();
 
     return new SignatureData(
         signature.getV().toByteArray(),
