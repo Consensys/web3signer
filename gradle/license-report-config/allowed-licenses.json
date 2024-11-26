@@ -108,6 +108,10 @@
       "moduleLicense": "Apache License, Version 2.0"
     },
     {
+      "moduleName": "jakarta.inject:jakarta.inject-api",
+      "moduleLicense": "Apache License, Version 2.0"
+    },
+    {
       "moduleName": "javax.xml.bind:jaxb-api",
       "moduleLicense": "COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.1"
     },
