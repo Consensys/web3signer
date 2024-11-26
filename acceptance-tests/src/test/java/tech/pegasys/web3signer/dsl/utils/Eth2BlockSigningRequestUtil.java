@@ -60,11 +60,12 @@ public class Eth2BlockSigningRequestUtil {
   }
 
   public Eth2SigningRequestBody createBlockV2Request() {
-      return switch (specMilestone) {
-          case PHASE0, ALTAIR -> createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlock()));
-          case BELLATRIX, CAPELLA, DENEB, ELECTRA ->
-                  createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlockHeader()));
-      };
+    return switch (specMilestone) {
+      case PHASE0, ALTAIR ->
+          createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlock()));
+      case BELLATRIX, CAPELLA, DENEB, ELECTRA ->
+          createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlockHeader()));
+    };
   }
 
   public Eth2SigningRequestBody createBlockV2Request(final BlockRequest blockRequest) {
@@ -100,16 +101,18 @@ public class Eth2BlockSigningRequestUtil {
   }
 
   private tech.pegasys.teku.api.schema.BeaconBlock getBeaconBlock() {
-      return switch (specMilestone) {
-          case PHASE0 -> new BeaconBlockPhase0(beaconBlock);
-          case ALTAIR -> new BeaconBlockAltair(
-                  beaconBlock.getSlot(),
-                  beaconBlock.getProposerIndex(),
-                  beaconBlock.getParentRoot(),
-                  beaconBlock.getStateRoot(),
-                  getBeaconBlockBodyAltair(beaconBlock.getBody()));
-          default -> throw new IllegalStateException("BeaconBlock only supported for PHASE0 and ALTAIR in AT");
-      };
+    return switch (specMilestone) {
+      case PHASE0 -> new BeaconBlockPhase0(beaconBlock);
+      case ALTAIR ->
+          new BeaconBlockAltair(
+              beaconBlock.getSlot(),
+              beaconBlock.getProposerIndex(),
+              beaconBlock.getParentRoot(),
+              beaconBlock.getStateRoot(),
+              getBeaconBlockBodyAltair(beaconBlock.getBody()));
+      default ->
+          throw new IllegalStateException("BeaconBlock only supported for PHASE0 and ALTAIR in AT");
+    };
   }
 
   private BeaconBlockBodyAltair getBeaconBlockBodyAltair(
