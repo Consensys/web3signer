@@ -18,12 +18,13 @@ import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.signing.KeyType;
 
+import java.security.SecureRandom;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 
 public class AcceptanceTestBase {
-
+  protected static final SecureRandom SECURE_RANDOM = new SecureRandom();
   protected Signer signer;
 
   public static final Long DEFAULT_CHAIN_ID = 1337L;

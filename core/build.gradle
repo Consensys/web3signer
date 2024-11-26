@@ -50,6 +50,7 @@ dependencies {
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 
   testImplementation (testFixtures(project(":signing")))
+  testImplementation 'tech.pegasys.teku.internal:networks'
   testImplementation 'io.vertx:vertx-junit5'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter-api'

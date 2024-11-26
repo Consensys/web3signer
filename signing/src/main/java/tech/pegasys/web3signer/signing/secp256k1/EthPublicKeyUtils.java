@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1;
 
+import tech.pegasys.web3signer.signing.util.SecureRandomProvider;
+
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -19,7 +21,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.SecureRandom;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECPrivateKeySpec;
@@ -43,7 +44,6 @@ import org.web3j.crypto.ECKeyPair;
  */
 public class EthPublicKeyUtils {
   private static final BouncyCastleProvider BC_PROVIDER = new BouncyCastleProvider();
-  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
   private static final ECDomainParameters SECP256K1_DOMAIN;
   private static final ECParameterSpec BC_SECP256K1_SPEC;
   private static final java.security.spec.ECParameterSpec JAVA_SECP256K1_SPEC;
@@ -80,7 +80,7 @@ public class EthPublicKeyUtils {
     try {
       final KeyPairGenerator keyPairGenerator =
           KeyPairGenerator.getInstance(EC_ALGORITHM, BC_PROVIDER);
-      keyPairGenerator.initialize(EC_KEYGEN_PARAM, SECURE_RANDOM);
+      keyPairGenerator.initialize(EC_KEYGEN_PARAM, SecureRandomProvider.getSecureRandom());
       return keyPairGenerator.generateKeyPair();
     } catch (final GeneralSecurityException e) {
       throw new RuntimeException(e);

@@ -26,7 +26,6 @@ import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
@@ -231,42 +230,5 @@ class DefaultArtifactSignerProviderTest {
                     EthPublicKeyUtils.web3JPublicKeyToECPublicKey(keyPair.getPublicKey())))
         .toList()
         .toArray(String[]::new);
-  }
-
-  private static class TestCommitBoostParameters implements KeystoresParameters {
-    private final Path keystorePath;
-    private final Path passwordFile;
-
-    public TestCommitBoostParameters(final Path keystorePath, final Path passwordDir) {
-      this.keystorePath = keystorePath;
-      // create password file in passwordDir
-      this.passwordFile = passwordDir.resolve("password.txt");
-      // write text to password file
-      try {
-        Files.writeString(passwordFile, "password");
-      } catch (final IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-
-    @Override
-    public Path getKeystoresPath() {
-      return keystorePath;
-    }
-
-    @Override
-    public Path getKeystoresPasswordsPath() {
-      return null;
-    }
-
-    @Override
-    public Path getKeystoresPasswordFile() {
-      return passwordFile;
-    }
-
-    @Override
-    public boolean isEnabled() {
-      return true;
-    }
   }
 }

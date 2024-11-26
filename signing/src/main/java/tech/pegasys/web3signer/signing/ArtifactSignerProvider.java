@@ -36,6 +36,16 @@ public interface ArtifactSignerProvider extends Closeable {
   Optional<ArtifactSigner> getSigner(final String identifier);
 
   /**
+   * Get the proxy signer for the given proxy public key.
+   *
+   * @param proxyPubKey the public key of the proxy signer
+   * @return the signer or empty if no signer is found
+   */
+  default Optional<ArtifactSigner> getProxySigner(final String proxyPubKey) {
+    throw new UnsupportedOperationException("Proxy signers are not supported by this provider");
+  }
+
+  /**
    * Get the available identifiers for the loaded signers.
    *
    * @return the available identifiers
@@ -67,6 +77,18 @@ public interface ArtifactSignerProvider extends Closeable {
    * @return a future that completes when the signer is removed
    */
   Future<Void> removeSigner(final String identifier);
+
+  /**
+   * Add a proxy signer to the signer provider.
+   *
+   * @param proxySigner Instance of ArtifactSigner that represents the proxy signer
+   * @param consensusPubKey Public Key of the consensus signer for which proxy signer is being added
+   * @return a future that completes when the proxy signer is added
+   */
+  default Future<Void> addProxySigner(
+      final ArtifactSigner proxySigner, final String consensusPubKey) {
+    throw new UnsupportedOperationException("Proxy signers are not supported by this provider");
+  }
 
   /** Close the executor service and release any resources. */
   @Override
