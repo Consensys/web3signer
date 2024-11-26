@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
-import tech.pegasys.web3signer.signing.ArtifactSignature;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
 import java.util.Optional;
@@ -41,18 +40,6 @@ public class SignerForIdentifier {
    */
   public Optional<String> sign(final String identifier, final Bytes data) {
     return signerProvider.getSigner(identifier).map(signer -> signer.sign(data).asHex());
-  }
-
-  /**
-   * Sign data for given identifier and return ArtifactSignature. Useful for SECP signing usages.
-   *
-   * @param identifier The identifier for which to sign data.
-   * @param data Bytes which is signed
-   * @return Optional ArtifactSignature of type T. Empty if no signer available for given identifier
-   */
-  public Optional<ArtifactSignature> signAndGetArtifactSignature(
-      final String identifier, final Bytes data) {
-    return signerProvider.getSigner(identifier).map(signer -> signer.sign(data));
   }
 
   /**
