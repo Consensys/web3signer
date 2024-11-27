@@ -8,10 +8,11 @@
 - Java 21 for build and runtime. [#995](https://github.com/Consensys/web3signer/pull/995)
 - Electra fork support. [#1020](https://github.com/Consensys/web3signer/pull/1020) and [#1023](https://github.com/Consensys/web3signer/pull/1023)
 - Teku and Besu libraries updated to 24.10.3 and 24.10.0 respectively.
-- Commit Boost API - Get Public Keys [#1031][cb_pr1], Generate Proxy Keys [#1043][cb_pr2].
+- Commit Boost API - Get Public Keys [#1031][cb_pr1], Generate Proxy Keys [#1043][cb_pr2] and Request Signature [#1045][cb_pr3].
 
 [cb_pr1]: https://github.com/Consensys/web3signer/pull/1031
 [cb_pr2]: https://github.com/Consensys/web3signer/pull/1043
+[cb_pr3]: https://github.com/Consensys/web3signer/pull/1045
 
 ### Bugs fixed
 - Override protobuf-java to 3.25.5 which is a transitive dependency from google-cloud-secretmanager. It fixes CVE-2024-7254.

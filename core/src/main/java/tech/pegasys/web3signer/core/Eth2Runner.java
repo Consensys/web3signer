@@ -27,6 +27,7 @@ import tech.pegasys.web3signer.core.routes.PublicKeysListRoute;
 import tech.pegasys.web3signer.core.routes.ReloadRoute;
 import tech.pegasys.web3signer.core.routes.eth2.CommitBoostGenerateProxyKeyRoute;
 import tech.pegasys.web3signer.core.routes.eth2.CommitBoostPublicKeysRoute;
+import tech.pegasys.web3signer.core.routes.eth2.CommitBoostRequestSignatureRoute;
 import tech.pegasys.web3signer.core.routes.eth2.Eth2SignExtensionRoute;
 import tech.pegasys.web3signer.core.routes.eth2.Eth2SignRoute;
 import tech.pegasys.web3signer.core.routes.eth2.HighWatermarkRoute;
@@ -145,6 +146,7 @@ public class Eth2Runner extends Runner {
     if (commitBoostApiParameters.isEnabled()) {
       new CommitBoostPublicKeysRoute(context).register();
       new CommitBoostGenerateProxyKeyRoute(context, commitBoostApiParameters, eth2Spec).register();
+      new CommitBoostRequestSignatureRoute(context, eth2Spec).register();
     }
   }
 
