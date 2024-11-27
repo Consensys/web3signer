@@ -12,6 +12,10 @@
  */
 package tech.pegasys.web3signer.core.routes.eth2;
 
+import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
+import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.routes.Web3SignerRoute;
@@ -57,7 +61,7 @@ public class CommitBoostGenerateProxyKeyRoute implements Web3SignerRoute {
         .failureHandler(
             ctx -> {
               final int statusCode = ctx.statusCode();
-              if (statusCode == 400) {
+              if (statusCode == HTTP_BAD_REQUEST) {
                 ctx.response()
                     .setStatusCode(statusCode)
                     .end(
@@ -65,21 +69,21 @@ public class CommitBoostGenerateProxyKeyRoute implements Web3SignerRoute {
                             .put("code", statusCode)
                             .put("message", "Bad Request")
                             .encode());
-              } else if (statusCode == 404) {
+              } else if (statusCode == HTTP_NOT_FOUND) {
                 ctx.response()
                     .setStatusCode(statusCode)
                     .end(
                         new JsonObject()
                             .put("code", statusCode)
-                            .put("message", "Identifier not found.")
+                            .put("message", "Unknown pubkey")
                             .encode());
-              } else if (statusCode == 500) {
+              } else if (statusCode == HTTP_INTERNAL_ERROR) {
                 ctx.response()
                     .setStatusCode(statusCode)
                     .end(
                         new JsonObject()
                             .put("code", statusCode)
-                            .put("message", "Internal Server Error")
+                            .put("message", "Internal Error")
                             .encode());
               } else {
                 ctx.next(); // go to global failure handler

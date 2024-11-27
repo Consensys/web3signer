@@ -13,6 +13,9 @@
 package tech.pegasys.web3signer.core.service.http.handlers.commitboost;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
+import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
@@ -36,9 +39,6 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContext> {
   private static final ObjectMapper JSON_MAPPER = SigningObjectMapperFactory.createObjectMapper();
-  private static final int NOT_FOUND = 404;
-  private static final int BAD_REQUEST = 400;
-  private static final int INTERNAL_ERROR = 500;
 
   private final CommitBoostSignerProvider commitBoostSignerProvider;
   private final ProxyKeysGenerator proxyKeyGenerator;
@@ -62,7 +62,7 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
     try {
       proxyKeyBody = JSON_MAPPER.readValue(body, GenerateProxyKeyBody.class);
     } catch (final JsonProcessingException | IllegalArgumentException e) {
-      context.fail(BAD_REQUEST);
+      context.fail(HTTP_BAD_REQUEST);
       return;
     }
 
@@ -72,7 +72,7 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
         commitBoostSignerProvider.isSignerAvailable(
             consensusPubKey, CommitBoostSignRequestType.CONSENSUS);
     if (!signerAvailable) {
-      context.fail(NOT_FOUND);
+      context.fail(HTTP_NOT_FOUND);
       return;
     }
 
@@ -96,7 +96,7 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
           commitBoostSignerProvider.sign(
               consensusPubKey, CommitBoostSignRequestType.CONSENSUS, signingRoot);
       if (optionalSig.isEmpty()) {
-        context.fail(NOT_FOUND);
+        context.fail(HTTP_NOT_FOUND);
         return;
       }
 
@@ -107,7 +107,7 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
       final String jsonEncoded = JSON_MAPPER.writeValueAsString(signedProxyDelegation);
       context.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonEncoded);
     } catch (final Exception e) {
-      context.fail(INTERNAL_ERROR, e);
+      context.fail(HTTP_INTERNAL_ERROR, e);
     }
   }
 }

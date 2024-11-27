@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.core.routes.eth2;
 
+import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
+
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.routes.Web3SignerRoute;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.CommitBoostPublicKeysHandler;
@@ -50,13 +52,13 @@ public class CommitBoostPublicKeysRoute implements Web3SignerRoute {
         .failureHandler(
             ctx -> {
               final int statusCode = ctx.statusCode();
-              if (statusCode == 500) {
+              if (statusCode == HTTP_INTERNAL_ERROR) {
                 ctx.response()
                     .setStatusCode(statusCode)
                     .end(
                         new JsonObject()
                             .put("code", statusCode)
-                            .put("message", "Internal Server Error")
+                            .put("message", "Internal Error")
                             .encode());
               } else {
                 ctx.next(); // go to global failure handler
