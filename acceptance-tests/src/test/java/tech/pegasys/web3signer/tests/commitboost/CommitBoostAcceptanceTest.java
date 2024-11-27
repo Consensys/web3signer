@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,8 +44,7 @@ import org.web3j.crypto.WalletUtils;
 
 // See https://commit-boost.github.io/commit-boost-client/api/ for Commit Boost spec
 public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
-  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-  private static final String KEYSTORE_PASSWORD = "password";
+  static final String KEYSTORE_PASSWORD = "password";
 
   private List<BLSKeyPair> consensusBlsKeys = randomBLSKeyPairs(2);
   private Map<String, List<BLSKeyPair>> proxyBLSKeysMap = new HashMap<>();
@@ -73,7 +71,7 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
     }
 
     // commit boost proxy keys password file
-    final Path commitBoostPasswordFile = createCommitBoostPasswordFile();
+    final Path commitBoostPasswordFile = createCommitBoostPasswordFile(commitBoostPasswordDir);
 
     // start web3signer with keystores and commit boost parameters
     final KeystoresParameters keystoresParameters =
@@ -139,7 +137,7 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
         .toList();
   }
 
-  private Path createCommitBoostPasswordFile() {
+  static Path createCommitBoostPasswordFile(final Path commitBoostPasswordDir) {
     try {
       return Files.writeString(
           commitBoostPasswordDir.resolve("cb_password.txt"), KEYSTORE_PASSWORD);
@@ -208,7 +206,7 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
    * @param count number of key pairs to generate
    * @return list of ECKeyPairs
    */
-  private static List<ECKeyPair> randomECKeyPairs(final int count) {
+  static List<ECKeyPair> randomECKeyPairs(final int count) {
     return Stream.generate(
             () -> {
               try {
@@ -227,7 +225,7 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
    * @param count number of key pairs to generate
    * @return list of BLSKeyPairs
    */
-  private static List<BLSKeyPair> randomBLSKeyPairs(final int count) {
+  static List<BLSKeyPair> randomBLSKeyPairs(final int count) {
     return Stream.generate(() -> BLSKeyPair.random(SECURE_RANDOM)).limit(count).toList();
   }
 }

@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core.service.http.handlers.commitboost;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
@@ -50,7 +51,7 @@ public class CommitBoostPublicKeysHandler implements Handler<RoutingContext> {
     } catch (final JsonProcessingException e) {
       // this is not meant to happen
       LOG.error("Failed to encode public keys response", e);
-      context.fail(500);
+      context.fail(HTTP_INTERNAL_ERROR);
     }
   }
 

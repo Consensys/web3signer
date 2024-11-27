@@ -115,6 +115,14 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   @Override
+  public Optional<ArtifactSigner> getProxySigner(final String proxyPubKey) {
+    return proxySigners.values().stream()
+        .flatMap(Set::stream)
+        .filter(signer -> signer.getIdentifier().equals(proxyPubKey))
+        .findFirst();
+  }
+
+  @Override
   public Set<String> availableIdentifiers() {
     return Set.copyOf(signers.keySet());
   }
@@ -147,6 +155,20 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
           signers.remove(identifier);
           proxySigners.remove(identifier);
           LOG.info("Removed signer with identifier '{}'", identifier);
+          return null;
+        });
+  }
+
+  @Override
+  public Future<Void> addProxySigner(
+      final ArtifactSigner proxySigner, final String consensusPubKey) {
+    return executorService.submit(
+        () -> {
+          proxySigners.computeIfAbsent(consensusPubKey, k -> new HashSet<>()).add(proxySigner);
+          LOG.info(
+              "Loaded new proxy signer {} for consensus public key '{}'",
+              proxySigner.getIdentifier(),
+              consensusPubKey);
           return null;
         });
   }
