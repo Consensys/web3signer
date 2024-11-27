@@ -24,6 +24,7 @@ import tech.pegasys.teku.spec.TestSpecFactory;
 import tech.pegasys.teku.spec.datastructures.blocks.BeaconBlock;
 import tech.pegasys.teku.spec.datastructures.state.ForkInfo;
 import tech.pegasys.teku.spec.signatures.SigningRootUtil;
+import tech.pegasys.teku.spec.util.DataStructureUtil;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
@@ -32,7 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class Eth2BlockSigningRequestUtil {
   private final SpecMilestone specMilestone;
-  private final DataStructureUtilAdapter beaconBlockUtil;
+  private final DataStructureUtil beaconBlockUtil;
   private final SigningRootUtil signingRootUtil;
   private final ForkInfo tekuForkInfo;
   private final Fork tekuFork;
@@ -41,23 +42,13 @@ public class Eth2BlockSigningRequestUtil {
   private final Bytes signingRoot;
 
   public Eth2BlockSigningRequestUtil(final SpecMilestone specMilestone) {
-    final Spec spec = TestSpecFactory.createMinimal(specMilestone);
-    this.specMilestone = specMilestone;
-    beaconBlockUtil = new DataStructureUtilAdapter(spec);
-    signingRootUtil = new SigningRootUtil(spec);
-    tekuForkInfo = Eth2RequestUtils.forkInfo().asInternalForkInfo();
-    tekuFork = new Fork(tekuForkInfo.getFork());
-    forkInfo =
-        new tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo(
-            tekuFork, tekuForkInfo.getGenesisValidatorsRoot());
-    beaconBlock = beaconBlockUtil.randomBeaconBlock(UInt64.valueOf(0L));
-    signingRoot = signingRootUtil.signingRootForSignBlock(beaconBlock, tekuForkInfo);
+    this(TestSpecFactory.createMinimal(specMilestone), UInt64.ONE, UInt64.ZERO);
   }
 
   public Eth2BlockSigningRequestUtil(
       final Spec spec, final UInt64 forkEpoch, final UInt64 beaconBlockSlot) {
     specMilestone = spec.atEpoch(forkEpoch).getMilestone();
-    beaconBlockUtil = new DataStructureUtilAdapter(spec);
+    beaconBlockUtil = new DataStructureUtil(spec);
     signingRootUtil = new SigningRootUtil(spec);
     tekuForkInfo = Eth2RequestUtils.forkInfo(forkEpoch.longValue()).asInternalForkInfo();
     tekuFork = new Fork(tekuForkInfo.getFork());
@@ -69,19 +60,12 @@ public class Eth2BlockSigningRequestUtil {
   }
 
   public Eth2SigningRequestBody createBlockV2Request() {
-    switch (specMilestone) {
-      case PHASE0:
-      case ALTAIR:
-        return createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlock()));
-      case BELLATRIX:
-      case CAPELLA:
-      case DENEB:
-      case ELECTRA:
-        return createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlockHeader()));
-      default:
-        throw new IllegalStateException(
-            "Spec not yet implemented for BLOCKV2 Signing AT: " + specMilestone);
-    }
+    return switch (specMilestone) {
+      case PHASE0, ALTAIR ->
+          createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlock()));
+      case BELLATRIX, CAPELLA, DENEB, ELECTRA ->
+          createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlockHeader()));
+    };
   }
 
   public Eth2SigningRequestBody createBlockV2Request(final BlockRequest blockRequest) {
@@ -117,19 +101,18 @@ public class Eth2BlockSigningRequestUtil {
   }
 
   private tech.pegasys.teku.api.schema.BeaconBlock getBeaconBlock() {
-    switch (specMilestone) {
-      case PHASE0:
-        return new BeaconBlockPhase0(beaconBlock);
-      case ALTAIR:
-        return new BeaconBlockAltair(
-            beaconBlock.getSlot(),
-            beaconBlock.getProposerIndex(),
-            beaconBlock.getParentRoot(),
-            beaconBlock.getStateRoot(),
-            getBeaconBlockBodyAltair(beaconBlock.getBody()));
-      default:
-        throw new IllegalStateException("BeaconBlock only supported for PHASE0 and ALTAIR in AT");
-    }
+    return switch (specMilestone) {
+      case PHASE0 -> new BeaconBlockPhase0(beaconBlock);
+      case ALTAIR ->
+          new BeaconBlockAltair(
+              beaconBlock.getSlot(),
+              beaconBlock.getProposerIndex(),
+              beaconBlock.getParentRoot(),
+              beaconBlock.getStateRoot(),
+              getBeaconBlockBodyAltair(beaconBlock.getBody()));
+      default ->
+          throw new IllegalStateException("BeaconBlock only supported for PHASE0 and ALTAIR in AT");
+    };
   }
 
   private BeaconBlockBodyAltair getBeaconBlockBodyAltair(
