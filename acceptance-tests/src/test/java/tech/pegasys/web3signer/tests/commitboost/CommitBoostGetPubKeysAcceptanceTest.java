@@ -43,12 +43,13 @@ import org.web3j.crypto.Keys;
 import org.web3j.crypto.WalletUtils;
 
 // See https://commit-boost.github.io/commit-boost-client/api/ for Commit Boost spec
-public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
+public class CommitBoostGetPubKeysAcceptanceTest extends AcceptanceTestBase {
   static final String KEYSTORE_PASSWORD = "password";
 
-  private List<BLSKeyPair> consensusBlsKeys = randomBLSKeyPairs(2);
-  private Map<String, List<BLSKeyPair>> proxyBLSKeysMap = new HashMap<>();
-  private Map<String, List<ECKeyPair>> proxySECPKeysMap = new HashMap<>();
+  private final List<BLSKeyPair> consensusBlsKeys = randomBLSKeyPairs(2);
+  private final Map<String, List<BLSKeyPair>> proxyBLSKeysMap = new HashMap<>();
+  private final Map<String, List<ECKeyPair>> proxySECPKeysMap = new HashMap<>();
+
   @TempDir private Path keystoreDir;
   @TempDir private Path passwordDir;
   // commit boost directories
@@ -62,11 +63,13 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
       KeystoreUtil.createKeystore(blsKeyPair, keystoreDir, passwordDir, KEYSTORE_PASSWORD);
 
       // create 2 proxy bls
-      final List<BLSKeyPair> proxyBLSKeys = createProxyBLSKeys(blsKeyPair);
+      final List<BLSKeyPair> proxyBLSKeys =
+          createProxyBLSKeys(blsKeyPair, 2, commitBoostKeystoresPath);
       proxyBLSKeysMap.put(blsKeyPair.getPublicKey().toHexString(), proxyBLSKeys);
 
       // create 2 proxy secp keys
-      final List<ECKeyPair> proxyECKeyPairs = createProxyECKeys(blsKeyPair);
+      final List<ECKeyPair> proxyECKeyPairs =
+          createProxyECKeys(blsKeyPair, 2, commitBoostKeystoresPath);
       proxySECPKeysMap.put(blsKeyPair.getPublicKey().toHexString(), proxyECKeyPairs);
     }
 
@@ -147,12 +150,15 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
   }
 
   /**
-   * Generate 2 random proxy EC key pairs and their encrypted keystores
+   * Generate random proxy EC key pairs and their encrypted keystores for given consensus BLS key
    *
    * @param consensusKeyPair consensus BLS key pair whose public key will be used as directory name
+   * @param count number of proxy key pairs to generate
+   * @param commitBoostKeystoresPath path to store the generated keystores
    * @return list of ECKeyPairs
    */
-  private List<ECKeyPair> createProxyECKeys(final BLSKeyPair consensusKeyPair) {
+  static List<ECKeyPair> createProxyECKeys(
+      final BLSKeyPair consensusKeyPair, final int count, final Path commitBoostKeystoresPath) {
     final Path proxySecpKeyStoreDir =
         commitBoostKeystoresPath
             .resolve(consensusKeyPair.getPublicKey().toHexString())
@@ -163,7 +169,7 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
       throw new UncheckedIOException(e);
     }
     // create 2 random proxy secp keys and their keystores
-    final List<ECKeyPair> proxyECKeyPairs = randomECKeyPairs(2);
+    final List<ECKeyPair> proxyECKeyPairs = randomECKeyPairs(count);
     proxyECKeyPairs.forEach(
         proxyECKey -> {
           try {
@@ -177,12 +183,15 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
   }
 
   /**
-   * Generate 2 random proxy BLS key pairs and their encrypted keystores
+   * Generate random proxy BLS key pairs and their encrypted keystores for given BLS consensus key
    *
    * @param consensusKeyPair consensus BLS key pair whose public key will be used as directory name
+   * @param count number of proxy key pairs to generate
+   * @param commitBoostKeystoresPath path to store the generated keystores
    * @return list of BLSKeyPairs
    */
-  private List<BLSKeyPair> createProxyBLSKeys(final BLSKeyPair consensusKeyPair) {
+  static List<BLSKeyPair> createProxyBLSKeys(
+      final BLSKeyPair consensusKeyPair, final int count, final Path commitBoostKeystoresPath) {
     final Path proxyBlsKeyStoreDir =
         commitBoostKeystoresPath
             .resolve(consensusKeyPair.getPublicKey().toHexString())
@@ -193,7 +202,7 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
       throw new UncheckedIOException(e);
     }
     // create 2 proxy bls keys and their keystores
-    List<BLSKeyPair> blsKeyPairs = randomBLSKeyPairs(2);
+    List<BLSKeyPair> blsKeyPairs = randomBLSKeyPairs(count);
     blsKeyPairs.forEach(
         blsKeyPair ->
             KeystoreUtil.createKeystoreFile(blsKeyPair, proxyBlsKeyStoreDir, KEYSTORE_PASSWORD));
