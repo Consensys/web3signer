@@ -25,7 +25,7 @@ dependencies {
   testImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
   testImplementation 'io.zonky.test:embedded-postgres'
   testImplementation 'org.jdbi:jdbi3-core'
-  testImplementation 'org.apache.tuweni:tuweni-units'
+  testImplementation 'io.tmio:tuweni-units'
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'org.apache.logging.log4j:log4j-api'
   testImplementation 'org.apache.logging.log4j:log4j-core'

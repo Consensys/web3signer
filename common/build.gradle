@@ -17,8 +17,8 @@ jar {
 dependencies {
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-net'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-net'
   implementation 'org.hyperledger.besu.internal:metrics-core'
   implementation 'org.hyperledger.besu:plugin-api'
 }
