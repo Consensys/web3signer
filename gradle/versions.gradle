@@ -135,7 +135,7 @@ dependencyManagement {
     dependency 'com.zaxxer:HikariCP:5.1.0'
     dependency 'org.postgresql:postgresql:42.7.4'
 
-    dependencySet(group: 'org.jdbi', version: '3.45.2') {
+    dependencySet(group: 'org.jdbi', version: '3.47.0') {
       entry 'jdbi3-core'
       entry 'jdbi3-sqlobject'
       entry 'jdbi3-testing'
