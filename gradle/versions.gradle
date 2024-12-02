@@ -72,12 +72,12 @@ dependencyManagement {
       entry 'bcprov-jdk18on'
     }
 
-    dependencySet(group: 'org.junit.jupiter', version: '5.10.3') {
+    dependencySet(group: 'org.junit.jupiter', version: '5.11.3') {
       entry 'junit-jupiter-api'
       entry 'junit-jupiter-engine'
       entry 'junit-jupiter-params'
     }
-    dependency 'org.junit.vintage:junit-vintage-engine:5.10.3'
+    dependency 'org.junit.vintage:junit-vintage-engine:5.11.3'
 
     dependency 'org.mock-server:mockserver-netty:5.15.0'
 
