@@ -25,10 +25,10 @@ dependencies {
   testImplementation project(":commandline")
   testImplementation project(":common")
 
-  testImplementation 'org.apache.tuweni:tuweni-bytes'
-  testImplementation 'org.apache.tuweni:tuweni-units'
+  testImplementation 'io.tmio:tuweni-bytes'
+  testImplementation 'io.tmio:tuweni-units'
 
-  testImplementation 'commons-io:commons-io:2.6'
+  testImplementation 'commons-io:commons-io'
 
   testRuntimeOnly 'javax.activation:activation'
   testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
@@ -58,8 +58,8 @@ dependencies {
   testImplementation 'tech.pegasys.teku.internal:async'
   testImplementation 'io.rest-assured:rest-assured'
   testImplementation 'org.web3j:core'
-  testImplementation 'org.apache.tuweni:tuweni-bytes'
-  testImplementation 'org.apache.tuweni:tuweni-net'
+  testImplementation 'io.tmio:tuweni-bytes'
+  testImplementation 'io.tmio:tuweni-net'
   testImplementation 'com.github.arteam:simple-json-rpc-server'
   testImplementation 'com.github.arteam:simple-json-rpc-client'
   testImplementation 'org.flywaydb:flyway-core'

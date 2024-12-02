@@ -42,7 +42,7 @@ import org.postgresql.ds.PGSimpleDataSource;
 public class DbConnection {
   // https://jdbc.postgresql.org/documentation/head/connect.html#connection-parameters
   private static final String PG_SOCKET_TIMEOUT_PARAM = "socketTimeout";
-  static final long DEFAULT_PG_SOCKET_TIMEOUT_SECONDS = Duration.ofMinutes(5).getSeconds();
+  static final long DEFAULT_PG_SOCKET_TIMEOUT_SECONDS = Duration.ofMinutes(5).toSeconds();
 
   public static Jdbi createConnection(
       final String jdbcUrl,
