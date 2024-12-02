@@ -1,0 +1,20 @@
+get:
+  tags:
+    - 'Server Health Status'
+  summary: 'Server Health Status'
+  description: |
+    Checks the Web3Signer server health status. Confirms if Web3Signer is healthy. Not used by validator clients.
+  operationId: 'HEALTHCHECK'
+  responses:
+    '200':
+      description: 'System is healthy'
+      content:
+        application/json:
+          schema:
+            "$ref": "../schemas.yaml#/components/schemas/HealthCheck"
+    '503':
+      description: 'At least one procedure is unhealthy'
+      content:
+        application/json:
+          schema:
+            "$ref": "../schemas.yaml#/components/schemas/HealthCheck"
