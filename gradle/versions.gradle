@@ -81,7 +81,7 @@ dependencyManagement {
 
     dependency 'org.mock-server:mockserver-netty:5.15.0'
 
-    dependencySet(group: 'org.mockito', version: '5.12.0') {
+    dependencySet(group: 'org.mockito', version: '5.14.2') {
       entry 'mockito-core'
       entry 'mockito-inline'
       entry 'mockito-junit-jupiter'
