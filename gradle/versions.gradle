@@ -30,7 +30,7 @@ dependencyManagement {
     dependency 'commons-cli:commons-cli:1.5.0'
     dependency 'commons-io:commons-io:2.16.1'
     dependency 'org.apache.commons:commons-lang3:3.17.0'
-    dependency 'commons-logging:commons-logging:1.3.3'
+    dependency 'commons-logging:commons-logging:1.3.4'
 
     dependency 'info.picocli:picocli:4.7.6'
 
