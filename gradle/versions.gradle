@@ -28,7 +28,7 @@ dependencyManagement {
     dependency 'com.google.guava:guava:33.2.1-jre'
 
     dependency 'commons-cli:commons-cli:1.5.0'
-    dependency 'commons-io:commons-io:2.16.1'
+    dependency 'commons-io:commons-io:2.18.0'
     dependency 'org.apache.commons:commons-lang3:3.17.0'
     dependency 'commons-logging:commons-logging:1.3.4'
 
