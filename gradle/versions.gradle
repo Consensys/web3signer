@@ -133,7 +133,7 @@ dependencyManagement {
     dependency 'com.azure:azure-identity:1.14.0'
 
     dependency 'com.zaxxer:HikariCP:5.1.0'
-    dependency 'org.postgresql:postgresql:42.7.3'
+    dependency 'org.postgresql:postgresql:42.7.4'
 
     dependencySet(group: 'org.jdbi', version: '3.45.2') {
       entry 'jdbi3-core'
