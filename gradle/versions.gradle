@@ -141,8 +141,8 @@ dependencyManagement {
       entry 'jdbi3-testing'
     }
 
-    dependency 'org.flywaydb:flyway-core:10.16.0'
-    dependency 'org.flywaydb:flyway-database-postgresql:10.16.0'
+    dependency 'org.flywaydb:flyway-core:11.0.0'
+    dependency 'org.flywaydb:flyway-database-postgresql:11.0.0'
 
     dependency 'com.google.cloud:google-cloud-secretmanager:2.51.0'
     dependency 'com.google.protobuf:protobuf-java:3.25.5' // fixes CVE-2024-7254 - transitive from google-cloud-secretmanager
