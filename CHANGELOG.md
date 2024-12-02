@@ -1,7 +1,9 @@
 # Changelog
 
-## Next Release
+## 24.12.0
+
 ### Breaking Changes
+- Java 21 is required to build Web3Signer.
 - Filecoin mode has been removed.
 
 ### Features Added
