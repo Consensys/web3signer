@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -45,15 +46,19 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
+  private final Optional<BiConsumer<Set<String>, Set<String>>> postLoadingCallback;
+  private final Optional<KeystoresParameters> commitBoostKeystoresParameters;
+
   private final Map<String, ArtifactSigner> signers = new HashMap<>();
   private final Map<String, Set<ArtifactSigner>> proxySigners = new HashMap<>();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-  private final Optional<KeystoresParameters> commitBoostKeystoresParameters;
 
   public DefaultArtifactSignerProvider(
       final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier,
+      final Optional<BiConsumer<Set<String>, Set<String>>> postLoadingCallback,
       final Optional<KeystoresParameters> commitBoostKeystoresParameters) {
     this.artifactSignerCollectionSupplier = artifactSignerCollectionSupplier;
+    this.postLoadingCallback = postLoadingCallback;
     this.commitBoostKeystoresParameters = commitBoostKeystoresParameters;
   }
 
@@ -62,20 +67,31 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
     return executorService.submit(
         () -> {
           LOG.debug("Signer keys pre-loaded in memory {}", signers.size());
+          // step 1: Create copy of current signers
+          final Map<String, ArtifactSigner> oldSigners = new HashMap<>(signers);
+          // step 2: Clear current signers and then load them via ArtifactSignerCollectionSupplier
+          signers.clear();
+          signers.putAll(
+              artifactSignerCollectionSupplier.get().stream()
+                  .collect(
+                      Collectors.toMap(
+                          ArtifactSigner::getIdentifier,
+                          Function.identity(),
+                          (signer1, signer2) -> {
+                            LOG.warn(
+                                "Duplicate keys were found while loading. {}", Function.identity());
+                            return signer1;
+                          })));
 
-          artifactSignerCollectionSupplier.get().stream()
-              .collect(
-                  Collectors.toMap(
-                      ArtifactSigner::getIdentifier,
-                      Function.identity(),
-                      (signer1, signer2) -> {
-                        LOG.warn(
-                            "Duplicate keys were found while loading. {}", Function.identity());
-                        return signer1;
-                      }))
-              .forEach(signers::putIfAbsent);
+          // step 3: Collect all stale keys that are no longer valid
+          final Set<String> staleKeys = new HashSet<>(oldSigners.keySet());
+          staleKeys.removeAll(signers.keySet());
 
-          // for each loaded signer, load commit boost proxy signers (if any)
+          // step 4: callback to register new keys and disable stale keys in slashing database
+          postLoadingCallback.ifPresent(callback -> callback.accept(signers.keySet(), staleKeys));
+
+          // step 5: for each loaded signer, load commit boost proxy signers (if any)
+          proxySigners.clear();
           commitBoostKeystoresParameters
               .filter(KeystoresParameters::isEnabled)
               .ifPresent(

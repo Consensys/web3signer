@@ -688,7 +688,9 @@ class CommandlineParserTest {
     @Override
     protected List<ArtifactSignerProvider> createArtifactSignerProvider(
         final Vertx vertx, final MetricsSystem metricsSystem) {
-      return List.of(new DefaultArtifactSignerProvider(Collections::emptyList, Optional.empty()));
+      return List.of(
+          new DefaultArtifactSignerProvider(
+              Collections::emptyList, Optional.empty(), Optional.empty()));
     }
 
     @Override

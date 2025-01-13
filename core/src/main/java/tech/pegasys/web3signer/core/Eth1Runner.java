@@ -116,6 +116,7 @@ public class Eth1Runner extends Runner {
                       .getValues());
               return signers;
             },
+            Optional.empty(),
             Optional.empty());
 
     // uses eth1 address as identifier
