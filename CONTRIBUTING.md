@@ -5,6 +5,9 @@ Welcome to the Web3Signer repository!  The following is a set of guidelines for 
 repo and its packages. These are mostly guidelines, not rules. Use your best judgment, 
 and feel free to propose changes to this document in a pull request.
 
+### Guidelines for Non-Code and other Trivial Contributions
+Please keep in mind that we do not accept non-code contributions like fixing comments, typos or some other trivial fixes. Although we appreciate the extra help, managing lots of these small contributions is unfeasible, and puts extra pressure in our continuous delivery systems (running all tests, etc). Feel free to open an issue pointing any of those errors, and we will batch them into a single change.
+
 #### Table Of Contents
 [Code of Conduct](#code-of-conduct)
 
