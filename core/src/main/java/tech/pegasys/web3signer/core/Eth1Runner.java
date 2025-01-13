@@ -92,6 +92,7 @@ public class Eth1Runner extends Runner {
 
     final ArtifactSignerProvider signerProvider =
         new DefaultArtifactSignerProvider(
+            baseConfig.reloadKeepStaleKeys(),
             () -> {
               final List<ArtifactSigner> signers = new ArrayList<>();
               final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory();
@@ -149,7 +150,8 @@ public class Eth1Runner extends Runner {
               awsKmsSignerFactory,
               true);
 
-      return new SignerLoader(baseConfig.keystoreParallelProcessingEnabled())
+      return new SignerLoader(
+              baseConfig.keystoreParallelProcessingEnabled(), baseConfig.reloadKeepStaleKeys())
           .load(
               baseConfig.getKeyConfigPath(),
               "yaml",

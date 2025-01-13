@@ -69,7 +69,7 @@ class DefaultArtifactSignerProviderTest {
 
     signerProvider =
         new DefaultArtifactSignerProvider(
-            () -> List.of(mockSigner), Optional.empty(), Optional.empty());
+            false, () -> List.of(mockSigner), Optional.empty(), Optional.empty());
     assertThatCode(() -> signerProvider.load().get()).doesNotThrowAnyException();
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
@@ -86,7 +86,7 @@ class DefaultArtifactSignerProviderTest {
 
     signerProvider =
         new DefaultArtifactSignerProvider(
-            () -> List.of(mockSigner1, mockSigner2), Optional.empty(), Optional.empty());
+            false, () -> List.of(mockSigner1, mockSigner2), Optional.empty(), Optional.empty());
     assertThatCode(() -> signerProvider.load().get()).doesNotThrowAnyException();
 
     assertThat(signerProvider.availableIdentifiers()).hasSize(1);
@@ -102,7 +102,7 @@ class DefaultArtifactSignerProviderTest {
 
     signerProvider =
         new DefaultArtifactSignerProvider(
-            () -> List.of(mockSigner1, mockSigner2), Optional.empty(), Optional.empty());
+            false, () -> List.of(mockSigner1, mockSigner2), Optional.empty(), Optional.empty());
     assertThatCode(() -> signerProvider.load().get()).doesNotThrowAnyException();
     assertThat(signerProvider.availableIdentifiers()).hasSize(2);
     assertThat(signerProvider.availableIdentifiers()).containsOnly(PUBLIC_KEY1, PUBLIC_KEY2);
@@ -131,6 +131,7 @@ class DefaultArtifactSignerProviderTest {
 
     signerProvider =
         new DefaultArtifactSignerProvider(
+            false,
             () -> List.of(mockSigner1, mockSigner2),
             Optional.empty(),
             Optional.of(commitBoostParameters));
@@ -171,6 +172,7 @@ class DefaultArtifactSignerProviderTest {
 
     signerProvider =
         new DefaultArtifactSignerProvider(
+            false,
             () -> List.of(mockSigner1, mockSigner2),
             Optional.empty(),
             Optional.of(commitBoostParameters));

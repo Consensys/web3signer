@@ -45,6 +45,8 @@ import org.apache.logging.log4j.Logger;
 public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
+
+  private final boolean reloadKeepStaleKeys;
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
   private final Optional<BiConsumer<Set<String>, Set<String>>> postLoadingCallback;
   private final Optional<KeystoresParameters> commitBoostKeystoresParameters;
@@ -54,9 +56,11 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   public DefaultArtifactSignerProvider(
+      final boolean reloadKeepStaleKeys,
       final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier,
       final Optional<BiConsumer<Set<String>, Set<String>>> postLoadingCallback,
       final Optional<KeystoresParameters> commitBoostKeystoresParameters) {
+    this.reloadKeepStaleKeys = reloadKeepStaleKeys;
     this.artifactSignerCollectionSupplier = artifactSignerCollectionSupplier;
     this.postLoadingCallback = postLoadingCallback;
     this.commitBoostKeystoresParameters = commitBoostKeystoresParameters;
@@ -70,7 +74,9 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
           // step 1: Create copy of current signers
           final Map<String, ArtifactSigner> oldSigners = new HashMap<>(signers);
           // step 2: Clear current signers and then load them via ArtifactSignerCollectionSupplier
-          signers.clear();
+          if (!reloadKeepStaleKeys) {
+            signers.clear();
+          }
           signers.putAll(
               artifactSignerCollectionSupplier.get().stream()
                   .collect(
@@ -84,14 +90,21 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                           })));
 
           // step 3: Collect all stale keys that are no longer valid
-          final Set<String> staleKeys = new HashSet<>(oldSigners.keySet());
-          staleKeys.removeAll(signers.keySet());
+          final Set<String> staleKeys;
+          if (reloadKeepStaleKeys) {
+            staleKeys = new HashSet<>();
+          } else {
+            staleKeys = new HashSet<>(oldSigners.keySet());
+            staleKeys.removeAll(signers.keySet());
+          }
 
           // step 4: callback to register new keys and disable stale keys in slashing database
           postLoadingCallback.ifPresent(callback -> callback.accept(signers.keySet(), staleKeys));
 
           // step 5: for each loaded signer, load commit boost proxy signers (if any)
-          proxySigners.clear();
+          if (!reloadKeepStaleKeys) {
+            proxySigners.clear();
+          }
           commitBoostKeystoresParameters
               .filter(KeystoresParameters::isEnabled)
               .ifPresent(

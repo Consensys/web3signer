@@ -51,15 +51,14 @@ public class SignerLoader {
   private static final long FILES_PROCESSED_TO_REPORT = 10;
   // enable or disable parallel streams to convert and load private keys from metadata files
   private final boolean useParallelStreams;
+  // if false, reload metadata files even if they are not modified
+  private final boolean reloadKeepStaleFiles;
 
   private static final Map<Path, FileTime> metadataConfigFilesPathCache = new HashMap<>();
 
-  public SignerLoader(final boolean useParallelStreams) {
+  public SignerLoader(final boolean useParallelStreams, final boolean reloadKeepStaleFiles) {
     this.useParallelStreams = useParallelStreams;
-  }
-
-  public SignerLoader() {
-    this(true);
+    this.reloadKeepStaleFiles = reloadKeepStaleFiles;
   }
 
   public MappedResults<ArtifactSigner> load(
@@ -173,7 +172,8 @@ public class SignerLoader {
     try {
       final FileTime lastModifiedTime = Files.getLastModifiedTime(path);
       if (metadataConfigFilesPathCache.containsKey(path)) {
-        if (metadataConfigFilesPathCache.get(path).compareTo(lastModifiedTime) == 0) {
+        if (reloadKeepStaleFiles
+            && metadataConfigFilesPathCache.get(path).compareTo(lastModifiedTime) == 0) {
           return false;
         }
       }

@@ -690,7 +690,10 @@ class CommandlineParserTest {
         final Vertx vertx, final MetricsSystem metricsSystem) {
       return List.of(
           new DefaultArtifactSignerProvider(
-              Collections::emptyList, Optional.empty(), Optional.empty()));
+              baseConfig.reloadKeepStaleKeys(),
+              Collections::emptyList,
+              Optional.empty(),
+              Optional.empty()));
     }
 
     @Override

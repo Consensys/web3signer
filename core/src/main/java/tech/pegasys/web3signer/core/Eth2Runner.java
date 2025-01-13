@@ -157,6 +157,7 @@ public class Eth2Runner extends Runner {
       final Vertx vertx, final MetricsSystem metricsSystem) {
     return List.of(
         new DefaultArtifactSignerProvider(
+            baseConfig.reloadKeepStaleKeys(),
             createArtifactSignerSupplier(vertx, metricsSystem),
             slashingProtectionContext.map(PostLoadingValidatorsProcessor::new),
             Optional.of(commitBoostApiParameters)));
@@ -201,7 +202,8 @@ public class Eth2Runner extends Runner {
               azureKeyVaultFactory);
 
       final MappedResults<ArtifactSigner> results =
-          new SignerLoader(baseConfig.keystoreParallelProcessingEnabled())
+          new SignerLoader(
+                  baseConfig.keystoreParallelProcessingEnabled(), baseConfig.reloadKeepStaleKeys())
               .load(
                   baseConfig.getKeyConfigPath(),
                   "yaml",

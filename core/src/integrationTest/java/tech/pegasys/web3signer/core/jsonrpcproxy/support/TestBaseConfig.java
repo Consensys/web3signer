@@ -141,4 +141,9 @@ public class TestBaseConfig implements BaseConfig {
   public int getVertxWorkerPoolSize() {
     return 20;
   }
+
+  @Override
+  public boolean reloadKeepStaleKeys() {
+    return false;
+  }
 }

@@ -108,7 +108,7 @@ class SignerLoaderTest {
     signerParser =
         new YamlSignerParser(
             List.of(blsArtifactSignerFactory), YamlMapperFactory.createYamlMapper());
-    signerLoader = new SignerLoader();
+    signerLoader = new SignerLoader(true, true);
   }
 
   @ParameterizedTest(name = "{index} - Signer created for file name {0}")

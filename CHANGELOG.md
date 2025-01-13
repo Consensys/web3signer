@@ -1,5 +1,14 @@
 # Changelog
 
+## Next Release
+### Breaking Changes
+- The behavior of reload API endpoint has been changed. It will remove all in-memory keys before loading them again 
+using configuration files and bulk loading. This unfortunately results in behaviour change of local configuration files 
+pointing to encrypted keystores. Previously cached local configuration files were avoided during reload API call. 
+To keep the old behavior `--reload-keep-stale-keys=true` option can be used which will not remove stale keys during 
+reload API call.
+
+---
 ## 24.12.0
 
 ### Breaking Changes
