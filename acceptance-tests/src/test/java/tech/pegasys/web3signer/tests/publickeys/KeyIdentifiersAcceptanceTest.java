@@ -164,9 +164,12 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     // reload is async ... assert that the key is removed
     Awaitility.await()
         .atMost(5, SECONDS)
-        .until(
-            () -> signer.callApiPublicKeys(keyType).jsonPath().<List<String>>get("."),
-            containsInAnyOrder(keys[0]));
+        .untilAsserted(
+            () -> {
+              final List<String> publicKeysList =
+                  signer.callApiPublicKeys(keyType).jsonPath().getList(".");
+              assertThat(publicKeysList).containsOnly(keys[0]);
+            });
   }
 
   @ParameterizedTest
@@ -188,9 +191,12 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     // reload is async ... assert that the keys are not removed
     Awaitility.await()
         .atMost(5, SECONDS)
-        .until(
-            () -> signer.callApiPublicKeys(keyType).jsonPath().<List<String>>get("."),
-            containsInAnyOrder(keys));
+        .untilAsserted(
+            () -> {
+              final List<String> publicKeysList =
+                  signer.callApiPublicKeys(keyType).jsonPath().getList(".");
+              assertThat(publicKeysList).containsExactlyInAnyOrder(keys);
+            });
   }
 
   @ParameterizedTest
