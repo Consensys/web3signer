@@ -1,12 +1,20 @@
 # Changelog
 
 ## Next Release
+
 ### Breaking Changes
-- The behavior of reload API endpoint has been changed. It will remove all in-memory keys before loading them again 
-using configuration files and bulk loading. This unfortunately results in behaviour change of local configuration files 
-pointing to encrypted keystores. Previously cached local configuration files were avoided during reload API call. 
-To keep the old behavior `--reload-keep-stale-keys=true` option can be used which will not remove stale keys during 
-reload API call.
+- The behavior of reload API endpoint has been modified due to issue [#1018][issue_1018] implemented by PR [#1054][pr_1054].
+The reload API call will remove all in-memory keys before loading them again using configuration files and bulk loading.
+This unfortunately results in behaviour change of local configuration files pointing to encrypted keystores. Previously 
+cached local configuration files were avoided being reloaded during reload API call, now they will be reloaded and 
+reparsed. To keep the old behavior `--reload-keep-stale-keys=true` option can be used which will not remove stale keys 
+during reload API call.
+
+[issue_1018]: https://github.com/Consensys/web3signer/issues/1018
+[pr_1054]: https://github.com/Consensys/web3signer/pull/1054
+
+### Features Added
+- Remove stale keys during reload API call. [#1018][issue_1018] [#1054][pr_1054]
 
 ---
 ## 24.12.0
