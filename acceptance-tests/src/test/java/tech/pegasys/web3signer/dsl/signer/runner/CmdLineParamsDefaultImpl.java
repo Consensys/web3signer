@@ -107,6 +107,11 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
 
     params.addAll(createServerTlsArgs());
 
+    signerConfig
+        .getReloadKeepStaleKeys()
+        .ifPresent(
+            reloadKeepStaleKeys -> params.add("--reload-keep-stale-keys=" + reloadKeepStaleKeys));
+
     params.add(signerConfig.getMode());
 
     if (signerConfig.getMode().equals("eth2")) {

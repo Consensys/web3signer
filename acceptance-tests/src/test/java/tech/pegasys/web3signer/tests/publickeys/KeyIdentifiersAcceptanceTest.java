@@ -147,7 +147,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
 
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
-  public void removedConfigFilePublicKeyIsRemovedAfterReload(final KeyType keyType) {
+  public void publicKeysAreRemovedAfterReloadDefault(final KeyType keyType) {
     final String[] prvKeys = privateKeys(keyType);
     final String[] keys = createKeys(keyType, true, prvKeys);
 
@@ -161,7 +161,36 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     // reload API call
     signer.callReload().then().statusCode(200);
 
-    validateApiResponse(signer.callApiPublicKeys(keyType), contains(keys[0]));
+    // reload is async ... assert that the key is removed
+    Awaitility.await()
+        .atMost(5, SECONDS)
+        .until(
+            () -> signer.callApiPublicKeys(keyType).jsonPath().<List<String>>get("."),
+            containsInAnyOrder(keys[0]));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = KeyType.class)
+  public void publicKeysNotRemovedAfterReloadWithKeepStaleKeysTrue(final KeyType keyType) {
+    final String[] prvKeys = privateKeys(keyType);
+    final String[] keys = createKeys(keyType, true, prvKeys);
+
+    initAndStartSignerWithReloadKeepStaleKeys(calculateMode(keyType));
+
+    validateApiResponse(signer.callApiPublicKeys(keyType), containsInAnyOrder(keys));
+
+    // remove one of the key config file
+    assertThat(testDirectory.resolve(keys[1] + ".yaml").toFile().delete()).isTrue();
+
+    // reload API call
+    signer.callReload().then().statusCode(200);
+
+    // reload is async ... assert that the keys are not removed
+    Awaitility.await()
+        .atMost(5, SECONDS)
+        .until(
+            () -> signer.callApiPublicKeys(keyType).jsonPath().<List<String>>get("."),
+            containsInAnyOrder(keys));
   }
 
   @ParameterizedTest

@@ -123,6 +123,14 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
 
     yamlConfig.append(createServerTlsArgs());
 
+    signerConfig
+        .getReloadKeepStaleKeys()
+        .ifPresent(
+            reloadKeepStaleKeys ->
+                yamlConfig.append(
+                    String.format(
+                        YAML_BOOLEAN_FMT, "reload-keep-stale-keys", reloadKeepStaleKeys)));
+
     params.add(signerConfig.getMode()); // sub-command .. it can't go to config file
 
     if (signerConfig.getMode().equals("eth2")) {
