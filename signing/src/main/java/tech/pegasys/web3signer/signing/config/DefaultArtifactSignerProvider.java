@@ -98,7 +98,8 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
             staleKeys.removeAll(signers.keySet());
           }
 
-          // step 4: callback to register new keys and disable stale keys in slashing database
+          // step 4: callback to perform further actions specific to eth1/eth2 mode with loaded and
+          // stale keys.
           postLoadingCallback.ifPresent(callback -> callback.accept(signers.keySet(), staleKeys));
 
           // step 5: for each loaded signer, load commit boost proxy signers (if any)
