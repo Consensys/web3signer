@@ -25,16 +25,17 @@ import tech.pegasys.web3signer.signing.bulkloading.SecpV3KeystoresBulkLoader;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -42,23 +43,33 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Default implementation of {@link ArtifactSignerProvider} that loads signers and proxy signers.
+ * This class is designed to provide concurrent access to signers and proxy signers, ensuring thread
+ * safety and efficient read operations. The {@code load()} method is called infrequently, typically
+ * at startup or via a reload API call, while the getter methods are called frequently.
+ *
+ * <p>The class uses a {@link ConcurrentHashMap} for storing signers and proxy signers to allow
+ * efficient concurrent read access. It also uses a single-threaded executor to ensure that the
+ * {@code load()} method and other write operations are executed sequentially.
+ */
 public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final boolean reloadKeepStaleKeys;
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
-  private final Optional<BiConsumer<Set<String>, Set<String>>> postLoadingCallback;
+  private final Optional<Consumer<Set<String>>> postLoadingCallback;
   private final Optional<KeystoresParameters> commitBoostKeystoresParameters;
 
-  private final Map<String, ArtifactSigner> signers = new HashMap<>();
-  private final Map<String, Set<ArtifactSigner>> proxySigners = new HashMap<>();
+  private final ConcurrentMap<String, ArtifactSigner> signers = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, Set<ArtifactSigner>> proxySigners = new ConcurrentHashMap<>();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   public DefaultArtifactSignerProvider(
       final boolean reloadKeepStaleKeys,
       final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier,
-      final Optional<BiConsumer<Set<String>, Set<String>>> postLoadingCallback,
+      final Optional<Consumer<Set<String>>> postLoadingCallback,
       final Optional<KeystoresParameters> commitBoostKeystoresParameters) {
     this.reloadKeepStaleKeys = reloadKeepStaleKeys;
     this.artifactSignerCollectionSupplier = artifactSignerCollectionSupplier;
@@ -71,13 +82,9 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
     return executorService.submit(
         () -> {
           LOG.debug("Signer keys pre-loaded in memory {}", signers.size());
-          // step 1: Create copy of current signers
-          final Map<String, ArtifactSigner> oldSigners = new HashMap<>(signers);
-          // step 2: Clear current signers and then load them via ArtifactSignerCollectionSupplier
-          if (!reloadKeepStaleKeys) {
-            signers.clear();
-          }
-          signers.putAll(
+
+          // Load new signers into a temporary map - this is time-consuming logic
+          final Map<String, ArtifactSigner> newSigners =
               artifactSignerCollectionSupplier.get().stream()
                   .collect(
                       Collectors.toMap(
@@ -87,47 +94,50 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                             LOG.warn(
                                 "Duplicate keys were found while loading. {}", Function.identity());
                             return signer1;
-                          })));
+                          }));
 
-          // step 3: Collect all stale keys that are no longer valid
-          final Set<String> staleKeys;
-          if (reloadKeepStaleKeys) {
-            staleKeys = new HashSet<>();
-          } else {
-            staleKeys = new HashSet<>(oldSigners.keySet());
-            staleKeys.removeAll(signers.keySet());
-          }
+          // Collect all stale keys that are no longer valid
+          final Set<String> staleKeys = new HashSet<>(signers.keySet());
+          staleKeys.removeAll(newSigners.keySet());
 
-          // step 4: callback to perform further actions specific to eth1/eth2 mode with loaded and
-          // stale keys.
-          postLoadingCallback.ifPresent(callback -> callback.accept(signers.keySet(), staleKeys));
-
-          // step 5: for each loaded signer, load commit boost proxy signers (if any)
+          // Update the signers map with new signers
+          signers.putAll(newSigners);
+          // Conditionally remove stale keys from signers map
           if (!reloadKeepStaleKeys) {
-            proxySigners.clear();
+            staleKeys.forEach(signers::remove);
           }
+
+          // Callback to perform further actions specific to eth1/eth2 mode (if any)
+          postLoadingCallback.ifPresent(callback -> callback.accept(signers.keySet()));
+
+          // For each loaded signer, load commit boost proxy signers (if any)
           commitBoostKeystoresParameters
               .filter(KeystoresParameters::isEnabled)
               .ifPresent(
-                  keystoreParameter ->
-                      signers
-                          .keySet()
-                          .forEach(
-                              consensusPubKey -> {
-                                LOG.trace(
-                                    "Loading proxy signers for signer '{}' ...", consensusPubKey);
-                                loadProxySigners(
-                                    keystoreParameter,
-                                    consensusPubKey,
-                                    SECP256K1.name(),
-                                    SecpV3KeystoresBulkLoader::loadECDSAProxyKeystores);
+                  keystoreParameter -> {
+                    signers
+                        .keySet()
+                        .forEach(
+                            consensusPubKey -> {
+                              LOG.trace(
+                                  "Loading proxy signers for signer '{}' ...", consensusPubKey);
+                              loadProxySigners(
+                                  keystoreParameter,
+                                  consensusPubKey,
+                                  SECP256K1.name(),
+                                  SecpV3KeystoresBulkLoader::loadECDSAProxyKeystores);
 
-                                loadProxySigners(
-                                    keystoreParameter,
-                                    consensusPubKey,
-                                    BLS.name(),
-                                    BlsKeystoreBulkLoader::loadKeystoresUsingPasswordFile);
-                              }));
+                              loadProxySigners(
+                                  keystoreParameter,
+                                  consensusPubKey,
+                                  BLS.name(),
+                                  BlsKeystoreBulkLoader::loadKeystoresUsingPasswordFile);
+                            });
+                    // Conditionally remove stale proxy signers
+                    if (!reloadKeepStaleKeys) {
+                      staleKeys.forEach(proxySigners::remove);
+                    }
+                  });
 
           LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());
           return null;
@@ -160,7 +170,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   @Override
   public Map<KeyType, Set<String>> getProxyIdentifiers(final String consensusPubKey) {
     final Set<ArtifactSigner> artifactSigners =
-        proxySigners.computeIfAbsent(consensusPubKey, k -> Set.of());
+        proxySigners.computeIfAbsent(consensusPubKey, k -> ConcurrentHashMap.newKeySet());
     return artifactSigners.stream()
         .collect(
             Collectors.groupingBy(
@@ -194,7 +204,9 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
       final ArtifactSigner proxySigner, final String consensusPubKey) {
     return executorService.submit(
         () -> {
-          proxySigners.computeIfAbsent(consensusPubKey, k -> new HashSet<>()).add(proxySigner);
+          proxySigners
+              .computeIfAbsent(consensusPubKey, k -> ConcurrentHashMap.newKeySet())
+              .add(proxySigner);
           LOG.info(
               "Loaded new proxy signer {} for consensus public key '{}'",
               proxySigner.getIdentifier(),
@@ -235,7 +247,9 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
       final MappedResults<ArtifactSigner> signersResult =
           loaderFunction.apply(proxyDir, keystoreParameter.getKeystoresPasswordFile());
       final Collection<ArtifactSigner> signers = signersResult.getValues();
-      proxySigners.computeIfAbsent(consensusPubKey, k -> new HashSet<>()).addAll(signers);
+      proxySigners
+          .computeIfAbsent(consensusPubKey, k -> ConcurrentHashMap.newKeySet())
+          .addAll(signers);
     }
   }
 }
