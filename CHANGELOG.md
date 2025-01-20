@@ -4,11 +4,9 @@
 
 ### Breaking Changes
 - The behavior of reload API endpoint has been modified due to issue [#1018][issue_1018] implemented by PR [#1054][pr_1054].
-The reload API call will remove all in-memory keys before loading them again using configuration files and bulk loading.
-This unfortunately results in behaviour change of local configuration files pointing to encrypted keystores. Previously 
-cached local configuration files were avoided being reloaded during reload API call, now they will be reloaded and 
-reparsed. To keep the old behavior `--reload-keep-stale-keys=true` option can be used which will not remove stale keys 
-during reload API call.
+The reload API call will remove stale keys therefore they will not be return in public_keys endpoint neither will be 
+able to perform any signing requests.
+- `--Xworker-pool-size` deprecated cli option has been removed. Use `--vertx-worker-pool-size` instead.
 
 [issue_1018]: https://github.com/Consensys/web3signer/issues/1018
 [pr_1054]: https://github.com/Consensys/web3signer/pull/1054

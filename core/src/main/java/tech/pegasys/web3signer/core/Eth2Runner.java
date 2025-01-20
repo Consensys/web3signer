@@ -202,15 +202,12 @@ public class Eth2Runner extends Runner {
               azureKeyVaultFactory);
 
       final MappedResults<ArtifactSigner> results =
-          new SignerLoader(
-                  baseConfig.keystoreParallelProcessingEnabled(), baseConfig.reloadKeepStaleKeys())
-              .load(
-                  baseConfig.getKeyConfigPath(),
-                  "yaml",
-                  new YamlSignerParser(
-                      List.of(artifactSignerFactory),
-                      YamlMapperFactory.createYamlMapper(
-                          baseConfig.getKeyStoreConfigFileMaxSize())));
+          SignerLoader.load(
+              baseConfig.getKeyConfigPath(),
+              new YamlSignerParser(
+                  List.of(artifactSignerFactory),
+                  YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())),
+              baseConfig.keystoreParallelProcessingEnabled());
       registerSignerLoadingHealthCheck(KEYS_CHECK_CONFIG_FILE_LOADING, results);
 
       return results;
