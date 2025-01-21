@@ -141,15 +141,6 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
-  protected void initAndStartSignerWithReloadKeepStaleKeys(final String mode) {
-    startSigner(
-        new SignerConfigurationBuilder()
-            .withKeyStoreDirectory(testDirectory)
-            .withMode(mode)
-            .withReloadKeepStaleKeys(true)
-            .build());
-  }
-
   protected Response callApiPublicKeysWithoutOpenApiClientSideFilter(final KeyType keyType) {
     return given().baseUri(signer.getUrl()).accept("").get(Signer.publicKeysPath(keyType));
   }

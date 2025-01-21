@@ -57,7 +57,6 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final boolean reloadKeepStaleKeys;
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
   private final Optional<Consumer<Set<String>>> postLoadingCallback;
   private final Optional<KeystoresParameters> commitBoostKeystoresParameters;
@@ -67,11 +66,9 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   public DefaultArtifactSignerProvider(
-      final boolean reloadKeepStaleKeys,
       final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier,
       final Optional<Consumer<Set<String>>> postLoadingCallback,
       final Optional<KeystoresParameters> commitBoostKeystoresParameters) {
-    this.reloadKeepStaleKeys = reloadKeepStaleKeys;
     this.artifactSignerCollectionSupplier = artifactSignerCollectionSupplier;
     this.postLoadingCallback = postLoadingCallback;
     this.commitBoostKeystoresParameters = commitBoostKeystoresParameters;
@@ -102,10 +99,9 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
           // Update the signers map with new signers
           signers.putAll(newSigners);
-          // Conditionally remove stale keys from signers map
-          if (!reloadKeepStaleKeys) {
-            staleKeys.forEach(signers::remove);
-          }
+
+          // remove stale keys from signers map
+          staleKeys.forEach(signers::remove);
 
           // Callback to perform further actions specific to eth1/eth2 mode (if any)
           postLoadingCallback.ifPresent(callback -> callback.accept(signers.keySet()));
@@ -133,10 +129,8 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                                   BLS.name(),
                                   BlsKeystoreBulkLoader::loadKeystoresUsingPasswordFile);
                             });
-                    // Conditionally remove stale proxy signers
-                    if (!reloadKeepStaleKeys) {
-                      staleKeys.forEach(proxySigners::remove);
-                    }
+                    // Remove stale proxy signers
+                    staleKeys.forEach(proxySigners::remove);
                   });
 
           LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());

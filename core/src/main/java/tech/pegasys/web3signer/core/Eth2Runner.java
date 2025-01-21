@@ -157,7 +157,6 @@ public class Eth2Runner extends Runner {
       final Vertx vertx, final MetricsSystem metricsSystem) {
     return List.of(
         new DefaultArtifactSignerProvider(
-            baseConfig.reloadKeepStaleKeys(),
             createArtifactSignerSupplier(vertx, metricsSystem),
             slashingProtectionContext.map(PostLoadingValidatorsProcessor::new),
             Optional.of(commitBoostApiParameters)));

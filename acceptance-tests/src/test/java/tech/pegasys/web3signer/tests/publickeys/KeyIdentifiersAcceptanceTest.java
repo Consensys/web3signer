@@ -174,33 +174,6 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
 
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
-  public void publicKeysNotRemovedAfterReloadWithKeepStaleKeysTrue(final KeyType keyType) {
-    final String[] prvKeys = privateKeys(keyType);
-    final String[] keys = createKeys(keyType, true, prvKeys);
-
-    initAndStartSignerWithReloadKeepStaleKeys(calculateMode(keyType));
-
-    validateApiResponse(signer.callApiPublicKeys(keyType), containsInAnyOrder(keys));
-
-    // remove one of the key config file
-    assertThat(testDirectory.resolve(keys[1] + ".yaml").toFile().delete()).isTrue();
-
-    // reload API call
-    signer.callReload().then().statusCode(200);
-
-    // reload is async ... assert that the keys are not removed
-    Awaitility.await()
-        .atMost(5, SECONDS)
-        .untilAsserted(
-            () -> {
-              final List<String> publicKeysList =
-                  signer.callApiPublicKeys(keyType).jsonPath().getList(".");
-              assertThat(publicKeysList).containsExactlyInAnyOrder(keys);
-            });
-  }
-
-  @ParameterizedTest
-  @EnumSource(value = KeyType.class)
   public void allLoadedKeysAreReturnedInPublicKeyResponse(final KeyType keyType) {
     final String[] keys = createKeys(keyType, true, privateKeys(keyType));
     initAndStartSigner(calculateMode(keyType));

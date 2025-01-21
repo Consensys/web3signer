@@ -213,14 +213,6 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
       paramLabel = INTEGER_FORMAT_HELP)
   private Integer vertxWorkerPoolSize = null;
 
-  @Option(
-      names = "--reload-keep-stale-keys",
-      description =
-          "Set to true to keep stale keys loaded during reload API call. (default: ${DEFAULT-VALUE})",
-      paramLabel = "<BOOL>",
-      arity = "1")
-  private boolean reloadKeepStaleKeys = false;
-
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
   @Override
@@ -332,11 +324,6 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
     }
 
     return VERTX_WORKER_POOL_SIZE_DEFAULT;
-  }
-
-  @Override
-  public boolean reloadKeepStaleKeys() {
-    return reloadKeepStaleKeys;
   }
 
   @Override

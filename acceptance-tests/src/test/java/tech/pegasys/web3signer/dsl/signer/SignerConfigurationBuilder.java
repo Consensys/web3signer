@@ -87,7 +87,6 @@ public class SignerConfigurationBuilder {
 
   private boolean signingExtEnabled;
   private Pair<Path, Path> commitBoostParameters;
-  private Optional<Boolean> reloadKeepStaleKeys = Optional.empty();
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -340,11 +339,6 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withReloadKeepStaleKeys(final boolean reloadKeepStaleKeys) {
-    this.reloadKeepStaleKeys = Optional.of(reloadKeepStaleKeys);
-    return this;
-  }
-
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -396,7 +390,6 @@ public class SignerConfigurationBuilder {
         chainIdProvider,
         Optional.ofNullable(v3KeystoresBulkloadParameters),
         signingExtEnabled,
-        Optional.ofNullable(commitBoostParameters),
-        reloadKeepStaleKeys);
+        Optional.ofNullable(commitBoostParameters));
   }
 }
