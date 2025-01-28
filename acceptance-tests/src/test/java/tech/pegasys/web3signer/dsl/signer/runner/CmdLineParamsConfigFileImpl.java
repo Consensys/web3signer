@@ -578,16 +578,12 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               String.join(",", awsVaultParameters.getPrefixesFilter())));
     }
 
-    awsVaultParameters
-        .getTags()
-        .forEach(
-            (key, value) -> {
-              yamlConfig.append(
-                  String.format(
-                      YAML_STRING_FMT,
-                      "eth2." + AWS_SECRETS_TAG_OPTION.substring(2),
-                      key + "=" + value));
-            });
+    if (!awsVaultParameters.getTags().isEmpty()) {
+      yamlConfig.append("eth2.").append(AWS_SECRETS_TAG_OPTION.substring(2)).append(":\n");
+      awsVaultParameters
+          .getTags()
+          .forEach((key, value) -> yamlConfig.append(String.format("  %s: \"%s\"%n", key, value)));
+    }
 
     awsVaultParameters
         .getEndpointOverride()
@@ -664,6 +660,13 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               YAML_STRING_FMT,
               "eth1." + AWS_KMS_REGION_OPTION.substring(2),
               awsVaultParameters.getRegion()));
+    }
+
+    if (!awsVaultParameters.getTags().isEmpty()) {
+      yamlConfig.append("eth1.").append(AWS_KMS_TAGS_OPTION.substring(2)).append(":\n");
+      awsVaultParameters
+          .getTags()
+          .forEach((key, value) -> yamlConfig.append(String.format("  %s: \"%s\"%n", key, value)));
     }
 
     awsVaultParameters
