@@ -92,8 +92,10 @@ public class PicoCliAwsSecretsManagerParameters implements AwsVaultParameters {
   @Option(
       names = AWS_SECRETS_TAG_OPTION,
       mapFallbackValue = "",
-      description =
-          "Optional key-value pair to filter secrets based on tags. Format --aws-secrets-tag <tag-name>=<tag-value>. Can be repeated.")
+      split = "\\|",
+      splitSynopsisLabel = "|",
+      description = "Optional key-value pair to filter secrets based on tags.",
+      paramLabel = "<TAG_NAME>=<TAG_VALUE>")
   private Map<String, String> tags = new LinkedHashMap<>();
 
   @CommandLine.Option(

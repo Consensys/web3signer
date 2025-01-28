@@ -17,7 +17,7 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KM
 import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_ENABLED_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_REGION_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_SECRET_ACCESS_KEY_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_TAGS_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_TAG_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_ENDPOINT_OVERRIDE_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
@@ -663,7 +663,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     }
 
     if (!awsVaultParameters.getTags().isEmpty()) {
-      yamlConfig.append("eth1.").append(AWS_KMS_TAGS_OPTION.substring(2)).append(":\n");
+      yamlConfig.append("eth1.").append(AWS_KMS_TAG_OPTION.substring(2)).append(":\n");
       awsVaultParameters
           .getTags()
           .forEach((key, value) -> yamlConfig.append(String.format("  %s: \"%s\"%n", key, value)));
@@ -676,7 +676,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               yamlConfig.append(
                   String.format(
                       YAML_STRING_FMT,
-                      "eth1." + AWS_KMS_TAGS_OPTION.substring(2),
+                      "eth1." + AWS_KMS_TAG_OPTION.substring(2),
                       key + "=" + value));
             });
 

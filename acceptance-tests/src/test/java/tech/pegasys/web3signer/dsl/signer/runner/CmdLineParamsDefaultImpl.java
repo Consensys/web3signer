@@ -17,7 +17,7 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KM
 import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_ENABLED_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_REGION_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_SECRET_ACCESS_KEY_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_TAGS_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_TAG_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_ENDPOINT_OVERRIDE_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
@@ -438,7 +438,7 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
         .getTags()
         .forEach(
             (key, value) -> {
-              params.add(AWS_KMS_TAGS_OPTION);
+              params.add(AWS_KMS_TAG_OPTION);
               params.add(key + "=" + value);
             });
 

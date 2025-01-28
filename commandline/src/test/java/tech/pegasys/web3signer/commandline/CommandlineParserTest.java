@@ -528,16 +528,14 @@ class CommandlineParserTest {
   @Test
   void awsWithoutModeDefaultsToSpecified() {
     String cmdline = validBaseCommandOptions();
-    cmdline +=
-        String.format(
-            "eth2 --slashing-protection-enabled=false %s=%s %s=test %s=test %s=us-east-2 %s=p1,p2,p3 %7$s=t1=v1 %7$s=t2=v2 %7$s=t3=v3",
-            AWS_SECRETS_ENABLED_OPTION,
-            Boolean.TRUE,
-            AWS_SECRETS_ACCESS_KEY_ID_OPTION,
-            AWS_SECRETS_SECRET_ACCESS_KEY_OPTION,
-            AWS_SECRETS_REGION_OPTION,
-            AWS_SECRETS_PREFIXES_FILTER_OPTION,
-            AWS_SECRETS_TAG_OPTION);
+    cmdline += "eth2 --slashing-protection-enabled=false ";
+    cmdline += AWS_SECRETS_ENABLED_OPTION + "=true ";
+    cmdline += AWS_SECRETS_ACCESS_KEY_ID_OPTION + "=test ";
+    cmdline += AWS_SECRETS_SECRET_ACCESS_KEY_OPTION + "=test ";
+    cmdline += AWS_SECRETS_REGION_OPTION + "=us-east-2 ";
+    cmdline += AWS_SECRETS_PREFIXES_FILTER_OPTION + "=p1,p2,p3 ";
+    cmdline += AWS_SECRETS_TAG_OPTION + " t1=v1 ";
+    cmdline += AWS_SECRETS_TAG_OPTION + "=t2=v2|t3=v3";
 
     MockEth2SubCommand mockEth2SubCommand = new MockEth2SubCommand();
     assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters()).isNull();

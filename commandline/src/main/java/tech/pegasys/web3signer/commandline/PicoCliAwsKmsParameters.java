@@ -29,9 +29,7 @@ public class PicoCliAwsKmsParameters implements AwsVaultParameters {
   public static final String AWS_KMS_SECRET_ACCESS_KEY_OPTION = "--aws-kms-secret-access-key";
   public static final String AWS_KMS_REGION_OPTION = "--aws-kms-region";
   public static final String AWS_ENDPOINT_OVERRIDE_OPTION = "--aws-endpoint-override";
-  // public static final String AWS_KMS_TAG_NAMES_FILTER_OPTION = "--aws-kms-tag-names-filter";
-  // public static final String AWS_KMS_TAG_VALUES_FILTER_OPTION = "--aws-kms-tag-values-filter";
-  public static final String AWS_KMS_TAGS_OPTION = "--aws-kms-tag";
+  public static final String AWS_KMS_TAG_OPTION = "--aws-kms-tag";
   public static final String AWS_CONNECTION_CACHE_SIZE_OPTION = "--aws-connection-cache-size";
 
   @Option(
@@ -78,10 +76,11 @@ public class PicoCliAwsKmsParameters implements AwsVaultParameters {
   private Optional<URI> endpointOverride;
 
   @Option(
-      names = AWS_KMS_TAGS_OPTION,
+      names = AWS_KMS_TAG_OPTION,
       mapFallbackValue = "",
-      description =
-          "Optional key-value pair to filter KMS keys based on tags. Format: --aws-kms-tag <tag-name>=<tag-value>. Can be repeated.",
+      split = "\\|",
+      splitSynopsisLabel = "|",
+      description = "Optional key-value pair to filter KMS keys based on tags.",
       paramLabel = "<TAG_NAME>=<TAG_VALUE>")
   private Map<String, String> tags = new LinkedHashMap<>();
 

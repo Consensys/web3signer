@@ -204,4 +204,21 @@ class YamlConfigFileDefaultProviderTest {
         .isThrownBy(() -> commandLine.parseArgs(args))
         .withMessage("Unable to read yaml configuration. File not found: %s", configFile);
   }
+
+  @Test
+  void commandLineArgTakePrecedenceOverConfigFileValue(@TempDir final Path tempDir)
+      throws IOException {
+    final File configFile =
+        Files.writeString(tempDir.resolve("config.yaml"), CmdlineHelpers.validBaseYamlOptions())
+            .toFile();
+    final Web3SignerBaseCommand web3SignerBaseCommand = new Web3SignerBaseCommand();
+    final CommandLine commandLine = new CommandLine(web3SignerBaseCommand);
+    commandLine.registerConverter(Level.class, Level::valueOf);
+    commandLine.setDefaultValueProvider(new YamlConfigFileDefaultProvider(commandLine, configFile));
+
+    final String[] args = CmdlineHelpers.validBaseCommandOptions().split(" ");
+    commandLine.parseArgs(args);
+
+    assertThat(web3SignerBaseCommand.getHttpListenPort()).isEqualTo(5001);
+  }
 }
