@@ -21,7 +21,6 @@ import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -119,9 +118,7 @@ public class AwsKmsClientTest {
 
   @Test
   void keyListCanBeMappedUsingCustomMappingFunction() {
-    final MappedResults<String> result =
-        awsKmsClient.mapKeyList(
-            KeyListEntry::keyId, Collections.emptyList(), Collections.emptyList());
+    final MappedResults<String> result = awsKmsClient.mapKeyList(KeyListEntry::keyId, Map.of());
 
     final Optional<String> testKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testKeyId)).findAny();
@@ -141,8 +138,7 @@ public class AwsKmsClientTest {
                 return kl.keyId();
               }
             },
-            Collections.emptyList(),
-            Collections.emptyList());
+            Map.of());
 
     final Optional<String> testKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testKeyId)).findAny();
@@ -151,33 +147,9 @@ public class AwsKmsClientTest {
   }
 
   @Test
-  void mapKeyListUsingTagsKey() {
-    final MappedResults<String> result =
-        awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("name"), Collections.emptyList());
-
-    final Optional<String> testKeyEntry =
-        result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
-    Assertions.assertThat(testKeyEntry).isPresent();
-    Assertions.assertThat(testKeyEntry.get()).isEqualTo(testWithTagKeyId);
-    Assertions.assertThat(result.getErrorCount()).isZero();
-  }
-
-  @Test
-  void mapKeyListUsingTagsValue() {
-    final MappedResults<String> result =
-        awsKmsClient.mapKeyList(KeyListEntry::keyId, Collections.emptyList(), List.of("tagged"));
-
-    final Optional<String> testKeyEntry =
-        result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
-    Assertions.assertThat(testKeyEntry).isPresent();
-    Assertions.assertThat(testKeyEntry.get()).isEqualTo(testWithTagKeyId);
-    Assertions.assertThat(result.getErrorCount()).isZero();
-  }
-
-  @Test
   void mapKeyListUsingTagsKeyAndValue() {
     final MappedResults<String> result =
-        awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("name"), List.of("tagged"));
+        awsKmsClient.mapKeyList(KeyListEntry::keyId, Map.of("name", "tagged"));
 
     final Optional<String> testKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
@@ -189,8 +161,7 @@ public class AwsKmsClientTest {
   @Test
   void mapKeyListWhenTagDoesNotExist() {
     final MappedResults<String> result =
-        awsKmsClient.mapKeyList(
-            KeyListEntry::keyId, List.of("unknownKey"), List.of("unknownValue"));
+        awsKmsClient.mapKeyList(KeyListEntry::keyId, Map.of("unknownKey", ""));
 
     final Optional<String> testKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
@@ -201,7 +172,7 @@ public class AwsKmsClientTest {
   @Test
   void mapKeyListIgnoresDisabledKeys() {
     final MappedResults<String> result =
-        awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("name"), List.of("disabled"));
+        awsKmsClient.mapKeyList(KeyListEntry::keyId, Map.of("name", "disabled"));
 
     final Optional<String> disableTestKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testWithDisabledKeyId)).findAny();
@@ -212,7 +183,7 @@ public class AwsKmsClientTest {
   @Test
   void mapKeyListIgnoresNonSecpKeys() {
     final MappedResults<String> result =
-        awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("name"), List.of("nist"));
+        awsKmsClient.mapKeyList(KeyListEntry::keyId, Map.of("name", "nist"));
 
     final Optional<String> disableTestKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testWithNistSecpKeyId)).findAny();
