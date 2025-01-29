@@ -38,20 +38,25 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.Keys;
 import org.web3j.utils.Numeric;
 
 public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
-  @Test
-  void missingSignerMetricIncreasesWhenUnmatchedRequestReceived() throws JsonProcessingException {
+  @ParameterizedTest(name = "{index} - Missing Signing Metrics using Config File: {0}")
+  @ValueSource(booleans = {true, false})
+  void missingSignerMetricIncreasesWhenUnmatchedRequestReceived(boolean useConfigFile)
+      throws JsonProcessingException {
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
-            .withMetricsCategories("SIGNING")
+            .withMetricsCategories("SIGNING", "JVM")
             .withMetricsEnabled(true)
             .withMode("eth2")
             .withNetwork("minimal")
+            .withUseConfigFile(useConfigFile)
             .build();
     startSigner(signerConfiguration);
 
@@ -81,7 +86,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
-            .withMetricsCategories("SIGNING")
+            .withMetricsCategories("SIGNING", "JVM")
             .withMetricsEnabled(true)
             .withKeyStoreDirectory(testDirectory)
             .withMode("eth1")
