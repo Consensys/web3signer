@@ -27,14 +27,20 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.logging.log4j.Level;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine;
 
 class YamlConfigFileDefaultProviderTest {
+  private static final ObjectMapper YAML_MAPPER =
+      YAMLMapper.builder().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER).build();
 
   @Test
   void valuesFromConfigFileArePopulated(@TempDir final Path tempDir) throws IOException {
@@ -220,5 +226,29 @@ class YamlConfigFileDefaultProviderTest {
     commandLine.parseArgs(args);
 
     assertThat(web3SignerBaseCommand.getHttpListenPort()).isEqualTo(5001);
+  }
+
+  @Test
+  void mapValuesFromYamlConfigFileAreAssigned(@TempDir final Path tempDir) throws Exception {
+    var tagsMap = Map.of("tag1", "value1", "tag2", "value2");
+    var demoSubCommandOptions = Map.of("demo.tags", tagsMap, "demo.x", 10);
+    var demoYamlOptions = YAML_MAPPER.writeValueAsString(demoSubCommandOptions);
+
+    var config = CmdlineHelpers.validBaseYamlOptions() + demoYamlOptions;
+    var configFile = Files.writeString(tempDir.resolve("config.yaml"), config).toFile();
+
+    var mainCommand = new Web3SignerBaseCommand();
+    var subCommand = new DemoCommand();
+    var commandLine = new CommandLine(mainCommand);
+    commandLine.registerConverter(Level.class, Level::valueOf);
+    commandLine.addSubcommand("demo", subCommand);
+    commandLine.setDefaultValueProvider(new YamlConfigFileDefaultProvider(commandLine, configFile));
+
+    commandLine.parseArgs("demo");
+
+    assertThat(mainCommand.getHttpListenPort()).isEqualTo(6001);
+    assertThat(mainCommand.getKeyConfigPath()).isEqualTo(Path.of("./keys_yaml"));
+    assertThat(subCommand.x).isEqualTo(10);
+    assertThat(subCommand.tags).containsExactlyInAnyOrderEntriesOf(tagsMap);
   }
 }
