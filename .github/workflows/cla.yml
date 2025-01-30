@@ -7,10 +7,9 @@ on:
   pull_request_target:
     types: [opened,closed,synchronize]
 
-# explicitly configure permissions, in case your GITHUB_TOKEN workflow permissions are set to read-only in repository settings
 permissions:
   actions: write
-  contents: write # this can be 'read' if the signatures are in remote repository
+  contents: write # 'write' = this repo itself, 'read' = remote repository
   pull-requests: write
   statuses: write
 
@@ -25,6 +24,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           path-to-signatures: 'signatures/version1/cla.json'
-          path-to-document: 'https://github.com/Consensys/cla/blob/main/CLA.md' # e.g. a CLA or a DCO document
-          branch: 'cla'
-          
+          path-to-document: 'https://github.com/Consensys/cla/blob/main/CLA.md' 
+          branch: 'main'
