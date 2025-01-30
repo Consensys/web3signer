@@ -86,7 +86,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       yamlConfigMap.put("http-host-allowlist", signerConfig.getHttpHostAllowList());
     }
 
-    yamlConfigMap.put("key-store-path", signerConfig.getKeyStorePath().toString());
+    yamlConfigMap.put("key-config-path", signerConfig.getKeyStorePath().toString());
 
     if (signerConfig.isMetricsEnabled()) {
       yamlConfigMap.put("metrics-enabled", Boolean.TRUE);
@@ -95,7 +95,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
         yamlConfigMap.put("metrics-host-allowlist", signerConfig.getMetricsHostAllowList());
       }
       if (!signerConfig.getMetricsCategories().isEmpty()) {
-        yamlConfigMap.put("metrics-categories", signerConfig.getMetricsCategories());
+        yamlConfigMap.put("metrics-category", signerConfig.getMetricsCategories());
       }
     }
 
@@ -275,9 +275,9 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
 
     if (signerConfig.getServerTlsOptions().isPresent()) {
       final TlsOptions serverTlsOptions = signerConfig.getServerTlsOptions().get();
-      yamlConfigMap.put("tls-key-store-file", serverTlsOptions.getKeyStoreFile().toString());
+      yamlConfigMap.put("tls-keystore-file", serverTlsOptions.getKeyStoreFile().toString());
       yamlConfigMap.put(
-          "tls-key-store-password-file", serverTlsOptions.getKeyStorePasswordFile().toString());
+          "tls-keystore-password-file", serverTlsOptions.getKeyStorePasswordFile().toString());
 
       if (serverTlsOptions.getClientAuthConstraints().isEmpty()) {
         yamlConfigMap.put("tls-allow-any-client", Boolean.TRUE);
