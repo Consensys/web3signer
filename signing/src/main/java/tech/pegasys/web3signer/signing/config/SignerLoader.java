@@ -48,7 +48,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * The SignerLoaded loads the metadata files and converts them to ArtifactSigners. This class keeps
+ * The SignerLoader loads the metadata files and converts them to ArtifactSigners. This class keeps
  * track of the metadata files and ArtifactSigners that have been read and only reads them again if
  * they have been modified. It also removes the cached ArtifactSigners if the metadata file has been
  * removed.
