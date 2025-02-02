@@ -1,0 +1,7 @@
+version: 2.1
+
+workflows:
+  no-op:
+  jobs:
+    no-op:
+      type: no-op
