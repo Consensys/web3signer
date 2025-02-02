@@ -25,4 +25,4 @@ jobs:
         with:
           path-to-signatures: 'signatures/version1/cla.json'
           path-to-document: 'https://github.com/Consensys/cla/blob/main/CLA.md' 
-          branch: 'main'
+          branch: 'cla'
