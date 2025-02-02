@@ -6,13 +6,31 @@
 - The behavior of reload API endpoint has been modified due to issue [#1018][issue_1018] implemented by PR [#1054][pr_1054].
 The reload API call will remove stale keys therefore they will not be return in public_keys endpoint neither will be 
 able to perform any signing requests.
+- The AWS secrets manager and KMS tag filter cli options has been modified. Following cli options has been removed:
+```
+--aws-kms-tag-names-filter
+--aws-kms-tag-values-filter
+--aws-secrets-tag-names-filter
+--aws-secrets-tag-values-filter
+```
+The above are replaced by:
+```
+--aws-kms-tag <TagName>=<TagValue>
+--aws-secrets-tag <TagName>=<TagValue>
+```
 - `--Xworker-pool-size` deprecated cli option has been removed. Use `--vertx-worker-pool-size` instead.
-
-[issue_1018]: https://github.com/Consensys/web3signer/issues/1018
-[pr_1054]: https://github.com/Consensys/web3signer/pull/1054
 
 ### Features Added
 - Remove stale keys during reload API call. [#1018][issue_1018] [#1054][pr_1054]
+- Use single cli option to specify AWS KMS tag name/value pairs. [#1055][pr_1055]
+- Use single cli option to specify AWS Secrets tag name/value pairs. [#1055][pr_1055]
+
+### Bugs Fixed:
+- AWS KMS tag filter behavior has been fixed. [#1055][pr_1055]
+
+[issue_1018]: https://github.com/Consensys/web3signer/issues/1018
+[pr_1054]: https://github.com/Consensys/web3signer/pull/1054
+[pr_1055]: https://github.com/Consensys/web3signer/pull/1055
 
 ---
 ## 24.12.0
