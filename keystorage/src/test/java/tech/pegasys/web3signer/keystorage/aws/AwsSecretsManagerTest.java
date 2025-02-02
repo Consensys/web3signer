@@ -263,68 +263,7 @@ class AwsSecretsManagerTest {
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet()));
   }
-
-  //  @Test
-  //  void listAndMapSecretsWithMatchingTagValues() {
-  //    final Set<String> expectedTagValues = Set.of("tagValB", "tagValC");
-  //
-  //    MappedResults<SimpleEntry<String, String>> mappedResults =
-  //        awsSecretsManagerExplicit.mapSecrets(
-  //            Collections.emptyList(), Collections.emptyList(), expectedTagValues,
-  // SimpleEntry::new);
-  //    final Set<String> fetchedKeys =
-  //        mappedResults.getValues().stream().map(SimpleEntry::getKey).collect(Collectors.toSet());
-  //
-  //    // expected tag values from both maps should have returned
-  //    final Map<Boolean, List<Map.Entry<String, AwsSecret>>> expectedSecrets =
-  //        secretsMaps.getAllSecretsMap().entrySet().stream()
-  //            .collect(
-  //                Collectors.partitioningBy(
-  //                    entry -> expectedTagValues.contains(entry.getValue().getTagValue())));
-  //
-  //    Assertions.assertThat(fetchedKeys)
-  //        .containsAll(
-  //            expectedSecrets.get(Boolean.TRUE).stream()
-  //                .map(Map.Entry::getKey)
-  //                .collect(Collectors.toSet()));
-  //    Assertions.assertThat(fetchedKeys)
-  //        .doesNotContainAnyElementsOf(
-  //            expectedSecrets.get(Boolean.FALSE).stream()
-  //                .map(Map.Entry::getKey)
-  //                .collect(Collectors.toSet()));
-  //  }
-
-  //  @Test
-  //  void listAndMapSecretsWithMatchingTagKeysAndValues() {
-  //    final Set<String> expectedTagKeys = Set.of("tagKey1");
-  //    final Set<String> expectedTagValues = Set.of("tagValB");
-  //
-  //    MappedResults<SimpleEntry<String, String>> mappedResults =
-  //        awsSecretsManagerExplicit.mapSecrets(
-  //            Collections.emptyList(), expectedTagKeys, expectedTagValues, SimpleEntry::new);
-  //    final Set<String> fetchedKeys =
-  //        mappedResults.getValues().stream().map(SimpleEntry::getKey).collect(Collectors.toSet());
-  //
-  //    final Map<Boolean, List<Map.Entry<String, AwsSecret>>> expectedSecrets =
-  //        secretsMaps.getAllSecretsMap().entrySet().stream()
-  //            .collect(
-  //                Collectors.partitioningBy(
-  //                    entry ->
-  //                        expectedTagKeys.contains(entry.getValue().getTagKey())
-  //                            && expectedTagValues.contains(entry.getValue().getTagValue())));
-  //
-  //    Assertions.assertThat(fetchedKeys)
-  //        .containsAll(
-  //            expectedSecrets.get(Boolean.TRUE).stream()
-  //                .map(Map.Entry::getKey)
-  //                .collect(Collectors.toSet()));
-  //    Assertions.assertThat(fetchedKeys)
-  //        .doesNotContainAnyElementsOf(
-  //            expectedSecrets.get(Boolean.FALSE).stream()
-  //                .map(Map.Entry::getKey)
-  //                .collect(Collectors.toSet()));
-  //  }
-
+  
   @Test
   void throwsAwayObjectsWhichMapToNull() {
     final Map<String, AwsSecret> secretsMap = secretsMaps.getAllSecretsMap();
