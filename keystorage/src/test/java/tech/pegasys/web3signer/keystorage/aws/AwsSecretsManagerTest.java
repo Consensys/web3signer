@@ -263,7 +263,7 @@ class AwsSecretsManagerTest {
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet()));
   }
-  
+
   @Test
   void throwsAwayObjectsWhichMapToNull() {
     final Map<String, AwsSecret> secretsMap = secretsMaps.getAllSecretsMap();
