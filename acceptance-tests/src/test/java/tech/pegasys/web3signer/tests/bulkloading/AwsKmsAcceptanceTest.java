@@ -83,7 +83,7 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
           : Optional.empty();
   private AwsKmsUtil awsSecretsManagerUtil;
 
-  public record Key(String keyId, String publicKey) {}
+  public record Key(String keyId, String publicKey, Map<String, String> tags) {}
 
   private final List<Key> keys = new ArrayList<>();
 
@@ -97,10 +97,26 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
             Optional.empty(),
             awsEndpointOverride);
 
-    for (int i = 0; i < 4; i++) {
-      final String keyId = awsSecretsManagerUtil.createKey(Map.of("TagName" + i, "TagValue" + i));
+    // Tags: Org=Protocols, Env=Dev
+    var protocolsKeysTags = Map.of("Org", "Protocols", "Env", "Prod");
+    var stakingKeysTags = Map.of("Org", "Staking", "Env", "Prod");
+    for (int i = 0; i < 2; i++) {
+      final String keyId = awsSecretsManagerUtil.createKey(protocolsKeysTags);
       final ECPublicKey publicKey = awsSecretsManagerUtil.publicKey(keyId);
-      keys.add(new Key(keyId, EthPublicKeyUtils.toHexString(publicKey)));
+      keys.add(new Key(keyId, EthPublicKeyUtils.toHexString(publicKey), protocolsKeysTags));
+    }
+
+    for (int i = 0; i < 2; i++) {
+      final String keyId = awsSecretsManagerUtil.createKey(stakingKeysTags);
+      final ECPublicKey publicKey = awsSecretsManagerUtil.publicKey(keyId);
+      keys.add(new Key(keyId, EthPublicKeyUtils.toHexString(publicKey), stakingKeysTags));
+    }
+
+    // keys with no tags
+    for (int i = 0; i < 2; i++) {
+      final String keyId = awsSecretsManagerUtil.createKey(Map.of());
+      final ECPublicKey publicKey = awsSecretsManagerUtil.publicKey(keyId);
+      keys.add(new Key(keyId, EthPublicKeyUtils.toHexString(publicKey), Map.of()));
     }
   }
 
@@ -114,8 +130,8 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
             .withRegion(AWS_REGION)
             .withAccessKeyId(RO_AWS_ACCESS_KEY_ID)
             .withSecretAccessKey(RO_AWS_SECRET_ACCESS_KEY)
-            .withTagNamesFilter(List.of("TagName0", "TagName1"))
-            .withTagValuesFilter(List.of("TagValue0", "TagValue1", "TagValue2"))
+            .withTag("Org", "Protocols")
+            .withTag("Env", "Prod")
             .withEndpointOverride(awsEndpointOverride)
             .build();
 
@@ -199,8 +215,8 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
         AwsVaultParametersBuilder.anAwsParameters()
             .withEnabled(true)
             .withAuthenticationMode(AwsAuthenticationMode.ENVIRONMENT)
-            .withTagNamesFilter(List.of("TagName2", "TagName3"))
-            .withTagValuesFilter(List.of("TagValue0", "TagValue2", "TagValue3"))
+            .withTag("Org", "Staking")
+            .withTag("Env", "Prod")
             .withEndpointOverride(awsEndpointOverride)
             .build();
 
@@ -222,6 +238,93 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
             containsInAnyOrder(keys.get(2).publicKey(), keys.get(3).publicKey()),
             "",
             hasSize(2));
+  }
+
+  @ParameterizedTest(name = "{index} - Using config file: {0}")
+  @ValueSource(booleans = {true, false})
+  void keysWithoutTagsAreLoadedFromAwsKmsAndReportedByPublicApi(final boolean useConfigFile) {
+    var awsVaultParameters =
+        AwsVaultParametersBuilder.anAwsParameters()
+            .withEnabled(true)
+            .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
+            .withRegion(AWS_REGION)
+            .withAccessKeyId(RO_AWS_ACCESS_KEY_ID)
+            .withSecretAccessKey(RO_AWS_SECRET_ACCESS_KEY)
+            .withEndpointOverride(awsEndpointOverride)
+            .build();
+
+    var configBuilder =
+        new SignerConfigurationBuilder()
+            .withUseConfigFile(useConfigFile)
+            .withMode("eth1")
+            .withAwsParameters(awsVaultParameters);
+
+    startSigner(configBuilder.build());
+
+    var response = signer.callApiPublicKeys(KeyType.SECP256K1);
+    response
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("", containsInAnyOrder(keys.stream().map(Key::publicKey).toArray()), "", hasSize(6));
+
+    var healthcheckResponse = signer.healthcheck();
+    healthcheckResponse
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("status", equalTo("UP"));
+
+    var jsonBody = healthcheckResponse.body().asString();
+    var keysLoaded = getAwsBulkLoadingData(jsonBody, "keys-loaded");
+    assertThat(keysLoaded).isEqualTo(6);
+  }
+
+  @ParameterizedTest(name = "{index} - Using config file: {0}")
+  @ValueSource(booleans = {true, false})
+  void keysWitSingleTagAreLoadedFromAwsKmsAndReportedByPublicApi(final boolean useConfigFile) {
+    var awsVaultParameters =
+        AwsVaultParametersBuilder.anAwsParameters()
+            .withEnabled(true)
+            .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
+            .withRegion(AWS_REGION)
+            .withAccessKeyId(RO_AWS_ACCESS_KEY_ID)
+            .withSecretAccessKey(RO_AWS_SECRET_ACCESS_KEY)
+            .withEndpointOverride(awsEndpointOverride)
+            .withTag("Env", "Prod")
+            .build();
+
+    var configBuilder =
+        new SignerConfigurationBuilder()
+            .withUseConfigFile(useConfigFile)
+            .withMode("eth1")
+            .withAwsParameters(awsVaultParameters);
+
+    startSigner(configBuilder.build());
+
+    var expectedKeysMatchingTag =
+        keys.stream()
+            .filter(key -> "Prod".equals(key.tags.get("Env")))
+            .map(Key::publicKey)
+            .toList()
+            .toArray();
+    var response = signer.callApiPublicKeys(KeyType.SECP256K1);
+    response
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("", containsInAnyOrder(expectedKeysMatchingTag), "", hasSize(4));
+
+    var healthcheckResponse = signer.healthcheck();
+    healthcheckResponse
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("status", equalTo("UP"));
+
+    var jsonBody = healthcheckResponse.body().asString();
+    var keysLoaded = getAwsBulkLoadingData(jsonBody, "keys-loaded");
+    assertThat(keysLoaded).isEqualTo(4);
   }
 
   @AfterAll

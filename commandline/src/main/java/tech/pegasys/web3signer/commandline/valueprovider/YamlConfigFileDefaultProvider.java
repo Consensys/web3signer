@@ -158,8 +158,15 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
       return null;
     }
 
-    if (optionSpec.isMultiValue() && value instanceof Collection) {
-      return ((Collection<?>) value).stream().map(String::valueOf).collect(Collectors.joining(","));
+    if (optionSpec.isMultiValue()) {
+      if (value instanceof Collection) {
+        return ((Collection<?>) value)
+            .stream().map(String::valueOf).collect(Collectors.joining(","));
+      } else if (value instanceof Map<?, ?> map) {
+        return map.entrySet().stream()
+            .map(e -> e.getKey() + "=" + e.getValue())
+            .collect(Collectors.joining("|"));
+      }
     }
 
     return String.valueOf(value);

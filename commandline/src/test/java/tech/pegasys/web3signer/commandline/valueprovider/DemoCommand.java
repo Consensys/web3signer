@@ -12,7 +12,9 @@
  */
 package tech.pegasys.web3signer.commandline.valueprovider;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -36,6 +38,15 @@ public class DemoCommand {
       names = {"--alias", "--aliases"},
       description = "Aliases")
   String alias;
+
+  @Option(
+      names = "--tags",
+      mapFallbackValue = "",
+      split = "\\|",
+      splitSynopsisLabel = "|",
+      description = "Optional key-value pair to specify tags.",
+      paramLabel = "<TAG_NAME>=<TAG_VALUE>")
+  Map<String, String> tags = new LinkedHashMap<>();
 
   @Command(name = "country", description = "Country Codes")
   static class SubCommand {
