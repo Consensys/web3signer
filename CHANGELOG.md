@@ -1,6 +1,6 @@
 # Changelog
 
-## Next Release
+## 25.2.0
 
 ### Breaking Changes
 - The behavior of reload API endpoint has been modified due to issue [#1018][issue_1018] implemented by PR [#1054][pr_1054].
@@ -24,6 +24,7 @@ The above are replaced by:
 - Remove stale keys during reload API call. [#1018][issue_1018] [#1054][pr_1054]
 - Use single cli option to specify AWS KMS tag name/value pairs. [#1055][pr_1055]
 - Use single cli option to specify AWS Secrets tag name/value pairs. [#1055][pr_1055]
+- Teku libraries updated to 25.2.0 with changes related to Electra hard fork on Holesky and Sepolia networks.
 
 ### Bugs Fixed:
 - AWS KMS tag filter behavior has been fixed. [#1055][pr_1055]
