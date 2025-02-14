@@ -2,6 +2,10 @@
 
 ## 25.2.0
 
+[!IMPORTANT]
+This is a required update for nodes running on Holesky or Sepolia network as it contains the configuration for the 
+Electra hard fork.
+
 ### Breaking Changes
 - The behavior of reload API endpoint has been modified due to issue [#1018][issue_1018] implemented by PR [#1054][pr_1054].
 The reload API call will remove stale keys therefore they will not be return in public_keys endpoint neither will be 
