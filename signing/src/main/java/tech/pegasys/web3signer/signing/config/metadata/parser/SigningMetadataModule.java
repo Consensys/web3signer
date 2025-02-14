@@ -121,7 +121,7 @@ public class SigningMetadataModule extends SimpleModule {
 
     @Override
     public void serialize(Double value, JsonGenerator gen, SerializerProvider serializers)
-            throws IOException {
+        throws IOException {
       gen.writeString(formatValue(value));
     }
 
@@ -143,7 +143,7 @@ public class SigningMetadataModule extends SimpleModule {
   public static class Bytes4Serializer extends JsonSerializer<Bytes4> {
     @Override
     public void serialize(Bytes4 value, JsonGenerator gen, SerializerProvider serializers)
-            throws IOException {
+        throws IOException {
       gen.writeString(value.toHexString().toLowerCase(Locale.ROOT));
     }
   }
@@ -159,11 +159,10 @@ public class SigningMetadataModule extends SimpleModule {
   public static class TekuUInt64Serializer extends JsonSerializer<UInt64> {
     @Override
     public void serialize(UInt64 value, JsonGenerator gen, SerializerProvider serializers)
-            throws IOException {
+        throws IOException {
       gen.writeString(value.toString());
     }
   }
-
 
   public static class TekuUInt64Deserializer extends JsonDeserializer<UInt64> {
     @Override
@@ -171,6 +170,4 @@ public class SigningMetadataModule extends SimpleModule {
       return UInt64.valueOf(p.getValueAsString());
     }
   }
-
-
 }

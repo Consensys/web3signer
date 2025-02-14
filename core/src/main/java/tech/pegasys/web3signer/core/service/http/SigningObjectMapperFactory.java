@@ -64,9 +64,11 @@ public class SigningObjectMapperFactory {
     module.addDeserializer(UInt64.class, new StringUInt64Deserializer());
     module.addSerializer(UInt64.class, new StringUInt64Serialiser());
     module.addDeserializer(
-        tech.pegasys.teku.infrastructure.unsigned.UInt64.class, new SigningMetadataModule.TekuUInt64Deserializer());
+        tech.pegasys.teku.infrastructure.unsigned.UInt64.class,
+        new SigningMetadataModule.TekuUInt64Deserializer());
     module.addSerializer(
-        tech.pegasys.teku.infrastructure.unsigned.UInt64.class, new SigningMetadataModule.TekuUInt64Serializer());
+        tech.pegasys.teku.infrastructure.unsigned.UInt64.class,
+        new SigningMetadataModule.TekuUInt64Serializer());
 
     module.addSerializer(Bytes32.class, new Bytes32Serializer());
     module.addDeserializer(Bytes32.class, new SigningMetadataModule.Bytes32Deserializer());
