@@ -29,7 +29,7 @@ buildscript {
 }
 
 plugins {
-  id 'org.owasp.dependencycheck' version "11.1.0"
+  id 'org.owasp.dependencycheck' version "12.0.2"
   id 'java-test-fixtures'
   id 'com.diffplug.spotless' version '7.0.0.BETA4'
   id 'com.github.ben-manes.versions' version '0.51.0' //`./gradlew dependencyUpdates` to report outdated dependencies
@@ -117,7 +117,6 @@ allprojects {
     maven { url "https://artifacts.consensys.net/public/maven/maven/" }
     maven { url "https://artifacts.consensys.net/public/teku/maven/" }
     maven { url "https://hyperledger.jfrog.io/artifactory/besu-maven" }
-    maven { url "https://hyperledger-org.bintray.com/besu-repo/" }
     maven { url "https://jitpack.io" }
   }
 
