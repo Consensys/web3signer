@@ -32,6 +32,7 @@ The above are replaced by:
 
 ### Bugs Fixed:
 - AWS KMS tag filter behavior has been fixed. [#1055][pr_1055]
+- Upgrade Netty library to 4.1.118.Final to fix CVE-2025-24970.
 
 [issue_1018]: https://github.com/Consensys/web3signer/issues/1018
 [pr_1054]: https://github.com/Consensys/web3signer/pull/1054
