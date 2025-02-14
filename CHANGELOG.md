@@ -2,8 +2,8 @@
 
 ## 25.2.0
 
-[!IMPORTANT]
-This is a required update for nodes running on Holesky or Sepolia network as it contains the configuration for the 
+> [!IMPORTANT]
+> This is a required update for nodes running on Holesky or Sepolia network as it contains the configuration for the 
 Electra hard fork.
 
 ### Breaking Changes
