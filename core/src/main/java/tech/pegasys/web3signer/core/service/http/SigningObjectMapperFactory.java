@@ -16,15 +16,6 @@ import tech.pegasys.teku.api.schema.BLSPubKey;
 import tech.pegasys.teku.api.schema.BLSSignature;
 import tech.pegasys.teku.infrastructure.bytes.Bytes20;
 import tech.pegasys.teku.infrastructure.bytes.Bytes4;
-import tech.pegasys.teku.infrastructure.jackson.deserializers.bytes.Bytes32Deserializer;
-import tech.pegasys.teku.infrastructure.jackson.deserializers.bytes.Bytes4Deserializer;
-import tech.pegasys.teku.infrastructure.jackson.deserializers.bytes.Bytes4Serializer;
-import tech.pegasys.teku.infrastructure.jackson.deserializers.bytes.BytesDeserializer;
-import tech.pegasys.teku.infrastructure.jackson.deserializers.bytes.BytesSerializer;
-import tech.pegasys.teku.infrastructure.jackson.deserializers.bytes.DoubleDeserializer;
-import tech.pegasys.teku.infrastructure.jackson.deserializers.bytes.DoubleSerializer;
-import tech.pegasys.teku.infrastructure.jackson.deserializers.uints.UInt64Deserializer;
-import tech.pegasys.teku.infrastructure.jackson.deserializers.uints.UInt64Serializer;
 import tech.pegasys.teku.infrastructure.ssz.collections.SszBitvector;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexDeserialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexSerialiser;
@@ -73,18 +64,20 @@ public class SigningObjectMapperFactory {
     module.addDeserializer(UInt64.class, new StringUInt64Deserializer());
     module.addSerializer(UInt64.class, new StringUInt64Serialiser());
     module.addDeserializer(
-        tech.pegasys.teku.infrastructure.unsigned.UInt64.class, new UInt64Deserializer());
+        tech.pegasys.teku.infrastructure.unsigned.UInt64.class,
+        new SigningMetadataModule.TekuUInt64Deserializer());
     module.addSerializer(
-        tech.pegasys.teku.infrastructure.unsigned.UInt64.class, new UInt64Serializer());
+        tech.pegasys.teku.infrastructure.unsigned.UInt64.class,
+        new SigningMetadataModule.TekuUInt64Serializer());
 
     module.addSerializer(Bytes32.class, new Bytes32Serializer());
-    module.addDeserializer(Bytes32.class, new Bytes32Deserializer());
-    module.addDeserializer(Bytes4.class, new Bytes4Deserializer());
-    module.addSerializer(Bytes4.class, new Bytes4Serializer());
-    module.addDeserializer(Bytes.class, new BytesDeserializer());
-    module.addSerializer(Bytes.class, new BytesSerializer());
-    module.addDeserializer(Double.class, new DoubleDeserializer());
-    module.addSerializer(Double.class, new DoubleSerializer());
+    module.addDeserializer(Bytes32.class, new SigningMetadataModule.Bytes32Deserializer());
+    module.addDeserializer(Bytes4.class, new SigningMetadataModule.Bytes4Deserializer());
+    module.addSerializer(Bytes4.class, new SigningMetadataModule.Bytes4Serializer());
+    module.addDeserializer(Bytes.class, new SigningMetadataModule.BytesDeserializer());
+    module.addSerializer(Bytes.class, new SigningMetadataModule.BytesSerializer());
+    module.addDeserializer(Double.class, new SigningMetadataModule.DoubleDeserializer());
+    module.addSerializer(Double.class, new SigningMetadataModule.DoubleSerializer());
 
     module.addSerializer(BLSPubKey.class, new BLSPubKeySerializer());
     module.addDeserializer(BLSPubKey.class, new BLSPubKeyDeserializer());

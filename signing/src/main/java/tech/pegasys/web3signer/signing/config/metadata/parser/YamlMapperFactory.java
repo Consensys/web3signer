@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.signing.config.metadata.parser;
 
 import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
@@ -42,6 +43,7 @@ public class YamlMapperFactory {
         .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
         .disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID)
         .enable(ACCEPT_CASE_INSENSITIVE_ENUMS)
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         .build();
   }
 }
