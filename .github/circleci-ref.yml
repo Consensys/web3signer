@@ -1,6 +1,8 @@
 ---
 version: 2.1
 
+# https://app.circleci.com/pipelines/github/Consensys/web3signer/4505/workflows/b69f31e1-8bc8-48e6-a7f5-30b2fdf094a7
+
 executors:
   executor_med:  # 2cpu, 4G ram
     docker:
