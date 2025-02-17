@@ -37,13 +37,41 @@ jobs:
 
       - name: Integration Test
         run: |
-          env
           ./gradlew integrationTest
 
-      # - name: Upload workspace
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: workspace
-      #     path: |
-      #       ./
-      #       !./.git/**
+      # - capture_test_results
+      # - capture_test_reports
+
+      - name: Upload workspace
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace
+          path: |
+            ./
+            !./.git/**
+
+  acceptanceTests:
+    needs: build
+    # 4 cpu, 16G ram
+    runs-on: ubuntu-24.04
+    environment: dev
+    env:
+      JAVA_TOOL_OPTIONS: -Xmx4096m
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4 -Xmx4096m
+
+    steps:
+      - name: Download workspace
+        uses: actions/download-artifact@v4
+        with:
+          name: workspace
+
+      - name: Acceptance Tests
+        run: |
+          if [ -n "$GCP_SERVICE_KEY" ]; then
+            echo "$GCP_SERVICE_KEY" | base64 --decode > $HOME/gcp_service_key.json
+            export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcp_service_key.json
+          fi
+          ./gradlew clean installDist
+          ./gradlew acceptanceTest
+      # - capture_test_results
+      # - capture_test_reports
