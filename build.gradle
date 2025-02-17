@@ -673,16 +673,6 @@ task releaseIntegrationTest(type: Test){
 
 task releaseAcceptanceTest(type: Test, dependsOn : ':acceptance-tests:acceptanceTest') {}
 
-task cloudsmithUpload {
-  dependsOn([distTar, distZip,])
-  doLast {
-    exec {
-      executable project.file("scripts/cloudsmith-upload.sh")
-      args rootProject.version, "${buildDir}/distributions"
-    }
-  }
-}
-
 def calculateJarName(Project project) {
   def jarName = project.name
   def parent = project.parent
