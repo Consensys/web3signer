@@ -43,7 +43,8 @@ jobs:
         with:
           name: workspace
           path: |
-            ./build
+            ./
+            !./.git/**
           retention-days: 7
 
   acceptanceTests:
@@ -67,6 +68,7 @@ jobs:
 
       - name: Acceptance Tests
         run: |
+          ls -la .
           if [ -n "$GCP_SERVICE_KEY" ]; then
             echo "$GCP_SERVICE_KEY" | base64 --decode > $HOME/gcp_service_key.json
             export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcp_service_key.json
@@ -129,7 +131,7 @@ jobs:
           ./gradlew "-Pbranch=${GITHUB_REF##*/}" testDocker
 
   publishOpenApiSpec:
-    # needs: acceptanceTests
+    needs: acceptanceTests
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -140,18 +142,17 @@ jobs:
         with:
           submodules: 'recursive'
 
+      - name: Download workspace build
+        uses: actions/download-artifact@v4
+        with:
+          name: workspace
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache-dependency-path: '.openapidoc/package-lock.json'
-          # cache: 'npm'
       
-      # - name: Download workspace build
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: workspace
-
   #     - add_ssh_keys:
   #         fingerprints:
   #           - "8c:7f:3d:66:05:d9:12:a2:af:58:59:bf:97:c1:c7:84"
