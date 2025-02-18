@@ -15,4 +15,4 @@ runs:
       uses: gradle/actions/setup-gradle@v4
 
     - name: set up docker buildx
-      uses: docker/setup-buildx-action@v3             
+      uses: docker/setup-buildx-action@v3
