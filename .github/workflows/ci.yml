@@ -25,14 +25,14 @@ jobs:
         run: |
           ./gradlew build
 
-      - name: Integration Test
-        run: |
-          ./gradlew integrationTest
+      # - name: Integration Test
+      #   run: |
+      #     ./gradlew integrationTest
 
-      - name: Test results and report
-        uses: ./.github/actions/testResultsReports
-        with:
-          suiteName: 'unitIntegrationTests'
+      # - name: Test results and report
+      #   uses: ./.github/actions/testResultsReports
+      #   with:
+      #     suiteName: 'unitTests'
 
       - name: Upload workspace build
         uses: actions/upload-artifact@v4
@@ -70,7 +70,7 @@ jobs:
             export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcp_service_key.json
           fi
           ./gradlew clean installDist
-          ./gradlew acceptanceTest
+          ./gradlew integrationTest acceptanceTest
 
       - name: Test results and report
         uses: ./.github/actions/testResultsReports
