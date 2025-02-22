@@ -2,13 +2,9 @@ name: trivy-vuln-scan
 on:
   push:
     branches:
-      - main
+      - master
   schedule:
     - cron:  '30 8 * * *'
-
-env:
-  JAVA_TOOL_OPTIONS: -Xmx4096m
-  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4 -Xmx4096m
 
 jobs:
   trivy:
@@ -18,7 +14,6 @@ jobs:
       security-events: write
     environment: dev
     steps:
-
       - name: Checkout
         uses: actions/checkout@v4
         with:

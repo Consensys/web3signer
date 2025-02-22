@@ -1,11 +1,7 @@
-name: CI
+name: CI (Pull Requests)
 
 on:
   pull_request:
-
-env:
-  JAVA_TOOL_OPTIONS: -Xmx4096m
-  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4 -Xmx4096m
 
 jobs:
   build:
@@ -22,79 +18,24 @@ jobs:
         uses: ./.github/actions/prepare
 
       - name: Build and unit test
-        run: |
-          ./gradlew build
+        run: ./gradlew build
 
-      # - name: Integration Test
-      #   run: |
-      #     ./gradlew integrationTest
-
-      # - name: Test results and report
-      #   uses: ./.github/actions/testResultsReports
-      #   with:
-      #     suiteName: 'unitTests'
-
-      - name: Upload workspace build
-        uses: actions/upload-artifact@v4
-        with:
-          name: workspace
-          path: |
-            ./
-            !./.git/**
-          retention-days: 7
-
-  acceptanceTests:
-    needs: build
-    # 4 cpu, 16G ram
-    runs-on: ubuntu-24.04
-    environment: dev
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-
-      - name: Prepare
-        uses: ./.github/actions/prepare
-
-      - name: Download workspace build
-        uses: actions/download-artifact@v4
-        with:
-          name: workspace
+      - name: Integration Tests
+        run: ./gradlew integrationTest
 
       - name: Acceptance Tests
-        run: |
-          ls -la .
-          if [ -n "$GCP_SERVICE_KEY" ]; then
-            echo "$GCP_SERVICE_KEY" | base64 --decode > $HOME/gcp_service_key.json
-            export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcp_service_key.json
-          fi
-          ./gradlew clean installDist
-          ./gradlew integrationTest acceptanceTest
+        run: ./gradlew acceptanceTest
 
-      - name: Test results and report
-        uses: ./.github/actions/testResultsReports
+      - name: Test Docker Image
+        run: ./gradlew testDocker
+
+      - name: Summarize tests results
+        uses: jeantessier/test-summary-action@v1.0.7
+        if: always()
+
+      - name: Upload build reports
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          suiteName: 'acceptanceTests'
-
-  buildTestDocker:
-    needs: build
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-
-      - name: Prepare
-        id: prepare
-        uses: ./.github/actions/prepare         
-
-      - name: Download workspace build
-        uses: actions/download-artifact@v4
-        with:
-          name: workspace
-
-      - name: Build and test docker image
-        run: |
-          ./gradlew "-Pbranch=${GITHUB_REF##*/}" testDocker
+          name: build-reports
+          path: **/build/reports/
