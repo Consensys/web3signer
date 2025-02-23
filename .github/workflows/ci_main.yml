@@ -57,14 +57,6 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: distribution
-          path: build/distributions/
-
-      - name: Display build distributions
-        run: ls -l build/distributions/
-
 #      - name: Login to Docker Hub
 #        uses: docker/login-action@v3
 #        with:
@@ -83,6 +75,14 @@ jobs:
 
       # TODO: Publish Docker image - develop for merges to master, tags/latest for tags
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: distribution
+          path: build/distributions/
+
+      - name: Display build distributions
+        run: ls -l build/distributions/
+        
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -90,6 +90,7 @@ jobs:
           file: docker/Dockerfile
           build-args: |
             TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
+          no-cache: true
           push: true
           tags: localhost:5000/consensys/web3signer:${{ needs.build.outputs.publish-version }}
 
