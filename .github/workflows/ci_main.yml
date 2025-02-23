@@ -77,7 +77,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-            driver-opts: network=host
+            driver-opts: network=host # TODO: Remove once testing is complete
 
       # TODO: Test docker image
 
@@ -89,7 +89,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           file: docker/Dockerfile
           build-args: |
-            TAR_FILE=build/distributions/web3signer-*.tar.gz
+            TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
           push: true
           tags: localhost:5000/consensys/web3signer:${{ needs.build.outputs.publish-version }}
 
