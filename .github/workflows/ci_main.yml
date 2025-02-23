@@ -98,3 +98,4 @@ jobs:
       - name: Inspect
         run: |
           docker buildx imagetools inspect localhost:5000/consensys/web3signer:develop
+          docker inspect localhost:5000/consensys/web3signer:develop
