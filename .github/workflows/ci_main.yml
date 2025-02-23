@@ -13,6 +13,13 @@ jobs:
     runs-on: ubuntu-24.04
     environment: production
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          fetch-depth: 0
+          fetch-tags: true
+
       - name: Build and Test
         id: build-test
         uses: ./.github/actions/build-test

@@ -5,13 +5,6 @@ description: 'Composite action to build and test Web3Signer'
 runs:
   using: "composite"
   steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        submodules: 'recursive'
-        fetch-depth: 0
-        fetch-tags: true
-
     - name: Set up JDK 21
       uses: actions/setup-java@v4.2.1
       with:
