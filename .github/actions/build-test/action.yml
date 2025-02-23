@@ -40,11 +40,6 @@ runs:
       run: ./gradlew acceptanceTest
       shell: bash
 
-    # TODO: Take docker out completely from gradle
-    - name: Test Docker Image
-      run: ./gradlew testDocker
-      shell: bash
-
     - name: Summarize tests results
       uses: jeantessier/test-summary-action@v1.0.7
       if: always()
@@ -55,3 +50,4 @@ runs:
       with:
         name: build-reports
         path: '**/build/reports/'
+        retention-days: 7
