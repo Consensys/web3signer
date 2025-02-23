@@ -1,4 +1,4 @@
-name: CI
+name: CI (Main Branch and Tags)
 
 on:
   push:
@@ -7,126 +7,28 @@ on:
     tags:        
       - '[0-9]+.[0-9]+.[0-9]+(-?.*)'
 
-env:
-  JAVA_TOOL_OPTIONS: -Xmx4096m
-  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4 -Xmx4096m
-
 jobs:
   build:
     # 4 cpu, 16G ram
     runs-on: ubuntu-24.04
-    environment: dev
+    environment: production
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
+      - name: Build and Test
+        id: build-test
+        uses: ./.github/actions/build-test
 
-      - name: Prepare
-        uses: ./.github/actions/prepare
+      - name: Create zip and tar distributions
+        run: ./gradlew distTar distZip
 
-      - name: Build and unit test
-        run: |
-          ./gradlew build
+      # TODO: Attach distTar as artifact (lowest retention) so that it is available for docker and release jobs
 
-      - name: Integration Test
-        run: |
-          ./gradlew integrationTest
+       # TODO: Test docker image
 
-      - name: Test results and report
-        uses: ./.github/actions/testResultsReports
-        with:
-          suiteName: 'unitIntegrationTests'
+       # TODO: Publish Docker image - develop for merges to master, tags/latest for tags
 
-      - name: Upload workspace build
-        uses: actions/upload-artifact@v4
-        with:
-          name: workspace
-          path: |
-            ./
-            !./.git/**
-          retention-days: 7
-
-  buildTestDocker:
-    needs: build
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-
-      - name: Prepare
-        id: prepare
-        uses: ./.github/actions/prepare         
-
-      - name: Download workspace build
-        uses: actions/download-artifact@v4
-        with:
-          name: workspace
-
-      - name: Build and test docker image
-        run: |
-          ./gradlew "-Pbranch=${GITHUB_REF##*/}" testDocker
-
-  publishOpenApiSpec:
-    needs: acceptanceTests
-    if: startsWith(github.ref, 'refs/tags/') && contains('0123456789', github.ref[10])
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-      id-token: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-
-      - name: Download workspace build
-        uses: actions/download-artifact@v4
-        with:
-          name: workspace
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache-dependency-path: '.openapidoc/package-lock.json'
-      
-      - name: Build openapidoc
-        run: |
-          cd .openapidoc
-          npm ci
-          env
-          OA_GIT_USERNAME="${GITHUB_ACTOR}" OA_GIT_EMAIL="${GITHUB_ACTOR}@users.noreply.github.com" OA_GIT_URL="${GITHUB_REPOSITORY}" OA_GH_PAGES_BRANCH="gh-pages" node publish.js
-
-  publish:
-    needs: [ acceptanceTests, buildTestDocker ]
-    if: startsWith(github.ref, 'refs/tags/') && contains('0123456789', github.ref[10])
-    runs-on: ubuntu-24.04
-    environment: dev
-    permissions:
-      id-token: write  
-      contents: read    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-
-      - name: Prepare
-        uses: ./.github/actions/prepare
-
-      - name: Download workspace build
-        uses: actions/download-artifact@v4
-        with:
-          name: workspace
-
-      - name: Create Artifacts
-        run: |
-          ./gradlew distTar distZip
-
+       # Create release notes
       - name: Create Release Notes
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           prevTag=$(git tag --sort=-creatordate | sed -n '2p')
           echo "# Release ${{ github.ref_name }}" > output.md
@@ -142,6 +44,7 @@ jobs:
 
       - name: Create Release
         id: release_publish
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           name: Release ${{ github.ref_name }}
@@ -150,11 +53,10 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             build/distributions/web3signer-${{ github.ref_name }}.tar.gz
-            build/distributions/web3signer-${{ github.ref_name }}.zip
+            build/distributions/web3signer-${{ github.ref_name }}.zip  
 
   publishDocker:
-    needs: [ buildTestDocker, acceptanceTests ]
-    if: startsWith(github.ref, 'refs/tags/') && contains('0123456789', github.ref[10])
+    if: false
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout

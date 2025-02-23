@@ -8,10 +8,5 @@ jobs:
     # 4 cpu, 16G ram
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-
       - name: Build And Test
         uses: ./.github/actions/build-test
