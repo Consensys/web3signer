@@ -24,19 +24,24 @@ runs:
 
     - name: Print Version
       run:  ./gradlew -q printVersion
+      shell: bash
 
     - name: Build and unit test
       run: ./gradlew build
+      shell: bash
 
     - name: Integration Tests
       run: ./gradlew integrationTest
+      shell: bash
 
     - name: Acceptance Tests
       run: ./gradlew acceptanceTest
+      shell: bash
 
     # TODO: Take docker out completely from gradle
     - name: Test Docker Image
       run: ./gradlew testDocker
+      shell: bash
 
     - name: Summarize tests results
       uses: jeantessier/test-summary-action@v1.0.7
