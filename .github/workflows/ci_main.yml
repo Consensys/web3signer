@@ -82,12 +82,13 @@ jobs:
 
       - name: Display build distributions
         run: ls -l build/distributions/
-        
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64,linux/arm64
           file: docker/Dockerfile
+          context: .
           build-args: |
             TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
           no-cache: true
