@@ -1,7 +1,13 @@
 ---
 name: 'build-test'
 description: 'Composite action to build and test Web3Signer'
-
+outputs:
+  publish-version:
+    description: 'The publish version of the build'
+    value: ${{ steps.checks-version.outputs.publish-version }}
+  specific-version:
+    description: 'The specific version of the build'
+    value: ${{ steps.checks-version.outputs.specific-version }}
 runs:
   using: "composite"
   steps:
@@ -14,11 +20,12 @@ runs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
-    - name: set up docker buildx
-      uses: docker/setup-buildx-action@v3
-
     - name: Print Version
-      run:  ./gradlew -q printVersion
+      id: checks-version
+      run:  |
+        output=$(./gradlew -q printVersion)
+        echo $output >> $GITHUB_OUTPUT
+        echo $output
       shell: bash
 
     - name: Build and unit test
