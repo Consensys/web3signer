@@ -1,12 +1,14 @@
-name: CI (Main Branch and Tags)
+name: CI
 
 on:
   push:
     branches:
       - master
-      - gha # For testing
-    tags:        
+    tags:
       - '[0-9]+.[0-9]+.[0-9]+(-?.*)'
+  pull_request:
+    branches:
+      - master
 
 jobs:
   build:
@@ -105,6 +107,15 @@ jobs:
           SUMMARY_CONTENT+="\n</code></pre></details>\n"
           echo -e "$SUMMARY_CONTENT" >> $GITHUB_STEP_SUMMARY          
 
+      - name: Determine Push Flag
+        id: determine-push-flag
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "push=false" >> $GITHUB_OUTPUT
+          else
+            echo "push=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build and push to registry
         uses: docker/build-push-action@v6
         with:
@@ -113,5 +124,5 @@ jobs:
           context: .
           build-args: |
             TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
-          push: true
+          push: ${{ steps.determine-push-flag.outputs.push }}
           tags: ${{ steps.calculate-tags.outputs.tags }}
