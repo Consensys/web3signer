@@ -43,7 +43,7 @@ COPY --chown=web3signer:web3signer ${TAR_FILE} /tmp/web3signer.tar.gz
 # Extract the tar.gz file and rename the directory
 RUN mkdir -p /opt/web3signer && \
     tar -xzf /tmp/web3signer.tar.gz -C /opt/web3signer --strip-components=1 && \
-    rm /tmp/web3signer.tar.gz
+    rm /tmp/web3signer.tar.gz && chown -R web3signer:web3signer /opt/web3signer
 
 USER web3signer
 WORKDIR /opt/web3signer

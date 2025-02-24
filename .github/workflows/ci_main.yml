@@ -105,10 +105,11 @@ jobs:
       - name: Test Summary
         if: always()
         run: |
-          echo "### Docker Test Summary" >> $GITHUB_STEP_SUMMARY
-          echo '```txt' >> $GITHUB_STEP_SUMMARY
+          echo '<details><summary>Docker Test Summary</summary>' >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
           cat ./build/reports/goss-report.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+          echo '</details>' >> $GITHUB_STEP_SUMMARY
           
 
       - name: Build and push to registry
