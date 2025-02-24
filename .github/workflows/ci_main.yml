@@ -71,8 +71,6 @@ jobs:
         with:
             driver-opts: network=host # TODO: Remove once testing is complete
 
-      # TODO: Test docker image
-
       - uses: actions/download-artifact@v4
         with:
           name: distribution
@@ -87,7 +85,7 @@ jobs:
           fi
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
-      - name: Build and push
+      - name: Build and export to docker
         uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64,linux/arm64
@@ -96,6 +94,21 @@ jobs:
           build-args: |
             TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
           no-cache: true
+          load: true
+          tags: ${{ steps.calculate-tags.outputs.tags }}
+
+      # TODO: Test docker image
+      - name: List Docker Images
+        run: docker images
+
+      - name: Build and push to registry
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64
+          file: docker/Dockerfile
+          context: .
+          build-args: |
+            TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
           push: true
           tags: ${{ steps.calculate-tags.outputs.tags }}
 
