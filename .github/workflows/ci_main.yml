@@ -42,17 +42,10 @@ jobs:
     runs-on: ubuntu-24.04
     needs: build
     environment: docker
-    # For testing - TODO: Remove
-    services:
-      registry:
-        image: registry:2
-        ports:
-          - 5000:5000
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: 'recursive'
           fetch-depth: 0
           fetch-tags: true
 
@@ -67,8 +60,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-            driver-opts: network=host # TODO: Remove once testing is complete
 
       - uses: actions/download-artifact@v4
         with:
@@ -78,9 +69,9 @@ jobs:
       - name: Calculate Docker Tags
         id: calculate-tags
         run: |
-          TAGS="localhost:5000/consensys/web3signer:${{ needs.build.outputs.publish-version }}"
+          TAGS="consensys/web3signer:${{ needs.build.outputs.publish-version }}"
           if [ "${{ needs.build.outputs.publish-version }}" != "develop" ]; then
-            TAGS="$TAGS,localhost:5000/consensys/web3signer:latest"
+            TAGS="$TAGS,consensys/web3signer:latest"
           fi
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
@@ -124,7 +115,3 @@ jobs:
             TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
           push: true
           tags: ${{ steps.calculate-tags.outputs.tags }}
-
-      - name: Inspect
-        run: |
-          docker buildx imagetools inspect localhost:5000/consensys/web3signer:develop
