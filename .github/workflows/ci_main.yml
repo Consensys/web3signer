@@ -30,7 +30,6 @@ jobs:
       - name: Create zip and tar distributions
         run: ./gradlew distTar distZip
 
-      # TODO: Attach distTar as artifact (lowest retention) so that it is available for docker and release jobs
       - name: Upload distribution artifacts
         uses: actions/upload-artifact@v4
         with:
