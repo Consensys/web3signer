@@ -100,7 +100,7 @@ jobs:
         run: echo "::set-output name=path::$(realpath ./build/reports)"
 
       - name: Run Docker tests
-        run: sh ./docker/test.sh 'consensys/web3signer:test' '${{ steps.get-reports-dir.outputs.path }}'
+        run: ./docker/test.sh 'consensys/web3signer:test' '${{ steps.get-reports-dir.outputs.path }}'
 
       - name: Summarize Docker tests results
         uses: jeantessier/test-summary-action@v1.0.7
