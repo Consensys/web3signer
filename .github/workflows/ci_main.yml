@@ -73,15 +73,19 @@ jobs:
 
       # TODO: Test docker image
 
-      # TODO: Publish Docker image - develop for merges to master, tags/latest for tags
-
       - uses: actions/download-artifact@v4
         with:
           name: distribution
           path: build/distributions/
 
-      - name: Display build distributions
-        run: ls -l build/distributions/
+      - name: Calculate Docker Tags
+        id: calculate-tags
+        run: |
+          TAGS="localhost:5000/consensys/web3signer:${{ needs.build.outputs.publish-version }}"
+          if [ "${{ needs.build.outputs.publish-version }}" != "develop" ]; then
+            TAGS="$TAGS,localhost:5000/consensys/web3signer:latest"
+          fi
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -93,7 +97,7 @@ jobs:
             TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
           no-cache: true
           push: true
-          tags: localhost:5000/consensys/web3signer:${{ needs.build.outputs.publish-version }}
+          tags: ${{ steps.calculate-tags.outputs.tags }}
 
       - name: Inspect
         run: |
