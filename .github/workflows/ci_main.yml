@@ -105,7 +105,7 @@ jobs:
       - name: Test Summary
         if: always()
         run: |
-          SUMMARY_CONTENT="<h2>Docker Test Summary<h2>\n"
+          SUMMARY_CONTENT="<h2>Docker Test Summary</h2>\n"
           SUMMARY_CONTENT+="<details><summary><strong>Details</strong></summary>\n"
           SUMMARY_CONTENT+="<pre><code>\n"
           SUMMARY_CONTENT+=$(cat ./build/reports/goss-report.txt)
