@@ -97,14 +97,19 @@ jobs:
 
       - name: Get absolute path of reports directory
         id: get-reports-dir
-        run: echo "::set-output name=path::$(realpath ./build/reports)"
+        run: echo "path=$(realpath ./build/reports)" >> $GITHUB_OUTPUT
 
       - name: Run Docker tests
         run: ./docker/test.sh 'consensys/web3signer:test' '${{ steps.get-reports-dir.outputs.path }}'
 
-      - name: Summarize Docker tests results
-        uses: jeantessier/test-summary-action@v1.0.7
+      - name: Test Summary
         if: always()
+        run: |
+          echo "### Docker Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo '```txt' >> $GITHUB_STEP_SUMMARY
+          cat ./build/reports/goss-report.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
 
       - name: Build and push to registry
         uses: docker/build-push-action@v6

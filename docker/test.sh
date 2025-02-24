@@ -6,7 +6,7 @@ set -e
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 export GOSS_PATH="$BASE_DIR/tests/goss-linux-amd64"
-export GOSS_OPTS="${GOSS_OPTS} --format junit"
+export GOSS_OPTS="${GOSS_OPTS} --format documentation"
 export GOSS_FILES_STRATEGY="cp"
 
 DOCKER_IMAGE="$1"
@@ -42,7 +42,7 @@ run --sysctl net.ipv6.conf.all.disable_ipv6=1 "$DOCKER_TEST_IMAGE" \
 --http-listen-host=0.0.0.0 \
 eth2 \
 --slashing-protection-enabled=false \
-> "$REPORTS_DIR/01.xml" || i=$((i + 1))
+> "$REPORTS_DIR/goss-report.txt" || i=$((i + 1))
 
 # Remove the test Docker image
 docker image rm "$DOCKER_TEST_IMAGE"
