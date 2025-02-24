@@ -86,7 +86,10 @@ jobs:
 
       - name: Build and export to docker
         uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_SUMMARY: false
         with:
+          platforms: linux/amd64,linux/arm64
           file: docker/Dockerfile
           context: .
           build-args: |
