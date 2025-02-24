@@ -105,12 +105,12 @@ jobs:
       - name: Test Summary
         if: always()
         run: |
-          echo '<details><summary>Docker Test Summary</summary>' >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          cat ./build/reports/goss-report.txt >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo '</details>' >> $GITHUB_STEP_SUMMARY
-          
+          SUMMARY_CONTENT="<h2>Docker Test Summary<h2>\n"
+          SUMMARY_CONTENT+="<details><summary><strong>Details</strong></summary>\n"
+          SUMMARY_CONTENT+="<pre><code>\n"
+          SUMMARY_CONTENT+=$(cat ./build/reports/goss-report.txt)
+          SUMMARY_CONTENT+="\n</code></pre></details>\n"
+          echo -e "$SUMMARY_CONTENT" >> $GITHUB_STEP_SUMMARY          
 
       - name: Build and push to registry
         uses: docker/build-push-action@v6
