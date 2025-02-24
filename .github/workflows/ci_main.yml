@@ -95,11 +95,16 @@ jobs:
           load: true
           tags: consensys/web3signer:test
 
-      # TODO: Test docker image
-      - name: List Docker Images
-        run: |
-          docker images
-          docker image inspect consensys/web3signer:test
+      - name: Get absolute path of reports directory
+        id: get-reports-dir
+        run: echo "::set-output name=path::$(realpath ./build/reports)"
+
+      - name: Run Docker tests
+        run: sh ./docker/test.sh 'consensys/web3signer:test' '${{ steps.get-reports-dir.outputs.path }}'
+
+      - name: Summarize Docker tests results
+        uses: jeantessier/test-summary-action@v1.0.7
+        if: always()
 
       - name: Build and push to registry
         uses: docker/build-push-action@v6
