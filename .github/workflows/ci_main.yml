@@ -62,14 +62,26 @@ jobs:
           name: distribution
           path: build/distributions/
 
-      - name: Calculate Docker Tags
-        id: calculate-tags
+      - name: Docker Metadata
+        id: docker-metadata
         run: |
+          # Calculate Docker Tags
           TAGS="consensys/web3signer:${{ needs.build.outputs.publish-version }}"
           if [ "${{ needs.build.outputs.publish-version }}" != "develop" ]; then
             TAGS="$TAGS,consensys/web3signer:latest"
           fi
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          
+          # Determine Push Flag
+          if [ "${{ github.event_name }}" == "pull_request" ] || [ "${{ github.event_name }}" == "schedule" ]; then
+            echo "push=false" >> $GITHUB_OUTPUT
+          else
+            echo "push=true" >> $GITHUB_OUTPUT
+          fi
+          
+          # Set Build Args
+          echo "build-date=$(date --utc --rfc-3339=seconds)" >> $GITHUB_OUTPUT
+          echo "vcs-ref=${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: Build and export to docker
         uses: docker/build-push-action@v6
@@ -80,6 +92,9 @@ jobs:
           context: .
           build-args: |
             TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
+            BUILD_DATE=${{ steps.docker-metadata.outputs.build-date }}
+            VCS_REF=${{ steps.docker-metadata.outputs.vcs-ref }}
+            VERSION=${{ needs.build.outputs.publish-version }}
           no-cache: true
           load: true
           tags: consensys/web3signer:test
@@ -90,6 +105,16 @@ jobs:
 
       - name: Run Docker tests
         run: ./docker/test.sh 'consensys/web3signer:test' '${{ steps.get-reports-dir.outputs.path }}'
+
+      - name: Test Summary
+        if: always()
+        run: |
+          SUMMARY_CONTENT="<h2>Docker Test Summary</h2>\n"
+          SUMMARY_CONTENT+="<details><summary><strong>Details</strong></summary>\n"
+          SUMMARY_CONTENT+="<pre><code>\n"
+          SUMMARY_CONTENT+=$(cat ./build/reports/goss-report.txt)
+          SUMMARY_CONTENT+="\n</code></pre></details>\n"
+          echo -e "$SUMMARY_CONTENT" >> $GITHUB_STEP_SUMMARY  
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.29.0
@@ -103,28 +128,9 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
-      - name: Test Summary
-        if: always()
-        run: |
-          SUMMARY_CONTENT="<h2>Docker Test Summary</h2>\n"
-          SUMMARY_CONTENT+="<details><summary><strong>Details</strong></summary>\n"
-          SUMMARY_CONTENT+="<pre><code>\n"
-          SUMMARY_CONTENT+=$(cat ./build/reports/goss-report.txt)
-          SUMMARY_CONTENT+="\n</code></pre></details>\n"
-          echo -e "$SUMMARY_CONTENT" >> $GITHUB_STEP_SUMMARY          
-
-      - name: Determine Push Flag
-        id: determine-push-flag
-        run: |
-          if [ "${{ github.event_name }}" == "pull_request" ] || [ "${{ github.event_name }}" == "schedule" ]; then
-            echo "push=false" >> $GITHUB_OUTPUT
-          else
-            echo "push=true" >> $GITHUB_OUTPUT
-          fi
-
       - name: Login to Docker Hub
         uses: docker/login-action@v3
-        if: steps.determine-push-flag.outputs.push == 'true'
+        if: steps.docker-metadata.outputs.push == 'true'
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -137,8 +143,11 @@ jobs:
           context: .
           build-args: |
             TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
-          push: ${{ steps.determine-push-flag.outputs.push }}
-          tags: ${{ steps.calculate-tags.outputs.tags }}
+            BUILD_DATE=${{ steps.docker-metadata.outputs.build-date }}
+            VCS_REF=${{ steps.docker-metadata.outputs.vcs-ref }}
+            VERSION=${{ needs.build.outputs.publish-version }}
+          push: ${{ steps.docker-metadata.outputs.push }}
+          tags: ${{ steps.docker-metadata.outputs.tags }}
 
   release:
     runs-on: ubuntu-24.04
