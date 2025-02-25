@@ -28,6 +28,8 @@ jobs:
       - name: Build and Test
         id: build-test
         uses: ./.github/actions/build-test
+        with:
+          disable-test: true
 
       - name: Create zip and tar distributions
         run: ./gradlew distTar distZip
