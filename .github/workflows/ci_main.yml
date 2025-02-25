@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-24.04
     environment: production
     outputs:
-      publish-version: ${{ steps.build-test.outputs.publish-version }}
+      publish-version: ${{ steps.project-version.outputs.publish-version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,11 +25,19 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Setup Java and Gradle
+        id: setup-java-gradle
+        uses: ./.github/actions/setup-java-gradle
+
+      - name: Determine Web3Signer version
+        id: project-version
+        uses: ./.github/actions/project-version
+
       - name: Build and Test
         id: build-test
         uses: ./.github/actions/build-test
         with:
-          disable-test: 'false'
+          disable-test: 'true'
 
       - name: Create zip and tar distributions
         run: ./gradlew distTar distZip

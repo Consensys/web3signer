@@ -6,37 +6,9 @@ inputs:
     description: 'Disable tests'
     required: false
     default: 'false'
-outputs:
-  publish-version:
-    description: 'The publish version of the build'
-    value: ${{ steps.checks-version.outputs.publish-version }}
-  specific-version:
-    description: 'The specific version of the build'
-    value: ${{ steps.checks-version.outputs.specific-version }}
 runs:
   using: "composite"
   steps:
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4.2.1
-      with:
-        java-version: 21
-        distribution: 'temurin'
-
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v4
-
-    - name: Print Version
-      id: checks-version
-      run:  |
-        output=$(./gradlew -q printVersion)
-        # Extract specific-version and publish-version from the output
-        specific_version=$(echo "$output" | grep -oP 'specific-version=\K.*')
-        publish_version=$(echo "$output" | grep -oP 'publish-version=\K.*')
-        # Set the outputs
-        echo "specific-version=$specific_version" >> $GITHUB_OUTPUT
-        echo "publish-version=$publish_version" >> $GITHUB_OUTPUT
-      shell: bash
-
     - name: Build with unit tests
       if: ${{ inputs.disable-test  == 'false' }}
       run: ./gradlew build
