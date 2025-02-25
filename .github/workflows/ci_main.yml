@@ -91,6 +91,18 @@ jobs:
       - name: Run Docker tests
         run: ./docker/test.sh 'consensys/web3signer:test' '${{ steps.get-reports-dir.outputs.path }}'
 
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          image-ref: 'consensys/web3signer:test'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
       - name: Test Summary
         if: always()
         run: |
@@ -104,7 +116,7 @@ jobs:
       - name: Determine Push Flag
         id: determine-push-flag
         run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
+          if [ "${{ github.event_name }}" == "pull_request" ] || [ "${{ github.event_name }}" == "schedule" ]; then
             echo "push=false" >> $GITHUB_OUTPUT
           else
             echo "push=true" >> $GITHUB_OUTPUT
