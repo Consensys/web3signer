@@ -438,72 +438,6 @@ distZip {
 
 check.dependsOn checkLicense
 
-// rename the top level dir from web3signer-<version> to web3signer and this makes it really
-// simple for use in docker
-tasks.register("dockerDistUntar") {
-  dependsOn distTar
-  def dockerBuildPath = "build/docker-web3signer/"
-  def distTarFile = distTar.outputs.files.singleFile
-  def distTarFileName = distTar.outputs.files.singleFile.name.replace(".tar.gz", "")
-
-  doFirst {
-    def dockerBuildDir = new File(dockerBuildPath)
-    dockerBuildDir.deleteDir()
-    dockerBuildDir.mkdir()
-    copy {
-      from tarTree(distTarFile)
-      into(dockerBuildPath)
-    }
-    def dockerDist = file("${dockerBuildPath}/${distTarFileName}")
-    dockerDist.renameTo("${dockerBuildPath}/web3signer")
-  }
-}
-
-def dockerImage = "consensys/web3signer"
-def dockerJdkVariants = ["jdk21",]
-def dockerBuildDir = "build/docker-web3signer/"
-
-task distDocker  {
-  dependsOn dockerDistUntar
-
-  def dockerBuildVersion = 'develop'
-  doLast {
-    for (def variant in dockerJdkVariants) {
-      copy {
-        from file("${projectDir}/docker/${variant}/Dockerfile")
-        into(dockerBuildDir)
-      }
-      exec {
-        def image = "${dockerImage}:${dockerBuildVersion}-${variant}"
-        workingDir dockerBuildDir
-        executable "sh"
-        args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
-      }
-    }
-    // tag the "default" (which is the variant in the zero position)
-    exec {
-      executable "sh"
-      args "-c", "docker tag '${dockerImage}:${dockerBuildVersion}-${dockerJdkVariants[0]}' '${dockerImage}:${dockerBuildVersion}'"
-    }
-  }
-}
-
-task testDocker {
-  dependsOn([distDocker])
-  def dockerBuildVersion = 'develop'
-  def dockerReportsDir = "docker/reports/"
-  doFirst {
-    new File(dockerReportsDir).mkdir()
-  }
-  doLast {
-    exec {
-      workingDir "docker"
-      executable "sh"
-      args "-c", "sh ./test.sh '${dockerImage}:${dockerBuildVersion}'"
-    }
-  }
-}
-
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
@@ -573,11 +507,6 @@ task printVersion() {
     println "specific-version=${specificVersion}"
     println "publish-version=${project.version}"
   }
-}
-
-def getCheckedOutGitCommitHash() {
-  def takeFromHash = 8
-  grgit ? grgit.head().id.take(takeFromHash) : 'UNKNOWN'
 }
 
 task releaseIntegrationTest(type: Test){
