@@ -1,6 +1,11 @@
 ---
 name: 'build-test'
 description: 'Composite action to build and test Web3Signer'
+inputs:
+  disable-test:
+    description: 'Disable tests'
+    required: false
+    default: 'false'
 outputs:
   publish-version:
     description: 'The publish version of the build'
@@ -32,25 +37,34 @@ runs:
         echo "publish-version=$publish_version" >> $GITHUB_OUTPUT
       shell: bash
 
-    - name: Build and unit test
+    - name: Build with unit tests
+      if: ${{ inputs.disable-test }} == 'false'
       run: ./gradlew build
       shell: bash
 
+    - name: Build without unit tests
+      if: ${{ inputs.disable-test }} == 'true'
+      run: ./gradlew build -x test
+      shell: bash
+
     - name: Integration Tests
+      if: ${{ inputs.disable-test }} == 'false'
       run: ./gradlew integrationTest
       shell: bash
 
     - name: Acceptance Tests
+      if: ${{ inputs.disable-test }} == 'false'
       run: ./gradlew acceptanceTest
       shell: bash
 
     - name: Build Step Output
+      if: ${{ inputs.disable-test }} == 'false'
       run: echo "<h2>Test Results</h2>" >> $GITHUB_STEP_SUMMARY
       shell: bash
 
     - name: Summarize tests results
       uses: jeantessier/test-summary-action@v1.0.7
-      if: always()
+      if: ${{ inputs.disable-test }} == 'false'
 
     - name: Upload build reports
       uses: actions/upload-artifact@v4
