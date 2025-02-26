@@ -17,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory.UNSUPPORTED_CURVE_NAME;
 
-import org.apache.commons.lang3.StringUtils;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
@@ -27,8 +26,8 @@ import tech.pegasys.web3signer.signing.secp256k1.common.SignerInitializationExce
 import java.math.BigInteger;
 import java.security.SignatureException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.web3j.crypto.Sign;
@@ -49,7 +48,8 @@ public class AzureKeyVaultSignerTest {
 
   @BeforeAll
   static void preChecks() {
-    assumeTrue(!StringUtils.isEmpty(AZURE_CLIENT_ID)
+    assumeTrue(
+        !StringUtils.isEmpty(AZURE_CLIENT_ID)
             && !StringUtils.isEmpty(AZURE_CLIENT_SECRET)
             && !StringUtils.isEmpty(AZURE_KEY_VAULT_NAME)
             && !StringUtils.isEmpty(AZURE_INVALID_KEY_VAULT_NAME)
