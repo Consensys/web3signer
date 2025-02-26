@@ -1,0 +1,47 @@
+---
+name: 'build-test'
+description: 'Composite action to build and test Web3Signer'
+inputs:
+  disable-test:
+    description: 'Disable tests'
+    required: false
+    default: 'false'
+runs:
+  using: "composite"
+  steps:
+    - name: Build with unit tests
+      if: ${{ inputs.disable-test  == 'false' }}
+      run: ./gradlew build
+      shell: bash
+
+    - name: Build without unit tests
+      if: ${{ inputs.disable-test == 'true' }}
+      run: ./gradlew build -x test
+      shell: bash
+
+    - name: Integration Tests
+      if: ${{ inputs.disable-test == 'false' }}
+      run: ./gradlew integrationTest
+      shell: bash
+
+    - name: Acceptance Tests
+      if: ${{ inputs.disable-test == 'false' }}
+      run: ./gradlew acceptanceTest
+      shell: bash
+
+    - name: Build Step Output
+      if: always()
+      run: echo "<h2>Test Results</h2>" >> $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    - name: Summarize tests results
+      uses: jeantessier/test-summary-action@v1.0.7
+      if: always()
+
+    - name: Upload build reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: build-reports
+        path: '**/build/reports/'
+        retention-days: 7

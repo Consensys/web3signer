@@ -1,0 +1,220 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+(-?.*)'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    # 4 cpu, 16G ram
+    runs-on: ubuntu-24.04
+    environment: dev
+    outputs:
+      publish-version: ${{ steps.project-version.outputs.publish-version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup Java and Gradle
+        id: setup-java-gradle
+        uses: ./.github/actions/setup-java-gradle
+
+      - name: Determine Web3Signer version
+        id: project-version
+        uses: ./.github/actions/project-version
+
+      - name: Build and Test
+        id: build-test
+        uses: ./.github/actions/build-test
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          RO_AWS_ACCESS_KEY_ID: ${{ secrets.RO_AWS_ACCESS_KEY_ID }}
+          RO_AWS_SECRET_ACCESS_KEY: ${{ secrets.RO_AWS_SECRET_ACCESS_KEY }}
+          RW_AWS_ACCESS_KEY_ID: ${{ secrets.RW_AWS_ACCESS_KEY_ID }}
+          RW_AWS_SECRET_ACCESS_KEY: ${{ secrets.RW_AWS_SECRET_ACCESS_KEY }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_INVALID_KEY_VAULT_NAME: ${{ secrets.AZURE_INVALID_KEY_VAULT_NAME }}
+          AZURE_KEY_VAULT_NAME: ${{ secrets.AZURE_KEY_VAULT_NAME }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        with:
+          disable-test: 'false'
+
+      - name: Create zip and tar distributions
+        run: ./gradlew distTar distZip
+
+      - name: Upload distribution artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: distribution
+          path: build/distributions/
+          retention-days: 1
+          if-no-files-found: error
+
+  docker:
+    runs-on: ubuntu-24.04
+    needs: build
+    environment: docker
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: distribution
+          path: build/distributions/
+
+      - name: Docker Metadata
+        id: docker-metadata
+        run: |
+          # Calculate Docker Tags
+          TAGS="consensys/web3signer:${{ needs.build.outputs.publish-version }}"
+          if [ "${{ needs.build.outputs.publish-version }}" != "develop" ]; then
+            TAGS="$TAGS,consensys/web3signer:latest"
+          fi
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          
+          # Determine Push Flag
+          if [ "${{ github.event_name }}" == "pull_request" ] || [ "${{ github.event_name }}" == "schedule" ]; then
+            echo "push=false" >> $GITHUB_OUTPUT
+          else
+            echo "push=true" >> $GITHUB_OUTPUT
+          fi
+          
+          # Set Build Args
+          echo "build-date=$(date --utc --rfc-3339=seconds)" >> $GITHUB_OUTPUT
+          echo "vcs-ref=${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Build and export to docker
+        uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_SUMMARY: false
+        with:
+          file: docker/Dockerfile
+          context: .
+          build-args: |
+            TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
+            BUILD_DATE=${{ steps.docker-metadata.outputs.build-date }}
+            VCS_REF=${{ steps.docker-metadata.outputs.vcs-ref }}
+            VERSION=${{ needs.build.outputs.publish-version }}
+          no-cache: true
+          load: true
+          tags: consensys/web3signer:test
+
+      - name: Get absolute path of reports directory
+        id: get-reports-dir
+        run: echo "path=$(realpath ./build/reports)" >> $GITHUB_OUTPUT
+
+      - name: Run Docker tests
+        run: ./docker/test.sh 'consensys/web3signer:test' '${{ steps.get-reports-dir.outputs.path }}'
+
+      - name: Test Summary
+        if: always()
+        run: |
+          SUMMARY_CONTENT="<h2>Docker Test Summary</h2>\n"
+          SUMMARY_CONTENT+="<details><summary><strong>Details</strong></summary>\n"
+          SUMMARY_CONTENT+="<pre><code>\n"
+          SUMMARY_CONTENT+=$(cat ./build/reports/goss-report.txt)
+          SUMMARY_CONTENT+="\n</code></pre></details>\n"
+          echo -e "$SUMMARY_CONTENT" >> $GITHUB_STEP_SUMMARY  
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          image-ref: 'consensys/web3signer:test'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        if: steps.docker-metadata.outputs.push == 'true'
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push to registry
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64
+          file: docker/Dockerfile
+          context: .
+          build-args: |
+            TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
+            BUILD_DATE=${{ steps.docker-metadata.outputs.build-date }}
+            VCS_REF=${{ steps.docker-metadata.outputs.vcs-ref }}
+            VERSION=${{ needs.build.outputs.publish-version }}
+          push: ${{ steps.docker-metadata.outputs.push }}
+          tags: ${{ steps.docker-metadata.outputs.tags }}
+
+  release:
+    runs-on: ubuntu-24.04
+    needs: [build, docker]
+    if: startsWith(github.ref, 'refs/tags/')
+    environment: release
+    permissions:
+        contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: distribution
+          path: build/distributions/
+
+      - name: Generate Checksum
+        working-directory: ./build/distributions
+        run: |
+          shasum -a 256 "web3signer-${{ needs.build.outputs.publish-version }}.tar.gz" > "web3signer-${{ needs.build.outputs.publish-version }}.tar.gz.sha256"
+          shasum -a 256 "web3signer-${{ needs.build.outputs.publish-version }}.zip" > "web3signer-${{ needs.build.outputs.publish-version }}.zip.sha256"
+
+      - name: Determine Prerelease
+        id: determine-prerelease
+        run: |
+          if [[ "${{ needs.build.outputs.publish-version }}" == *-RC* ]]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Create release tag and attach the distribution
+      - name: Web3Signer Release
+        id: release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          files: |
+            build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
+            build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz.sha256
+            build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.zip
+            build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.zip.sha256
+
+          tag_name: ${{ needs.build.outputs.publish-version }}
+          body: |
+            ** Web3Signer Release **
+          draft: true
+          prerelease: ${{ steps.determine-prerelease.outputs.prerelease }}
+          preserve_order: true
