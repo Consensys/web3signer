@@ -41,19 +41,19 @@ import org.web3j.utils.Numeric;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledIfEnvironmentVariable(
     named = "RW_AWS_ACCESS_KEY_ID",
-    matches = ".*",
+    matches = ".+",
     disabledReason = "RW_AWS_ACCESS_KEY_ID env variable is required")
 @EnabledIfEnvironmentVariable(
     named = "RW_AWS_SECRET_ACCESS_KEY",
-    matches = ".*",
+    matches = ".+",
     disabledReason = "RW_AWS_SECRET_ACCESS_KEY env variable is required")
 @EnabledIfEnvironmentVariable(
     named = "AWS_ACCESS_KEY_ID",
-    matches = ".*",
+    matches = ".+",
     disabledReason = "AWS_ACCESS_KEY_ID env variable is required")
 @EnabledIfEnvironmentVariable(
     named = "AWS_SECRET_ACCESS_KEY",
-    matches = ".*",
+    matches = ".+",
     disabledReason = "AWS_SECRET_ACCESS_KEY env variable is required")
 public class AwsKmsSignerTest {
   private static final String AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID");
