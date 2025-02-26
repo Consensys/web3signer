@@ -156,10 +156,10 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   @Test
   @EnabledIfEnvironmentVariables({
-    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".*")
+    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".+"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".+"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".+"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".+")
   })
   public void ableToSignUsingAzure() throws JsonProcessingException {
     final String clientId = System.getenv("AZURE_CLIENT_ID");

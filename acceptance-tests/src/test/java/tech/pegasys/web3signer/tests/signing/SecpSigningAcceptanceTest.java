@@ -99,10 +99,10 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   @Test
   @EnabledIfEnvironmentVariables({
-    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".*")
+    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".+"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".+"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".+"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".+")
   })
   public void signDataWithKeyInAzure() {
     METADATA_FILE_HELPERS.createAzureKeyYamlFileAt(
