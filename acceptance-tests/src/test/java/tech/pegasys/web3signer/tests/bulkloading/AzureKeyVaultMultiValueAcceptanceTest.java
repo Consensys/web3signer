@@ -48,19 +48,19 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 @EnabledIfEnvironmentVariable(
     named = "AZURE_CLIENT_ID",
-    matches = ".*",
+    matches = ".+",
     disabledReason = "AZURE_CLIENT_ID env variable is required")
 @EnabledIfEnvironmentVariable(
     named = "AZURE_CLIENT_SECRET",
-    matches = ".*",
+    matches = ".+",
     disabledReason = "AZURE_CLIENT_SECRET env variable is required")
 @EnabledIfEnvironmentVariable(
     named = "AZURE_TENANT_ID",
-    matches = ".*",
+    matches = ".+",
     disabledReason = "AZURE_TENANT_ID env variable is required")
 @EnabledIfEnvironmentVariable(
     named = "AZURE_KEY_VAULT_NAME",
-    matches = ".*",
+    matches = ".+",
     disabledReason = "AZURE_KEY_VAULT_NAME env variable is required")
 public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
 

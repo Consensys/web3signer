@@ -99,10 +99,10 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   @Test
   @EnabledIfEnvironmentVariables({
-    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".*")
+    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".+"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".+"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".+"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".+")
   })
   public void signDataWithKeyInAzure() {
     METADATA_FILE_HELPERS.createAzureKeyYamlFileAt(
@@ -119,19 +119,19 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @EnabledIfEnvironmentVariables({
     @EnabledIfEnvironmentVariable(
         named = "RW_AWS_ACCESS_KEY_ID",
-        matches = ".*",
+        matches = ".+",
         disabledReason = "RW_AWS_ACCESS_KEY_ID env variable is required"),
     @EnabledIfEnvironmentVariable(
         named = "RW_AWS_SECRET_ACCESS_KEY",
-        matches = ".*",
+        matches = ".+",
         disabledReason = "RW_AWS_SECRET_ACCESS_KEY env variable is required"),
     @EnabledIfEnvironmentVariable(
         named = "AWS_ACCESS_KEY_ID",
-        matches = ".*",
+        matches = ".+",
         disabledReason = "AWS_ACCESS_KEY_ID env variable is required"),
     @EnabledIfEnvironmentVariable(
         named = "AWS_SECRET_ACCESS_KEY",
-        matches = ".*",
+        matches = ".+",
         disabledReason = "AWS_SECRET_ACCESS_KEY env variable is required"),
   })
   public void remoteSignWithAwsKMS() {

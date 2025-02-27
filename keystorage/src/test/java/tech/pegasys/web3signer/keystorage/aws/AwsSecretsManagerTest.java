@@ -51,23 +51,23 @@ import software.amazon.awssdk.services.secretsmanager.model.UpdateSecretRequest;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledIfEnvironmentVariable(
     named = "RW_AWS_ACCESS_KEY_ID",
-    matches = ".*",
+    matches = ".+",
     disabledReason = "RW_AWS_ACCESS_KEY_ID env variable is required")
 @EnabledIfEnvironmentVariable(
     named = "RW_AWS_SECRET_ACCESS_KEY",
-    matches = ".*",
+    matches = ".+",
     disabledReason = "RW_AWS_SECRET_ACCESS_KEY env variable is required")
 @EnabledIfEnvironmentVariable(
     named = "AWS_ACCESS_KEY_ID",
-    matches = ".*",
+    matches = ".+",
     disabledReason = "AWS_ACCESS_KEY_ID env variable is required")
 @EnabledIfEnvironmentVariable(
     named = "AWS_SECRET_ACCESS_KEY",
-    matches = ".*",
+    matches = ".+",
     disabledReason = "AWS_SECRET_ACCESS_KEY env variable is required")
 @EnabledIfEnvironmentVariable(
     named = "AWS_REGION",
-    matches = ".*",
+    matches = ".+",
     disabledReason = "AWS_REGION env variable is required")
 class AwsSecretsManagerTest {
 

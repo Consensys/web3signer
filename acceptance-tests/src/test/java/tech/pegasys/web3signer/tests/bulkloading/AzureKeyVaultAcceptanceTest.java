@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
 import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealtcheckKeysLoaded;
 import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthcheckErrorCount;
@@ -32,7 +33,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import org.junit.jupiter.api.Assumptions;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -56,10 +57,10 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
 
   @BeforeAll
   public static void setup() {
-    Assumptions.assumeTrue(CLIENT_ID != null, "Set AZURE_CLIENT_ID environment variable");
-    Assumptions.assumeTrue(CLIENT_SECRET != null, "Set AZURE_CLIENT_SECRET environment variable");
-    Assumptions.assumeTrue(TENANT_ID != null, "Set AZURE_TENANT_ID environment variable");
-    Assumptions.assumeTrue(VAULT_NAME != null, "Set AZURE_KEY_VAULT_NAME environment variable");
+    assumeTrue(!StringUtils.isEmpty(CLIENT_ID), "Set AZURE_CLIENT_ID environment variable");
+    assumeTrue(!StringUtils.isEmpty(CLIENT_SECRET), "Set AZURE_CLIENT_SECRET environment variable");
+    assumeTrue(!StringUtils.isEmpty(TENANT_ID), "Set AZURE_TENANT_ID environment variable");
+    assumeTrue(!StringUtils.isEmpty(VAULT_NAME), "Set AZURE_KEY_VAULT_NAME environment variable");
   }
 
   @ParameterizedTest
