@@ -39,13 +39,6 @@ jobs:
         with:
           image-tag: 'latest'
           configuration: DEBUG=1
-        env:
-          LOCALSTACK_SERVICES: secretsmanager,kms
-          LOCALSTACK_EAGER_SERVICE_LOADING: 1
-          AWS_ACCESS_KEY_ID: test
-          AWS_SECRET_ACCESS_KEY: test
-          AWS_DEFAULT_REGION: us-east-2
-          AWS_SESSION_TOKEN: test
 
       - name: Build and Test
         id: build-test
@@ -56,7 +49,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: 'test'
           RW_AWS_ACCESS_KEY_ID: 'test'
           RW_AWS_SECRET_ACCESS_KEY: 'test'
-          AWS_ENDPOINT_OVERRIDE: 'http://localhost:4566'
+          AWS_ENDPOINT_OVERRIDE: 'http://127.0.0.1:4566'
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           AZURE_INVALID_KEY_VAULT_NAME: ${{ secrets.AZURE_INVALID_KEY_VAULT_NAME }}
