@@ -55,6 +55,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: 'test'
           RW_AWS_ACCESS_KEY_ID: 'test'
           RW_AWS_SECRET_ACCESS_KEY: 'test'
+          AWS_ENDPOINT_OVERRIDE: 'http://localhost:4566'
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           AZURE_INVALID_KEY_VAULT_NAME: ${{ secrets.AZURE_INVALID_KEY_VAULT_NAME }}
