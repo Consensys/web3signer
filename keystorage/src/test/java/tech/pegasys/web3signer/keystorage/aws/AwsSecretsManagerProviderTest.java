@@ -51,7 +51,8 @@ class AwsSecretsManagerProviderTest {
   private final String AWS_REGION =
       Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
   private final String DIFFERENT_AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID_TEST2");
-  private final String DIFFERENT_AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY_TEST2");
+  private final String DIFFERENT_AWS_SECRET_ACCESS_KEY =
+      System.getenv("AWS_SECRET_ACCESS_KEY_TEST2");
   private final String DIFFERENT_AWS_REGION = "us-east-1";
 
   // can be pointed to localstack
