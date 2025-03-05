@@ -223,7 +223,12 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     try {
       METADATA_FILE_HELPERS.createAwsYamlFileAt(
-          keyConfigFile, region, roAwsAccessKeyId, roAwsSecretAccessKey, fullyPrefixKeyName);
+          keyConfigFile,
+          region,
+          roAwsAccessKeyId,
+          roAwsSecretAccessKey,
+          fullyPrefixKeyName,
+          awsEndpointOverride);
 
       signAndVerifySignature(ArtifactType.BLOCK);
     } finally {

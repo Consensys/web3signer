@@ -233,7 +233,8 @@ public class MetadataFileHelpers {
       final String awsRegion,
       final String accessKeyId,
       final String secretAccessKey,
-      final String secretName) {
+      final String secretName,
+      final Optional<URI> awsEndpointOverride) {
     try {
       final Map<String, String> signingMetadata = new HashMap<>();
 
@@ -243,6 +244,8 @@ public class MetadataFileHelpers {
       signingMetadata.put("accessKeyId", accessKeyId);
       signingMetadata.put("secretAccessKey", secretAccessKey);
       signingMetadata.put("secretName", secretName);
+      awsEndpointOverride.ifPresent(
+          endpoint -> signingMetadata.put("endpointOverride", endpoint.toString()));
 
       createYamlFile(metadataFilePath, signingMetadata);
     } catch (final Exception e) {
@@ -250,8 +253,11 @@ public class MetadataFileHelpers {
     }
   }
 
-  public void createAwsYamlFileAt(
-      final Path metadataFilePath, final String awsRegion, final String secretName) {
+  public void createAwsYamlFileWithEnvironmentAt(
+      final Path metadataFilePath,
+      final String awsRegion,
+      final String secretName,
+      final Optional<URI> awsEndpointOverride) {
     try {
       final Map<String, String> signingMetadata = new HashMap<>();
 
@@ -259,7 +265,8 @@ public class MetadataFileHelpers {
       signingMetadata.put("authenticationMode", "ENVIRONMENT");
       signingMetadata.put("region", awsRegion);
       signingMetadata.put("secretName", secretName);
-
+      awsEndpointOverride.ifPresent(
+          endpoint -> signingMetadata.put("endpointOverride", endpoint.toString()));
       createYamlFile(metadataFilePath, signingMetadata);
     } catch (final Exception e) {
       throw new RuntimeException("Unable to construct aws yaml file", e);
