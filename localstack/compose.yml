@@ -18,7 +18,6 @@ services:
       - AWS_SECRET_ACCESS_KEY=test
       - AWS_DEFAULT_REGION=us-east-2
       - AWS_SESSION_TOKEN=test
-      - AWS_SESSION_TOKEN=test
       # ready hook script configuration
     volumes:
       #- "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
