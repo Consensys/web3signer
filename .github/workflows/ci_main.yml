@@ -50,7 +50,6 @@ jobs:
       - name: Build and Test
         id: build-test
         uses: ./.github/actions/build-test
-        needs: localstack
         env:
           AWS_REGION: 'us-east-2'
           AWS_ACCESS_KEY_ID: 'test'
