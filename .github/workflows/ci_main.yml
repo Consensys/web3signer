@@ -38,14 +38,14 @@ jobs:
         uses: LocalStack/setup-localstack@v0.2.2
         with:
           image-tag: 'latest'
-          env:
-            SERVICES=secretsmanager,kms 
-            EAGER_SERVICE_LOADING=1
-            AWS_ACCESS_KEY_ID=test
-            AWS_SECRET_ACCESS_KEY=test
-            AWS_DEFAULT_REGION=us-east-2
-            AWS_SESSION_TOKEN=test
-            AWS_SESSION_TOKEN=test
+        env:
+          SERVICES=secretsmanager,kms 
+          EAGER_SERVICE_LOADING=1
+          AWS_ACCESS_KEY_ID=test
+          AWS_SECRET_ACCESS_KEY=test
+          AWS_DEFAULT_REGION=us-east-2
+          AWS_SESSION_TOKEN=test
+          AWS_SESSION_TOKEN=test
 
       - name: Build and Test
         id: build-test
