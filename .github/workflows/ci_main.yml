@@ -33,15 +33,25 @@ jobs:
         id: project-version
         uses: ./.github/actions/project-version
 
+      - name: Start LocalStack (AWS)
+        id: localstack
+        uses: LocalStack/setup-localstack@v0.2.4
+        with:
+          image-tag: 'latest'
+          configuration: LOCALSTACK_DEBUG=1
+
       - name: Build and Test
         id: build-test
         uses: ./.github/actions/build-test
         env:
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.RO_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.RO_AWS_SECRET_ACCESS_KEY }}
-          RW_AWS_ACCESS_KEY_ID: ${{ secrets.RW_AWS_ACCESS_KEY_ID }}
-          RW_AWS_SECRET_ACCESS_KEY: ${{ secrets.RW_AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: 'us-east-2'
+          AWS_ACCESS_KEY_ID: 'test'
+          AWS_SECRET_ACCESS_KEY: 'test'
+          RW_AWS_ACCESS_KEY_ID: 'test'
+          RW_AWS_SECRET_ACCESS_KEY: 'test'
+          AWS_ACCESS_KEY_ID_TEST2: 'test2'
+          AWS_SECRET_ACCESS_KEY_TEST2: 'test2'
+          AWS_ENDPOINT_OVERRIDE: 'http://127.0.0.1:4566'
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           AZURE_INVALID_KEY_VAULT_NAME: ${{ secrets.AZURE_INVALID_KEY_VAULT_NAME }}

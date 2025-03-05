@@ -30,6 +30,8 @@ import tech.pegasys.web3signer.signing.secp256k1.util.AddressUtil;
 import tech.pegasys.web3signer.tests.eth1rpc.Eth1RpcAcceptanceTestBase;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -200,11 +202,12 @@ public class ValueTransferAcceptanceTest extends Eth1RpcAcceptanceTestBase {
             RECIPIENT,
             transferAmountWei);
 
-    String hash = null;
+    List<String> hashes = new ArrayList<>();
     for (int i = 0; i < FIFTY_TRANSACTIONS; i++) {
-      hash = signer.transactions().submit(transaction);
+      hashes.add(signer.transactions().submit(transaction));
     }
-    besu.transactions().awaitBlockContaining(hash);
+
+    hashes.forEach(hash -> besu.transactions().awaitBlockContaining(hash));
 
     final BigInteger endBalance = besu.accounts().balance(RECIPIENT);
     final BigInteger numberOfTransactions = BigInteger.valueOf(FIFTY_TRANSACTIONS);

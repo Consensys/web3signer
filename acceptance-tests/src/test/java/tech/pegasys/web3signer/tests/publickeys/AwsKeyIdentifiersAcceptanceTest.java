@@ -94,7 +94,8 @@ public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTes
         AWS_REGION,
         RO_AWS_ACCESS_KEY_ID,
         RO_AWS_SECRET_ACCESS_KEY,
-        awsSecretsManagerUtil.getSecretsManagerPrefix() + publicKey);
+        awsSecretsManagerUtil.getSecretsManagerPrefix() + publicKey,
+        awsEndpointOverride);
     initAndStartSigner("eth2");
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(BLS);
     validateApiResponse(response, containsInAnyOrder(publicKey));
@@ -102,10 +103,11 @@ public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTes
 
   @Test
   public void environmentAwsKeysReturnAppropriatePublicKey() {
-    METADATA_FILE_HELPERS.createAwsYamlFileAt(
+    METADATA_FILE_HELPERS.createAwsYamlFileWithEnvironmentAt(
         testDirectory.resolve(publicKey + ".yaml"),
         AWS_REGION,
-        awsSecretsManagerUtil.getSecretsManagerPrefix() + publicKey);
+        awsSecretsManagerUtil.getSecretsManagerPrefix() + publicKey,
+        awsEndpointOverride);
     initAndStartSigner("eth2");
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(BLS);
     validateApiResponse(response, containsInAnyOrder(publicKey));
