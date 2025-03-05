@@ -39,12 +39,12 @@ jobs:
         with:
           image-tag: 'latest'
         env:
-          SERVICES: secretsmanager,kms
-          EAGER_SERVICE_LOADING: 1
-          AWS_ACCESS_KEY_ID: test
-          AWS_SECRET_ACCESS_KEY: test
-          AWS_DEFAULT_REGION: us-east-2
-          AWS_SESSION_TOKEN: test
+          LOCALSTACK_SERVICES: secretsmanager,kms
+          LOCALSTACK_EAGER_SERVICE_LOADING: 1
+          LOCALSTACK_AWS_ACCESS_KEY_ID: test
+          LOCALSTACK_AWS_SECRET_ACCESS_KEY: test
+          LOCALSTACK_AWS_DEFAULT_REGION: us-east-2
+          LOCALSTACK_AWS_SESSION_TOKEN: test
 
       - name: Build and Test
         id: build-test
