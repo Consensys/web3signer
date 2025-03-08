@@ -46,7 +46,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 @EnabledIfEnvironmentVariable(
     named = "GCP_PROJECT_ID",
-    matches = ".*",
+    matches = ".+",
     disabledReason = "GCP_PROJECT_ID env variable is required")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // same instance is shared across test methods
 public class GcpSecretManagerAcceptanceTest extends AcceptanceTestBase {
