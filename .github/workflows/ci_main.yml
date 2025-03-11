@@ -5,7 +5,7 @@ on:
     branches:
       - master
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+(-?.*)'
+      - '*'
   pull_request:
     branches:
       - master
@@ -14,6 +14,9 @@ jobs:
   build:
     # 4 cpu, 16G ram
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
     environment: dev
     outputs:
       publish-version: ${{ steps.project-version.outputs.publish-version }}
@@ -40,6 +43,13 @@ jobs:
           image-tag: 'latest'
           configuration: LOCALSTACK_DEBUG=1
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2.1.8
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS_JSON }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
       - name: Build and Test
         id: build-test
         uses: ./.github/actions/build-test
@@ -57,6 +67,7 @@ jobs:
           AZURE_INVALID_KEY_VAULT_NAME: ${{ secrets.AZURE_INVALID_KEY_VAULT_NAME }}
           AZURE_KEY_VAULT_NAME: ${{ secrets.AZURE_KEY_VAULT_NAME }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         with:
           disable-test: 'false'
 
