@@ -1,5 +1,16 @@
 # Changelog
 
+## Next Release
+
+### Upcoming Breaking Changes
+> [!IMPORTANT]
+> USB Armory II HSM and YubiHSM 2 keystore support will be removed in a future release.
+
+### Features Added
+
+### Bugs Fixes
+
+---
 ## 25.2.0
 
 > [!IMPORTANT]
