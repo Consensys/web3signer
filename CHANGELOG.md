@@ -7,7 +7,7 @@
 > USB Armory II HSM and YubiHSM 2 keystore support will be removed in a future release.
 
 ### Features Added
-- Update Teku libraries to 25.3.0 that provide support for Hoodie testnet.
+- Update Teku libraries to 25.3.0 to provide support for Hoodi testnet.
 
 ### Bugs Fixes
 
