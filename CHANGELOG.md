@@ -8,6 +8,7 @@
 
 ### Features Added
 - Update Teku libraries to 25.3.0 to provide support for Hoodi testnet.
+- Updated Gnosis Chiado testnet Electra Configuration
 
 ### Bugs Fixes
 
