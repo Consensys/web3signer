@@ -25,8 +25,8 @@ dependencies {
   testImplementation project(":commandline")
   testImplementation project(":common")
 
-  testImplementation 'io.tmio:tuweni-bytes'
-  testImplementation 'io.tmio:tuweni-units'
+  testImplementation 'io.consensys.tuweni:tuweni-bytes'
+  testImplementation 'io.consensys.tuweni:tuweni-units'
 
   testImplementation 'commons-io:commons-io'
 
@@ -57,8 +57,8 @@ dependencies {
   testImplementation 'tech.pegasys.teku.internal:async'
   testImplementation 'io.rest-assured:rest-assured'
   testImplementation 'org.web3j:core'
-  testImplementation 'io.tmio:tuweni-bytes'
-  testImplementation 'io.tmio:tuweni-net'
+  testImplementation 'io.consensys.tuweni:tuweni-bytes'
+  testImplementation 'io.consensys.tuweni:tuweni-net'
   testImplementation 'com.github.arteam:simple-json-rpc-server'
   testImplementation 'com.github.arteam:simple-json-rpc-client'
   testImplementation 'org.flywaydb:flyway-core'
