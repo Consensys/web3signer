@@ -30,11 +30,11 @@ jobs:
 
       - name: Setup Java and Gradle
         id: setup-java-gradle
-        uses: ./.github/actions/setup-java-gradle
+        uses: ConsenSys/github-actions/java-setup-gradle@main
 
       - name: Determine Web3Signer version
         id: project-version
-        uses: ./.github/actions/project-version
+        uses: ConsenSys/github-actions/java-get-project-version@main
 
       - name: Start LocalStack (AWS)
         id: localstack
