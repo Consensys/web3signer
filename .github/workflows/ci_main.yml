@@ -45,7 +45,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2.1.8
-        if: (github.ref == 'refs/heads/master' && github.event_name != 'pull_request') || startsWith(github.ref, 'refs/tags/') || ${{ github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name }}
+        if: (github.ref == 'refs/heads/master' && github.event_name != 'pull_request') || startsWith(github.ref, 'refs/tags/')
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS_JSON }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
