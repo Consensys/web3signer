@@ -63,8 +63,7 @@ public class Eth2BlockSigningRequestUtil {
     return switch (specMilestone) {
       case PHASE0, ALTAIR ->
           createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlock()));
-      case BELLATRIX, CAPELLA, DENEB, ELECTRA ->
-          createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlockHeader()));
+      default -> createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlockHeader()));
     };
   }
 
