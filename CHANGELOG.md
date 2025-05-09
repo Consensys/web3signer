@@ -1,5 +1,15 @@
 # Changelog
 
+## 25.4.1
+### Upcoming Breaking Changes
+> [!IMPORTANT]
+> USB Armory II HSM and YubiHSM 2 keystore support will be removed in a future release.
+
+### Features Added
+- Scheduled Electra for Mainnet at epoch 364032 (May 7, 2025, 10:05:11am UTC)
+- Scheduled Electra for Gnosis at epoch 1337856 (April 30, 2025, 14:03:40 UTC)
+
+---
 ## 25.3.0
 
 ### Upcoming Breaking Changes
