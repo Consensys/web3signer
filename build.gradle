@@ -317,6 +317,15 @@ subprojects {
     integrationTestImplementation sourceSets.testSupport.output
   }
 
+  configurations.all {
+    // transitive versions conflict with io.protocols.tuweni, prefer ours
+    exclude group: 'io.tmio', module: 'tuweni-bytes'
+    exclude group: 'io.tmio', module: 'tuweni-crypto'
+    exclude group: 'io.tmio', module: 'tuweni-rlp'
+    exclude group: 'io.tmio', module: 'tuweni-units'
+  }
+
+
   task integrationTest(type: Test, dependsOn:["compileTestJava"]){
     group = "verification"
     description = "Runs the Web3Signer integration tests"
