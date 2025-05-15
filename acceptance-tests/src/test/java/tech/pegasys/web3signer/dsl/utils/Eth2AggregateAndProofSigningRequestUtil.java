@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.dsl.utils;
 
-import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.TestSpecFactory;
@@ -23,6 +22,7 @@ import tech.pegasys.teku.spec.util.DataStructureUtil;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.AggregateAndProofV2;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.service.http.schema.Fork;
 
 import org.apache.tuweni.bytes.Bytes;
 

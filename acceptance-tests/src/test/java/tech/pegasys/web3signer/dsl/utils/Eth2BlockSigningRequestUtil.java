@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.dsl.utils;
 
 import tech.pegasys.teku.api.schema.BeaconBlockHeader;
-import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.api.schema.altair.BeaconBlockAltair;
 import tech.pegasys.teku.api.schema.altair.BeaconBlockBodyAltair;
 import tech.pegasys.teku.api.schema.phase0.BeaconBlockPhase0;
@@ -28,6 +27,7 @@ import tech.pegasys.teku.spec.util.DataStructureUtil;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.service.http.schema.Fork;
 
 import org.apache.tuweni.bytes.Bytes;
 

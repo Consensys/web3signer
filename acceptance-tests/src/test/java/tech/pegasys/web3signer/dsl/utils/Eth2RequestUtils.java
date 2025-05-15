@@ -17,14 +17,10 @@ import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.computeDo
 
 import tech.pegasys.teku.api.schema.AggregateAndProof;
 import tech.pegasys.teku.api.schema.Attestation;
-import tech.pegasys.teku.api.schema.AttestationData;
-import tech.pegasys.teku.api.schema.BLSPubKey;
-import tech.pegasys.teku.api.schema.BLSSignature;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.api.schema.BeaconBlockBody;
 import tech.pegasys.teku.api.schema.Checkpoint;
 import tech.pegasys.teku.api.schema.Eth1Data;
-import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.api.schema.VoluntaryExit;
 import tech.pegasys.teku.infrastructure.async.SafeFuture;
 import tech.pegasys.teku.infrastructure.bytes.Bytes4;
@@ -48,6 +44,10 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncCommitteeMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ValidatorRegistration;
+import tech.pegasys.web3signer.core.service.http.schema.AttestationData;
+import tech.pegasys.web3signer.core.service.http.schema.BLSPubKey;
+import tech.pegasys.web3signer.core.service.http.schema.BLSSignature;
+import tech.pegasys.web3signer.core.service.http.schema.Fork;
 import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 
 import java.util.Random;
