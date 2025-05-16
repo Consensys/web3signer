@@ -12,9 +12,10 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class Root {
@@ -26,15 +27,9 @@ public class Root {
   }
 
   @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof Root)) {
-      return false;
-    }
-    Root root1 = (Root) o;
-    return Objects.equal(root, root1.root);
+  public boolean equals(Object o) {
+    if (!(o instanceof Root root1)) return false;
+    return Objects.equals(root, root1.root);
   }
 
   @Override
