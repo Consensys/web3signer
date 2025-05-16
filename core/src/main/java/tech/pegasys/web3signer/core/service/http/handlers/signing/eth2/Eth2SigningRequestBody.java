@@ -12,11 +12,11 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
-import tech.pegasys.teku.api.schema.AttestationData;
-import tech.pegasys.teku.api.schema.BeaconBlock;
-import tech.pegasys.teku.api.schema.VoluntaryExit;
-import tech.pegasys.teku.api.schema.altair.ContributionAndProof;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.AttestationData;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.BeaconBlock;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.VoluntaryExit;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.altair.ContributionAndProof;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;

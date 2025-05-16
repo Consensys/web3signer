@@ -12,10 +12,10 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
-import tech.pegasys.teku.api.schema.BeaconBlock;
-import tech.pegasys.teku.api.schema.BeaconBlockHeader;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json.BlockRequestDeserializer;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.BeaconBlock;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.BeaconBlockHeader;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

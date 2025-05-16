@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
-import tech.pegasys.teku.api.schema.Fork;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.Fork;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

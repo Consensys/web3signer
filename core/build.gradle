@@ -46,6 +46,9 @@ dependencies {
   implementation 'tech.pegasys.teku.internal:serializer'
   implementation 'tech.pegasys.teku.internal:spec'
   implementation 'tech.pegasys.teku.internal:unsigned'
+  implementation 'tech.pegasys.teku.internal:async'
+  implementation 'tech.pegasys.teku.internal:execution-types'
+
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 
   testImplementation (testFixtures(project(":signing")))

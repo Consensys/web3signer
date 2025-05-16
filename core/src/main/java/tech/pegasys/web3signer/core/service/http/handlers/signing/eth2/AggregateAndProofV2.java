@@ -12,10 +12,10 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
-import tech.pegasys.teku.api.schema.AggregateAndProof;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json.AggregateAndProofV2Deserializer;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json.AggregateAndProofV2Serializer;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.AggregateAndProof;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

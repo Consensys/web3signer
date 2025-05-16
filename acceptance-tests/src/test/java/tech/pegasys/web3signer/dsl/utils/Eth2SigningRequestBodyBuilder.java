@@ -12,10 +12,6 @@
  */
 package tech.pegasys.web3signer.dsl.utils;
 
-import tech.pegasys.teku.api.schema.AttestationData;
-import tech.pegasys.teku.api.schema.BeaconBlock;
-import tech.pegasys.teku.api.schema.VoluntaryExit;
-import tech.pegasys.teku.api.schema.altair.ContributionAndProof;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.AggregateAndProofV2;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.AggregationSlot;
@@ -27,6 +23,10 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoRev
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncAggregatorSelectionData;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncCommitteeMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ValidatorRegistration;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.AttestationData;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.BeaconBlock;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.VoluntaryExit;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.altair.ContributionAndProof;
 
 import org.apache.tuweni.bytes.Bytes;
 

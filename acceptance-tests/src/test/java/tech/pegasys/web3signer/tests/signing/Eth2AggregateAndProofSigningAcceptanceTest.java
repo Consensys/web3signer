@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.tests.signing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.teku.api.schema.Attestation;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
@@ -23,6 +22,7 @@ import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.Attestation;
 import tech.pegasys.web3signer.dsl.utils.Eth2AggregateAndProofSigningRequestUtil;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.signing.KeyType;

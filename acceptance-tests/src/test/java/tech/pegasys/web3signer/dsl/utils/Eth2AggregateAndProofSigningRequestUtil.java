@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.dsl.utils;
 
-import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.TestSpecFactory;
@@ -23,6 +22,7 @@ import tech.pegasys.teku.spec.util.DataStructureUtil;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.AggregateAndProofV2;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.Fork;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -52,8 +52,10 @@ public class Eth2AggregateAndProofSigningRequestUtil {
   }
 
   public Eth2SigningRequestBody createAggregateAndProofV2Request() {
-    final tech.pegasys.teku.api.schema.AggregateAndProof aggregateAndProof =
-        new tech.pegasys.teku.api.schema.AggregateAndProof(this.aggregateAndProof);
+    final tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.AggregateAndProof
+        aggregateAndProof =
+            new tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema
+                .AggregateAndProof(this.aggregateAndProof);
     return Eth2SigningRequestBodyBuilder.anEth2SigningRequestBody()
         .withType(ArtifactType.AGGREGATE_AND_PROOF_V2)
         .withSigningRoot(signingRoot)

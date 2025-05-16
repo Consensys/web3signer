@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.core.service.http.serializers;
 
-import tech.pegasys.teku.api.schema.BLSSignature;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.BLSSignature;
 
 import java.io.IOException;
 
