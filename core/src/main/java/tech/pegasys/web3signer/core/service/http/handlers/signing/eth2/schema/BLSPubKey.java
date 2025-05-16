@@ -10,23 +10,25 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.http.schema;
+package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import tech.pegasys.teku.bls.BLSConstants;
+import tech.pegasys.teku.bls.BLSPublicKey;
 
 import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes48;
 
-public class BLSSignature {
-  /** The number of bytes in this value - i.e. 96 */
-  private static final int SIZE = BLSConstants.BLS_SIGNATURE_SIZE;
+@SuppressWarnings("JavaCase")
+public class BLSPubKey {
+  /** The number of bytes in this value - i.e. 48 */
+  private static final int SIZE = 48;
 
   private final Bytes bytes;
 
-  public BLSSignature(final Bytes bytes) {
+  public BLSPubKey(final Bytes bytes) {
     checkArgument(
         bytes.size() == SIZE,
         "Bytes%s should be %s bytes, but was %s bytes.",
@@ -36,8 +38,8 @@ public class BLSSignature {
     this.bytes = bytes;
   }
 
-  public BLSSignature(final tech.pegasys.teku.bls.BLSSignature signature) {
-    this(signature.toBytesCompressed());
+  public BLSPubKey(final BLSPublicKey publicKey) {
+    this(publicKey.toSSZBytes());
   }
 
   @Override
@@ -48,8 +50,8 @@ public class BLSSignature {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final BLSSignature blsSignature = (BLSSignature) o;
-    return bytes.equals(blsSignature.bytes);
+    final BLSPubKey BLSSignature = (BLSPubKey) o;
+    return bytes.equals(BLSSignature.bytes);
   }
 
   @Override
@@ -62,23 +64,27 @@ public class BLSSignature {
     return bytes.toString();
   }
 
-  public static BLSSignature fromHexString(final String value) {
-    return new BLSSignature(Bytes.fromHexString(value));
+  public static BLSPubKey fromHexString(final String value) {
+    try {
+      return new BLSPubKey(BLSPublicKey.fromBytesCompressedValidate(Bytes48.fromHexString(value)));
+    } catch (IllegalArgumentException e) {
+      throw new PublicKeyException("Public key " + value + " is invalid: " + e.getMessage(), e);
+    }
   }
 
   public String toHexString() {
     return bytes.toHexString();
   }
 
-  public static BLSSignature empty() {
-    return new BLSSignature(tech.pegasys.teku.bls.BLSSignature.empty());
-  }
-
-  public final Bytes getBytes() {
+  public Bytes toBytes() {
     return bytes;
   }
 
-  public tech.pegasys.teku.bls.BLSSignature asInternalBLSSignature() {
-    return tech.pegasys.teku.bls.BLSSignature.fromBytesCompressed(bytes);
+  public static BLSPubKey empty() {
+    return new BLSPubKey(Bytes.wrap(new byte[SIZE]));
+  }
+
+  public BLSPublicKey asBLSPublicKey() {
+    return BLSPublicKey.fromSSZBytes(bytes);
   }
 }

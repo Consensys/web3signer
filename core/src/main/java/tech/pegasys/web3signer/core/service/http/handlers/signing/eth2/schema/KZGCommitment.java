@@ -10,25 +10,21 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.http.schema;
+package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema;
 
 import static com.google.common.base.Preconditions.checkArgument;
-
-import tech.pegasys.teku.bls.BLSPublicKey;
 
 import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes48;
 
-@SuppressWarnings("JavaCase")
-public class BLSPubKey {
+public class KZGCommitment {
   /** The number of bytes in this value - i.e. 48 */
   private static final int SIZE = 48;
 
   private final Bytes bytes;
 
-  public BLSPubKey(final Bytes bytes) {
+  public KZGCommitment(final Bytes bytes) {
     checkArgument(
         bytes.size() == SIZE,
         "Bytes%s should be %s bytes, but was %s bytes.",
@@ -38,8 +34,8 @@ public class BLSPubKey {
     this.bytes = bytes;
   }
 
-  public BLSPubKey(final BLSPublicKey publicKey) {
-    this(publicKey.toSSZBytes());
+  public KZGCommitment(final tech.pegasys.teku.kzg.KZGCommitment kzgCommitment) {
+    this(kzgCommitment.toSSZBytes());
   }
 
   @Override
@@ -50,8 +46,8 @@ public class BLSPubKey {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final BLSPubKey BLSSignature = (BLSPubKey) o;
-    return bytes.equals(BLSSignature.bytes);
+    final KZGCommitment other = (KZGCommitment) o;
+    return bytes.equals(other.bytes);
   }
 
   @Override
@@ -64,11 +60,12 @@ public class BLSPubKey {
     return bytes.toString();
   }
 
-  public static BLSPubKey fromHexString(final String value) {
+  public static KZGCommitment fromHexString(final String value) {
     try {
-      return new BLSPubKey(BLSPublicKey.fromBytesCompressedValidate(Bytes48.fromHexString(value)));
-    } catch (final IllegalArgumentException e) {
-      throw new RuntimeException("Public key " + value + " is invalid: " + e.getMessage(), e);
+      return new KZGCommitment(tech.pegasys.teku.kzg.KZGCommitment.fromHexString(value));
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+          "KZGCommitment " + value + " is invalid: " + e.getMessage(), e);
     }
   }
 
@@ -80,11 +77,11 @@ public class BLSPubKey {
     return bytes;
   }
 
-  public static BLSPubKey empty() {
-    return new BLSPubKey(Bytes.wrap(new byte[SIZE]));
+  public static KZGCommitment empty() {
+    return new KZGCommitment(Bytes.wrap(new byte[SIZE]));
   }
 
-  public BLSPublicKey asBLSPublicKey() {
-    return BLSPublicKey.fromSSZBytes(bytes);
+  public tech.pegasys.teku.kzg.KZGCommitment asInternalKZGCommitment() {
+    return tech.pegasys.teku.kzg.KZGCommitment.fromSSZBytes(bytes);
   }
 }

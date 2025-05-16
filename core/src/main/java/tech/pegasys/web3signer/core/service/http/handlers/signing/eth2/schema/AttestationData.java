@@ -10,9 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.http.schema;
-
-import static tech.pegasys.web3signer.core.service.http.schema.SchemaConstants.DESCRIPTION_BYTES32;
+package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema;
 
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 
@@ -20,18 +18,14 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.tuweni.bytes.Bytes32;
 
 @SuppressWarnings("JavaCase")
 public class AttestationData {
-  @Schema(type = "string", format = "uint64")
   public final UInt64 slot;
 
-  @Schema(type = "string", format = "uint64")
   public final UInt64 index;
 
-  @Schema(type = "string", format = "byte", description = DESCRIPTION_BYTES32)
   public final Bytes32 beacon_block_root;
 
   public final Checkpoint source;

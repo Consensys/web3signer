@@ -107,6 +107,7 @@ dependencyManagement {
       entry 'async'
       entry 'networks'
       entry 'json'
+      entry 'execution-types'
     }
 
     dependency 'tech.pegasys:jblst:0.3.12'

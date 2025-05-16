@@ -10,10 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.http.schema;
-
-import static tech.pegasys.web3signer.core.service.http.schema.SchemaConstants.DESCRIPTION_BYTES4;
-import static tech.pegasys.web3signer.core.service.http.schema.SchemaConstants.PATTERN_BYTES4;
+package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema;
 
 import tech.pegasys.teku.infrastructure.bytes.Bytes4;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
@@ -23,17 +20,13 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
-import io.swagger.v3.oas.annotations.media.Schema;
 
 @SuppressWarnings("JavaCase")
 public class Fork {
-  @Schema(type = "string", pattern = PATTERN_BYTES4, description = DESCRIPTION_BYTES4)
   public Bytes4 previous_version;
 
-  @Schema(type = "string", pattern = PATTERN_BYTES4, description = DESCRIPTION_BYTES4)
   public Bytes4 current_version;
 
-  @Schema(type = "string")
   public UInt64 epoch;
 
   @JsonCreator

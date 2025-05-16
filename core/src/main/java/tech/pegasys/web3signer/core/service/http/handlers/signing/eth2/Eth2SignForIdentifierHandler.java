@@ -19,8 +19,6 @@ import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TE
 import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.computeDomain;
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
-import tech.pegasys.teku.api.schema.altair.ContributionAndProof;
-import tech.pegasys.teku.api.schema.altair.SyncCommitteeContribution;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.constants.Domain;
 import tech.pegasys.teku.spec.datastructures.operations.versions.altair.SyncAggregatorSelectionDataSchema;
@@ -29,8 +27,10 @@ import tech.pegasys.teku.spec.signatures.SigningRootUtil;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.AttestationData;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.altair.ContributionAndProof;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.altair.SyncCommitteeContribution;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
-import tech.pegasys.web3signer.core.service.http.schema.AttestationData;
 import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 

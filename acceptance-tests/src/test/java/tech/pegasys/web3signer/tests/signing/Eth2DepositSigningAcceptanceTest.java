@@ -23,7 +23,7 @@ import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
-import tech.pegasys.web3signer.core.service.http.schema.BLSPubKey;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.BLSPubKey;
 import tech.pegasys.web3signer.dsl.utils.Eth2SigningRequestBodyBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 

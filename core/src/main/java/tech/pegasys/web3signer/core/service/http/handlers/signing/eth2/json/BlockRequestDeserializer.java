@@ -13,11 +13,11 @@
 package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json;
 
 import tech.pegasys.teku.api.exceptions.BadRequestException;
-import tech.pegasys.teku.api.schema.BeaconBlock;
-import tech.pegasys.teku.api.schema.BeaconBlockHeader;
-import tech.pegasys.teku.api.schema.altair.BeaconBlockAltair;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.BeaconBlock;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.BeaconBlockHeader;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.altair.BeaconBlockAltair;
 
 import java.io.IOException;
 

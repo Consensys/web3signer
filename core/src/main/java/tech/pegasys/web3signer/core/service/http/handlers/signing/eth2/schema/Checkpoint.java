@@ -10,26 +10,22 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.http.schema;
-
-import static tech.pegasys.web3signer.core.service.http.schema.SchemaConstants.DESCRIPTION_BYTES32;
+package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema;
 
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
-import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class Checkpoint {
   public static final Checkpoint EMPTY = new Checkpoint(UInt64.ZERO, Bytes32.ZERO);
 
-  @Schema(type = "string", format = "uint64")
   public final UInt64 epoch;
 
-  @Schema(type = "string", format = "byte", description = DESCRIPTION_BYTES32)
   public final Bytes32 root;
 
   public Checkpoint(final tech.pegasys.teku.spec.datastructures.state.Checkpoint checkpoint) {
@@ -49,20 +45,14 @@ public class Checkpoint {
   }
 
   @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof Checkpoint)) {
-      return false;
-    }
-    Checkpoint that = (Checkpoint) o;
-    return Objects.equal(epoch, that.epoch) && Objects.equal(root, that.root);
+  public boolean equals(Object o) {
+    if (!(o instanceof Checkpoint that)) return false;
+    return java.util.Objects.equals(epoch, that.epoch) && java.util.Objects.equals(root, that.root);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(epoch, root);
+    return Objects.hash(epoch, root);
   }
 
   @Override
