@@ -28,6 +28,7 @@ dependencies {
   implementation 'org.apache.commons:commons-lang3'
   implementation 'org.jdbi:jdbi3-core'
   implementation 'org.jdbi:jdbi3-sqlobject'
+  implementation 'io.consensys.tuweni:tuweni-units'
 
   implementation 'tech.pegasys.teku.internal:spec'
   implementation 'tech.pegasys.teku.internal:unsigned'
