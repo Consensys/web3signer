@@ -1,5 +1,10 @@
 # Changelog
 
+## Upcoming Release
+### Features Added
+- Updated Teku libraries to handle BPO configurations
+
+---
 ## 25.4.1
 ### Upcoming Breaking Changes
 > [!IMPORTANT]
