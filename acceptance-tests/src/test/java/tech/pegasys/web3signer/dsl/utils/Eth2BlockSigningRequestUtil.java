@@ -12,11 +12,6 @@
  */
 package tech.pegasys.web3signer.dsl.utils;
 
-import tech.pegasys.teku.api.schema.BeaconBlockHeader;
-import tech.pegasys.teku.api.schema.Fork;
-import tech.pegasys.teku.api.schema.altair.BeaconBlockAltair;
-import tech.pegasys.teku.api.schema.altair.BeaconBlockBodyAltair;
-import tech.pegasys.teku.api.schema.phase0.BeaconBlockPhase0;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.SpecMilestone;
@@ -28,6 +23,11 @@ import tech.pegasys.teku.spec.util.DataStructureUtil;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.BeaconBlockHeader;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.Fork;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.altair.BeaconBlockAltair;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.altair.BeaconBlockBodyAltair;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.phase0.BeaconBlockPhase0;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -99,7 +99,8 @@ public class Eth2BlockSigningRequestUtil {
         beaconBlock.getBodyRoot());
   }
 
-  private tech.pegasys.teku.api.schema.BeaconBlock getBeaconBlock() {
+  private tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.BeaconBlock
+      getBeaconBlock() {
     return switch (specMilestone) {
       case PHASE0 -> new BeaconBlockPhase0(beaconBlock);
       case ALTAIR ->

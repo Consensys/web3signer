@@ -92,7 +92,7 @@ dependencyManagement {
 
     dependency 'org.xipki.iaik:sunpkcs11-wrapper:1.4.10'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '25.4.1') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '25.5.0') {
       entry ('bls') {
         exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
       }
@@ -107,6 +107,7 @@ dependencyManagement {
       entry 'async'
       entry 'networks'
       entry 'json'
+      entry 'execution-types'
     }
 
     dependency 'tech.pegasys:jblst:0.3.12'
