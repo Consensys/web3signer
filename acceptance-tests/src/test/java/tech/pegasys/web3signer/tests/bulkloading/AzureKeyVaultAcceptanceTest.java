@@ -73,7 +73,8 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
             .withMode(calculateMode(keyType))
-            .withAzureKeyVaultParameters(azureParams);
+            .withAzureKeyVaultParameters(azureParams)
+            .withUseConfigFile(true);
 
     startSigner(configBuilder.build());
 
@@ -110,7 +111,8 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder()
             .withMode(calculateMode(keyType))
             .withUseConfigFile(useConfigFile)
-            .withAzureKeyVaultParameters(azureParams);
+            .withAzureKeyVaultParameters(azureParams)
+            .withUseConfigFile(true);
 
     startSigner(configBuilder.build());
 
@@ -154,7 +156,8 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
             .withMode(calculateMode(keyType))
-            .withAzureKeyVaultParameters(azureParams);
+            .withAzureKeyVaultParameters(azureParams)
+            .withUseConfigFile(true);
 
     startSigner(configBuilder.build());
 
@@ -183,7 +186,10 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
             envPrefix + "AZURE_TENANT_ID", TENANT_ID);
 
     final SignerConfigurationBuilder configBuilder =
-        new SignerConfigurationBuilder().withMode(calculateMode(keyType)).withEnvironment(env);
+        new SignerConfigurationBuilder()
+            .withMode(calculateMode(keyType))
+            .withEnvironment(env)
+            .withUseConfigFile(true);
 
     startSigner(configBuilder.build());
 

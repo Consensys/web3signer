@@ -89,7 +89,10 @@ public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
             VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET, TAG_FILTER);
 
     final SignerConfigurationBuilder configBuilder =
-        new SignerConfigurationBuilder().withMode("eth2").withAzureKeyVaultParameters(azureParams);
+        new SignerConfigurationBuilder()
+            .withMode("eth2")
+            .withAzureKeyVaultParameters(azureParams)
+            .withUseConfigFile(true);
 
     startSigner(configBuilder.build());
 
