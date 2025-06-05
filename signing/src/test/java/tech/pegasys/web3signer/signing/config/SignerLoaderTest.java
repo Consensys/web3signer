@@ -26,11 +26,9 @@ import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
-import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
-import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,8 +63,6 @@ class SignerLoaderTest {
   @TempDir Path configsDirectory;
   @Mock private MetricsSystem metricsSystem;
   @Mock private HashicorpConnectionFactory hashicorpConnectionFactory;
-  @Mock private InterlockKeyProvider interlockKeyProvider;
-  @Mock private YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
   @Mock private AwsSecretsManagerProvider awsSecretsManagerProvider;
   @Mock private AzureKeyVaultFactory azureKeyVaultFactory;
   @Mock private LabelledMetric<OperationTimer> privateKeyRetrievalTimer;
@@ -97,8 +93,6 @@ class SignerLoaderTest {
             configsDirectory,
             metricsSystem,
             hashicorpConnectionFactory,
-            interlockKeyProvider,
-            yubiHsmOpaqueDataProvider,
             awsSecretsManagerProvider,
             (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()),
             azureKeyVaultFactory);

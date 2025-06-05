@@ -52,10 +52,8 @@ import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
-import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
-import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.slashingprotection.DbHealthCheck;
 import tech.pegasys.web3signer.slashingprotection.DbPrunerRunner;
 import tech.pegasys.web3signer.slashingprotection.PostLoadingValidatorsProcessor;
@@ -184,18 +182,13 @@ public class Eth2Runner extends Runner {
       final MetricsSystem metricsSystem) {
     try (final HashicorpConnectionFactory hashicorpConnectionFactory =
             new HashicorpConnectionFactory();
-        final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
-        final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-            new YubiHsmOpaqueDataProvider();
         final AwsSecretsManagerProvider awsSecretsManagerProvider =
-            new AwsSecretsManagerProvider(awsVaultParameters.getCacheMaximumSize()); ) {
+            new AwsSecretsManagerProvider(awsVaultParameters.getCacheMaximumSize())) {
       final AbstractArtifactSignerFactory artifactSignerFactory =
           new BlsArtifactSignerFactory(
               baseConfig.getKeyConfigPath(),
               metricsSystem,
               hashicorpConnectionFactory,
-              interlockKeyProvider,
-              yubiHsmOpaqueDataProvider,
               awsSecretsManagerProvider,
               (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()),
               azureKeyVaultFactory);

@@ -31,8 +31,6 @@ import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
-import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
-import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -57,8 +55,6 @@ class YamlSignerParserMultiReadTest {
   private final BLSKeyPair blsKeyPair2 = BLSTestUtil.randomKeyPair(2);
   @Mock private MetricsSystem metricsSystem;
   @Mock private HashicorpConnectionFactory hashicorpConnectionFactory;
-  @Mock private InterlockKeyProvider interlockKeyProvider;
-  @Mock private YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
   @Mock private AwsSecretsManagerProvider awsSecretsManagerProvider;
   @Mock private AzureKeyVaultFactory azureKeyVaultFactory;
   @Mock private LabelledMetric<OperationTimer> privateKeyRetrievalTimer;
@@ -87,8 +83,6 @@ class YamlSignerParserMultiReadTest {
             configDir,
             metricsSystem,
             hashicorpConnectionFactory,
-            interlockKeyProvider,
-            yubiHsmOpaqueDataProvider,
             awsSecretsManagerProvider,
             (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()),
             azureKeyVaultFactory);

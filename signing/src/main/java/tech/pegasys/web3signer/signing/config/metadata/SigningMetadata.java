@@ -29,8 +29,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
       value = AzureSecretSigningMetadata.class,
       name = AzureSecretSigningMetadata.TYPE),
   @JsonSubTypes.Type(value = AzureKeySigningMetadata.class, name = AzureKeySigningMetadata.TYPE),
-  @JsonSubTypes.Type(value = InterlockSigningMetadata.class, name = InterlockSigningMetadata.TYPE),
-  @JsonSubTypes.Type(value = YubiHsmSigningMetadata.class, name = YubiHsmSigningMetadata.TYPE),
   @JsonSubTypes.Type(value = AwsKeySigningMetadata.class, name = AwsKeySigningMetadata.TYPE),
   @JsonSubTypes.Type(value = AwsKmsMetadata.class, name = AwsKmsMetadata.TYPE),
 })

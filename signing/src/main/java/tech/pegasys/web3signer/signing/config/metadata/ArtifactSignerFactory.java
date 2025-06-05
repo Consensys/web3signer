@@ -41,16 +41,6 @@ public interface ArtifactSignerFactory {
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(final InterlockSigningMetadata interlockSigningMetadata) {
-    throw new UnsupportedOperationException(
-        "Unable to generate a signer of requested type from supplied metadata");
-  }
-
-  default ArtifactSigner create(final YubiHsmSigningMetadata yubiHsmSigningMetadata) {
-    throw new UnsupportedOperationException(
-        "Unable to generate a signer of requested type from supplied metadata");
-  }
-
   default ArtifactSigner create(final AwsKeySigningMetadata awsKeySigningMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");

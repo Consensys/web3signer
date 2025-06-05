@@ -1,3 +1,0 @@
-type: interlock
-interlockUrl: https://testhost
-knownServersFile: ./testFile.txt
