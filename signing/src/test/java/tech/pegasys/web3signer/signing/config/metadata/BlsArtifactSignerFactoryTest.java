@@ -32,7 +32,6 @@ import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
-import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -62,7 +61,6 @@ class BlsArtifactSignerFactoryTest {
   private ArtifactSignerFactory artifactSignerFactory;
 
   private Vertx vertx;
-  private YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
   private AwsSecretsManagerProvider awsSecretsManagerProvider;
   private AzureKeyVaultFactory azureKeyVaultFactory;
 
@@ -82,7 +80,6 @@ class BlsArtifactSignerFactoryTest {
   @BeforeEach
   void setup() {
     vertx = Vertx.vertx();
-    yubiHsmOpaqueDataProvider = new YubiHsmOpaqueDataProvider();
     awsSecretsManagerProvider = new AwsSecretsManagerProvider(100);
     azureKeyVaultFactory = new AzureKeyVaultFactory();
 
@@ -91,7 +88,6 @@ class BlsArtifactSignerFactoryTest {
             configDir,
             new NoOpMetricsSystem(),
             new HashicorpConnectionFactory(),
-            yubiHsmOpaqueDataProvider,
             awsSecretsManagerProvider,
             (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin()),
             azureKeyVaultFactory);
@@ -99,7 +95,6 @@ class BlsArtifactSignerFactoryTest {
 
   @AfterEach
   void cleanup() {
-    yubiHsmOpaqueDataProvider.close();
     vertx.close();
   }
 

@@ -40,7 +40,6 @@ import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
-import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsSignerFactory;
 import tech.pegasys.web3signer.signing.secp256k1.aws.CachedAwsKmsClientFactory;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureHttpClientFactory;
@@ -132,27 +131,22 @@ public class Eth1Runner extends Runner {
       final AzureKeyVaultSignerFactory azureSignerFactory,
       final AwsKmsSignerFactory awsKmsSignerFactory) {
     final HashicorpConnectionFactory hashicorpConnectionFactory = new HashicorpConnectionFactory();
-    try (final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-        new YubiHsmOpaqueDataProvider()) {
+    final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
+        new Secp256k1ArtifactSignerFactory(
+            hashicorpConnectionFactory,
+            baseConfig.getKeyConfigPath(),
+            azureSignerFactory,
+            EthSecpArtifactSigner::new,
+            azureKeyVaultFactory,
+            awsKmsSignerFactory,
+            true);
 
-      final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
-          new Secp256k1ArtifactSignerFactory(
-              hashicorpConnectionFactory,
-              baseConfig.getKeyConfigPath(),
-              azureSignerFactory,
-              yubiHsmOpaqueDataProvider,
-              EthSecpArtifactSigner::new,
-              azureKeyVaultFactory,
-              awsKmsSignerFactory,
-              true);
-
-      return SignerLoader.load(
-          baseConfig.getKeyConfigPath(),
-          new YamlSignerParser(
-              List.of(ethSecpArtifactSignerFactory),
-              YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())),
-          baseConfig.keystoreParallelProcessingEnabled());
-    }
+    return SignerLoader.load(
+        baseConfig.getKeyConfigPath(),
+        new YamlSignerParser(
+            List.of(ethSecpArtifactSignerFactory),
+            YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())),
+        baseConfig.keystoreParallelProcessingEnabled());
   }
 
   private MappedResults<ArtifactSigner> bulkLoadSigners(

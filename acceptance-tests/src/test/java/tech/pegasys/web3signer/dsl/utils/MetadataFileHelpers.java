@@ -188,28 +188,6 @@ public class MetadataFileHelpers {
     }
   }
 
-  public void createYubihsmYamlFileAt(
-      final Path metadataFilePath,
-      final String pkcs11ModulePath,
-      final String connectorUrl,
-      final String additionalInitConfig,
-      final short authId,
-      final String password,
-      final int opaqueDataId,
-      final KeyType keyType) {
-    final Map<String, Serializable> yaml = new HashMap<>();
-    yaml.put("type", "yubihsm");
-    yaml.put("pkcs11ModulePath", pkcs11ModulePath);
-    yaml.put("connectorUrl", connectorUrl);
-    yaml.put("additionalInitConfig", additionalInitConfig);
-    yaml.put("authId", authId);
-    yaml.put("password", password);
-    yaml.put("opaqueDataId", opaqueDataId);
-    yaml.put("keyType", keyType.name());
-
-    createYamlFile(metadataFilePath, yaml);
-  }
-
   public void createAwsYamlFileAt(
       final Path metadataFilePath,
       final String awsRegion,
