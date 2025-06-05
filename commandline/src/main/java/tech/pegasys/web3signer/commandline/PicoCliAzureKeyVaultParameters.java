@@ -15,7 +15,7 @@ package tech.pegasys.web3signer.commandline;
 import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import picocli.CommandLine;
@@ -78,7 +78,7 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
       splitSynopsisLabel = "|",
       description = "Optional key-value pair to filter secrets based on tags.",
       paramLabel = "<TAG_NAME>=<TAG_VALUE>")
-  private Map<String, String> tags = Collections.emptyMap();
+  private Map<String, String> tags = new LinkedHashMap<>();
 
   @Override
   public boolean isAzureKeyVaultEnabled() {
