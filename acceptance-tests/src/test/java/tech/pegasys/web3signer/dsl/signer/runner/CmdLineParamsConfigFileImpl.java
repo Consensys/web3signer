@@ -54,6 +54,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -139,6 +140,13 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       signerConfig
           .getGcpParameters()
           .ifPresent(gcpParameters -> yamlConfigMap.putAll(gcpBulkLoadingOptions(gcpParameters)));
+
+      signerConfig
+          .getAzureKeyVaultParameters()
+          .ifPresent(
+              azureParams ->
+                  yamlConfigMap.putAll(
+                      azureBulkLoadingOptions(signerConfig.getMode(), azureParams)));
 
       if (signerConfig.isSigningExtEnabled()) {
         yamlConfigMap.put("eth2.Xsigning-ext-enabled", Boolean.TRUE);
@@ -230,8 +238,22 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     yamlConfigMap.put(mode + ".azure-client-id", azureParams.getClientId());
     yamlConfigMap.put(mode + ".azure-client-secret", azureParams.getClientSecret());
     yamlConfigMap.put(mode + ".azure-tenant-id", azureParams.getTenantId());
-    yamlConfigMap.put(mode + ".azure-tags", azureParams.getTags());
+    if (!azureParams.getTags().isEmpty()) {
+      yamlConfigMap.put(mode + ".azure-tags", mapToStringConcatenated(azureParams.getTags()));
+    }
     return yamlConfigMap;
+  }
+
+  /**
+   * Tags are key=value|key2=value2 format in the config file.
+   *
+   * @param map Tag Map
+   * @return key=value|key2=value2
+   */
+  private String mapToStringConcatenated(final Map<String, String> map) {
+    return map.entrySet().stream()
+        .map(entry -> entry.getKey() + "=" + entry.getValue())
+        .collect(Collectors.joining("|"));
   }
 
   private CommandArgs createSubCommandArgs() {
@@ -444,7 +466,8 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
 
     if (!awsVaultParameters.getTags().isEmpty()) {
       yamlConfigMap.put(
-          "eth2." + PrefixUtil.stripPrefix(AWS_SECRETS_TAG_OPTION), awsVaultParameters.getTags());
+          "eth2." + PrefixUtil.stripPrefix(AWS_SECRETS_TAG_OPTION),
+          mapToStringConcatenated(awsVaultParameters.getTags()));
     }
 
     awsVaultParameters
@@ -505,7 +528,8 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
 
     if (!awsVaultParameters.getTags().isEmpty()) {
       yamlConfigMap.put(
-          "eth1." + PrefixUtil.stripPrefix(AWS_KMS_TAG_OPTION), awsVaultParameters.getTags());
+          "eth1." + PrefixUtil.stripPrefix(AWS_KMS_TAG_OPTION),
+          mapToStringConcatenated(awsVaultParameters.getTags()));
     }
 
     awsVaultParameters

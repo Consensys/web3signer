@@ -1,6 +1,9 @@
 # Changelog
 
 ## Upcoming Release
+### Breaking Changes
+- Deprecated CLI option `--azure-secrets-tags` has been removed. Use `--azure-tags` instead.
+
 ### Features Added
 - Updated Teku libraries to handle BPO configurations
 

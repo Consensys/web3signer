@@ -21,7 +21,7 @@ import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTOR
 import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORD_FILE;
 
 import tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters;
-import tech.pegasys.web3signer.commandline.PicoCliEth1AzureKeyVaultParameters;
+import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.annotations.RequiredOption;
 import tech.pegasys.web3signer.commandline.config.PicoV3KeystoresBulkloadParameters;
 import tech.pegasys.web3signer.commandline.config.client.PicoCliClientTlsOptions;
@@ -150,7 +150,7 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
 
   @CommandLine.Mixin private PicoCliClientTlsOptions clientTlsOptions;
 
-  @CommandLine.Mixin private PicoCliEth1AzureKeyVaultParameters azureKeyVaultParameters;
+  @CommandLine.Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
   @CommandLine.Mixin private PicoV3KeystoresBulkloadParameters picoV3KeystoresBulkloadParameters;
 
