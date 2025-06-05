@@ -1,6 +1,11 @@
 # Changelog
 
 ## Upcoming Release
+### Breaking Changes
+- Deprecated CLI option `--azure-secrets-tags` has been removed. Use `--azure-tags` instead.
+- USB Armory II/Interlock support has been removed.
+- YubiHSM 2 support has been removed.
+
 ### Features Added
 - Updated Teku libraries to handle BPO configurations
 

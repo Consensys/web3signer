@@ -1,6 +1,0 @@
-type: interlock
-interlockUrl: https://testhost
-knownServersFile: ./testFile.txt
-volume: test
-password: test
-keyPath: /test.txt

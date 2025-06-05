@@ -17,7 +17,6 @@ public enum SignerOrigin {
   HASHICORP,
   AWS,
   GCP,
-  INTERLOCK,
   YUBI_HSM,
   FILE_KEYSTORE,
   FILE_RAW

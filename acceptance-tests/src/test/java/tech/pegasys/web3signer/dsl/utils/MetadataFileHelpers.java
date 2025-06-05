@@ -188,24 +188,6 @@ public class MetadataFileHelpers {
     }
   }
 
-  public void createInterlockYamlFileAt(
-      final Path metadataFilePath,
-      final Path knownServersFile,
-      final String keyPath,
-      final KeyType keyType) {
-    // these are default credentials of Interlock on USB Armory
-    final Map<String, String> yaml = new HashMap<>();
-    yaml.put("type", "interlock");
-    yaml.put("interlockUrl", "https://10.0.0.1");
-    yaml.put("knownServersFile", knownServersFile.toString());
-    yaml.put("volume", "armory");
-    yaml.put("password", "usbarmory");
-    yaml.put("keyPath", keyPath);
-    yaml.put("keyType", keyType.name());
-
-    createYamlFile(metadataFilePath, yaml);
-  }
-
   public void createYubihsmYamlFileAt(
       final Path metadataFilePath,
       final String pkcs11ModulePath,

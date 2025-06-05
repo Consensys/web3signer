@@ -38,7 +38,6 @@ import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import tech.pegasys.web3signer.signing.config.SecpArtifactSignerProviderAdapter;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
-import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
@@ -133,16 +132,14 @@ public class Eth1Runner extends Runner {
       final AzureKeyVaultSignerFactory azureSignerFactory,
       final AwsKmsSignerFactory awsKmsSignerFactory) {
     final HashicorpConnectionFactory hashicorpConnectionFactory = new HashicorpConnectionFactory();
-    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
-        final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-            new YubiHsmOpaqueDataProvider()) {
+    try (final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+        new YubiHsmOpaqueDataProvider()) {
 
       final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
           new Secp256k1ArtifactSignerFactory(
               hashicorpConnectionFactory,
               baseConfig.getKeyConfigPath(),
               azureSignerFactory,
-              interlockKeyProvider,
               yubiHsmOpaqueDataProvider,
               EthSecpArtifactSigner::new,
               azureKeyVaultFactory,
