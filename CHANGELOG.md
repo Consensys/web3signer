@@ -1,6 +1,6 @@
 # Changelog
 
-## Upcoming Release
+## 25.6.0
 ### Breaking Changes
 - Deprecated CLI option `--azure-secrets-tags` has been removed. Use `--azure-tags` instead.
 - USB Armory II/Interlock support has been removed.
@@ -8,6 +8,10 @@
 
 ### Features Added
 - Updated Teku libraries to handle BPO configurations
+
+### Known Issues
+Few customers have reported increasing memory usage with `/reload` API endpoint. We are investigating this issue and 
+will provide a fix in the next release. As a workaround, please restart Web3Signer instance when adding or removing keys.
 
 ---
 ## 25.4.1
