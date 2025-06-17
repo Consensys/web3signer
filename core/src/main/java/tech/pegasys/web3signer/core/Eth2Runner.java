@@ -155,19 +155,19 @@ public class Eth2Runner extends Runner {
       final Vertx vertx, final MetricsSystem metricsSystem) {
     return List.of(
         new DefaultArtifactSignerProvider(
-            createArtifactSignerSupplier(vertx, metricsSystem),
+            createArtifactSignerSupplier(metricsSystem),
             slashingProtectionContext.map(PostLoadingValidatorsProcessor::new),
             Optional.of(commitBoostApiParameters)));
   }
 
   private Supplier<Collection<ArtifactSigner>> createArtifactSignerSupplier(
-      final Vertx vertx, final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem) {
     return () -> {
       try (final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory()) {
         final List<ArtifactSigner> signers = new ArrayList<>();
         // load keys from key config files
         signers.addAll(
-            loadSignersFromKeyConfigFiles(vertx, azureKeyVaultFactory, metricsSystem).getValues());
+            loadSignersFromKeyConfigFiles(azureKeyVaultFactory, metricsSystem).getValues());
         // bulk load keys
         signers.addAll(bulkLoadSigners(azureKeyVaultFactory).getValues());
 
@@ -177,9 +177,7 @@ public class Eth2Runner extends Runner {
   }
 
   private MappedResults<ArtifactSigner> loadSignersFromKeyConfigFiles(
-      final Vertx vertx,
-      final AzureKeyVaultFactory azureKeyVaultFactory,
-      final MetricsSystem metricsSystem) {
+      final AzureKeyVaultFactory azureKeyVaultFactory, final MetricsSystem metricsSystem) {
     try (final HashicorpConnectionFactory hashicorpConnectionFactory =
             new HashicorpConnectionFactory();
         final AwsSecretsManagerProvider awsSecretsManagerProvider =

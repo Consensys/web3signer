@@ -50,7 +50,7 @@ public class BesuNodeFactory {
     params.add("--miner-enabled");
     params.add("--miner-coinbase");
     params.add("1b23ba34ca45bb56aa67bc78be89ac00ca00da00");
-    params.add("--host-whitelist");
+    params.add("--host-allowlist");
     params.add("*");
     params.add("--p2p-port");
     params.add("0");
@@ -68,9 +68,10 @@ public class BesuNodeFactory {
     params.add("ETH,NET,WEB3,EEA");
     params.add("--min-gas-price=0");
     params.add("--data-storage-format=FOREST"); // Required for privacy
-    params.add("--privacy-enabled");
-    params.add("--privacy-public-key-file");
-    params.add(privacyPublicKeyFilePath());
+    // Besu 25.6.0 has removed privacy support.
+    // params.add("--privacy-enabled");
+    // params.add("--privacy-public-key-file");
+    // params.add(privacyPublicKeyFilePath());
 
     config.getCors().ifPresent(cors -> params.addAll(List.of("--rpc-http-cors-origins", cors)));
 

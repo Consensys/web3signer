@@ -116,7 +116,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
     try {
       createVersionMetric(metricsSystem);
-      metricsService = MetricsService.create(vertx, metricsConfiguration, metricsSystem);
+      metricsService = MetricsService.create(metricsConfiguration, metricsSystem);
       metricsService.ifPresent(MetricsService::start);
 
       // load the artifact signer providers in order ...
@@ -225,7 +225,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
   private void createVersionMetric(final MetricsSystem metricsSystem) {
     metricsSystem
-        .createLabelledGauge(
+        .createLabelledSuppliedGauge(
             StandardMetricCategory.PROCESS, "release", "Release information", "version")
         .labels(() -> 1, ApplicationInfo.version());
   }
