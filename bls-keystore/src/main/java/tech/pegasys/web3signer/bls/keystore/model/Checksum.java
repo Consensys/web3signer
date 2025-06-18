@@ -55,7 +55,7 @@ public class Checksum {
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("function", checksumFunction)
-        .add("param", emptyParam)
+        .add("params", emptyParam)
         .add("message", message)
         .toString();
   }

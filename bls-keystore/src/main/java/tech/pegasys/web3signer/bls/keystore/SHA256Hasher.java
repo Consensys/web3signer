@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.bls.keystore;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -34,9 +36,10 @@ public class SHA256Hasher {
    *
    * @param input The Bytes to hash (non-null).
    * @return The SHA-256 hash in Bytes.
-   * @throws IllegalArgumentException if the input is {@code null}.
+   * @throws NullPointerException if the input is {@code null}.
    */
   public static Bytes calculateSHA256(final Bytes input) {
+    checkNotNull(input, "Input Bytes must not be null");
     MessageDigest digest = digestThreadLocal.get();
     try {
       digest.reset(); // Reset before reuse (important!)

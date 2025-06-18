@@ -24,6 +24,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -51,7 +52,7 @@ public class KeyStoreLoader {
     } catch (final JsonParseException e) {
       throw new KeyStoreValidationException("Invalid KeyStore: " + e.getMessage(), e);
     } catch (final JsonMappingException e) {
-      throw convertToKeyStoreValidationException(e);
+      throw unwrapJacksonException(e);
     } catch (final IOException e) {
       LOG.error("Unexpected IO error while reading KeyStore: " + e.getMessage());
       throw new KeyStoreValidationException(
@@ -72,15 +73,14 @@ public class KeyStoreLoader {
       return keyStoreData;
     } catch (final FileNotFoundException e) {
       throw new KeyStoreValidationException("KeyStore file not found: " + keystoreFile, e);
-    } catch (final JsonProcessingException e) {
-      throw convertToKeyStoreValidationException((JsonMappingException) e);
+    } catch (final JacksonException e) {
+      throw unwrapJacksonException(e);
     } catch (final IOException e) {
       throw new KeyStoreValidationException("Failed to read keystore file: " + e.getMessage(), e);
     }
   }
 
-  private static KeyStoreValidationException convertToKeyStoreValidationException(
-      final JsonMappingException e) {
+  private static KeyStoreValidationException unwrapJacksonException(final JacksonException e) {
     final String cause;
     if (e.getCause() instanceof final KeyStoreValidationException keyStoreValidationException) {
       // this is wrapped because it is raised from custom deserializer in KeyStoreBytesModule to
