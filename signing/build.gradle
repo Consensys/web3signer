@@ -17,6 +17,7 @@ jar {
 dependencies {
   implementation project(":common")
   implementation project(':keystorage')
+  implementation project(":bls-keystore")
 
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
   implementation 'com.github.arteam:simple-json-rpc-server'
@@ -29,7 +30,6 @@ dependencies {
   implementation 'org.hyperledger.besu:plugin-api'
   implementation 'org.web3j:core'
   implementation 'tech.pegasys.teku.internal:bls'
-  implementation 'tech.pegasys.teku.internal:bls-keystore'
   implementation 'tech.pegasys.teku.internal:serializer'
   implementation 'tech.pegasys.teku.internal:spec'
   implementation 'tech.pegasys.teku.internal:unsigned'
@@ -61,10 +61,10 @@ dependencies {
   testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
   testFixturesImplementation 'io.consensys.tuweni:tuweni-bytes'
-  testFixturesImplementation 'tech.pegasys.teku.internal:bls-keystore'
   testFixturesImplementation 'software.amazon.awssdk:auth'
   testFixturesImplementation 'software.amazon.awssdk:secretsmanager'
   testFixturesImplementation 'software.amazon.awssdk:kms'
   testFixturesImplementation 'com.google.cloud:google-cloud-secretmanager'
   testFixturesImplementation project(":common")
+  testFixturesImplementation project(":bls-keystore")
 }

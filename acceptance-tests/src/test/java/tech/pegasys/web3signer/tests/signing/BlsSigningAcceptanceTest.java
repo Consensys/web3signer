@@ -23,7 +23,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
-import tech.pegasys.teku.bls.keystore.model.KdfFunction;
+import tech.pegasys.web3signer.bls.keystore.model.KdfFunction;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.AwsSecretsManagerUtil;

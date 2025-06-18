@@ -14,10 +14,10 @@ package tech.pegasys.web3signer.signing.config.metadata;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
-import tech.pegasys.teku.bls.keystore.KeyStore;
-import tech.pegasys.teku.bls.keystore.KeyStoreLoader;
-import tech.pegasys.teku.bls.keystore.KeyStoreValidationException;
-import tech.pegasys.teku.bls.keystore.model.KeyStoreData;
+import tech.pegasys.web3signer.bls.keystore.KeyStore;
+import tech.pegasys.web3signer.bls.keystore.KeyStoreLoader;
+import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
+import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManager;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
