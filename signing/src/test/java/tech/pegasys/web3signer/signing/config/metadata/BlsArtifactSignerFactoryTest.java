@@ -138,7 +138,7 @@ class BlsArtifactSignerFactoryTest {
 
     assertThatThrownBy(() -> artifactSignerFactory.create(fileKeyStoreMetadata))
         .isInstanceOf(SigningMetadataException.class)
-        .hasMessageStartingWith("KeyStore file not found")
+        .hasMessageStartingWith("Failed to read keystore file:")
         .hasMessageContaining(nonExistingKeystoreFile.toString());
   }
 
