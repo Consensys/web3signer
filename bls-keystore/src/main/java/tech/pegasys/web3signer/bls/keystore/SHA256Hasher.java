@@ -40,8 +40,9 @@ public class SHA256Hasher {
    */
   public static Bytes calculateSHA256(final Bytes input) {
     checkNotNull(input, "Input Bytes must not be null");
-    MessageDigest digest = digestThreadLocal.get();
-      digest.reset(); // Reset before reuse (important!)
-      return Bytes.wrap(digest.digest(input.toArrayUnsafe()));
+    final MessageDigest digest = digestThreadLocal.get();
+    digest.reset(); // Reset before reuse (important!)
+    final byte[] byteDigestArray = digest.digest(input.toArrayUnsafe());
+    return Bytes.wrap(byteDigestArray);
   }
 }
