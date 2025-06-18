@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright 2025 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,21 +10,17 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package tech.pegasys.web3signer.bls.keystore.model;
 
-rootProject.name='web3signer'
-include 'app'
-include 'acceptance-tests'
-include 'bls-keystore'
-include 'commandline'
-include 'common'
-include 'core'
-include 'keystorage'
-include 'signing'
-include 'slashing-protection'
-include 'slashing-protection:referencetests'
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-dependencyResolutionManagement {
-  repositories {
-    mavenCentral()
+/** Placeholder for empty params */
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class EmptyParam {
+  public EmptyParam() {}
+
+  @Override
+  public String toString() {
+    return "";
   }
 }
