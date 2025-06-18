@@ -27,6 +27,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.web3j.crypto.Hash;
 import org.web3j.crypto.StructuredDataEncoder;
 
 public class EthSignTypedDataResultProvider implements ResultProvider<String> {
@@ -56,11 +57,15 @@ public class EthSignTypedDataResultProvider implements ResultProvider<String> {
     try {
       dataEncoder = new StructuredDataEncoder(jsonData);
     } catch (IOException e) {
-      throw new RuntimeException("Exception thrown while encoding the json provided");
+      throw new RuntimeException("Exception thrown while encoding the json provided", e);
     }
+    
+    // Get EIP-712 structured data and hash it to get the final 32-byte hash to sign
     final Bytes structuredData = Bytes.of(dataEncoder.getStructuredData());
+    final Bytes finalHash = Bytes.of(Hash.sha3(structuredData.toArrayUnsafe()));
+    
     return transactionSignerProvider
-        .sign(normaliseIdentifier(eth1Address), structuredData)
+        .signHashed(normaliseIdentifier(eth1Address), finalHash)
         .orElseThrow(
             () -> {
               LOG.debug("Address ({}) does not match any available account", eth1Address);

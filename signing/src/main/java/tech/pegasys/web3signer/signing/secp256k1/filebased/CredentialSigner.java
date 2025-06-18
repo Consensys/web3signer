@@ -49,6 +49,25 @@ public class CredentialSigner implements Signer {
         new BigInteger(1, signature.getS()));
   }
 
+  /**
+   * Signs already hashed data without applying additional hashing. This is used for EIP-712
+   * structured data signing where the hash is already computed.
+   *
+   * @param hashedData the already hashed data to sign (must be 32 bytes)
+   * @return the signature
+   */
+  public Signature signHashed(final byte[] hashedData) {
+    if (hashedData.length != 32) {
+      throw new IllegalArgumentException("Hash data must be exactly 32 bytes, got: " + hashedData.length);
+    }
+    
+    final SignatureData signature = Sign.signMessage(hashedData, credentials.getEcKeyPair(), false);
+    return new Signature(
+        new BigInteger(signature.getV()),
+        new BigInteger(1, signature.getR()),
+        new BigInteger(1, signature.getS()));
+  }
+
   @Override
   public ECPublicKey getPublicKey() {
     return publicKey;

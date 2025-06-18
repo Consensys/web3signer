@@ -18,7 +18,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.web3j.crypto.Keys.getAddress;
-import static org.web3j.crypto.Sign.signMessage;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
 
@@ -53,6 +52,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.Keys;
 import org.web3j.crypto.Sign;
+import org.web3j.crypto.StructuredDataEncoder;
 import org.web3j.utils.Numeric;
 
 @ExtendWith(MockitoExtension.class)
@@ -110,15 +110,26 @@ public class EthSignTypedDataResultProviderTest {
   @ParameterizedTest
   @ValueSource(strings = {EIP712_VALID_JSON})
   public void returnsExpectedSignature(final String message) throws IOException {
+    // Generate expected structured data hash using Web3j
+    final StructuredDataEncoder dataEncoder = new StructuredDataEncoder(message);
+    final byte[] structuredData = dataEncoder.getStructuredData(); // This is 66 bytes: 0x1901 || domainSeparator || hashStruct(message)
+    final byte[] expectedHashedData = org.web3j.crypto.Hash.sha3(structuredData); // Hash it to get 32 bytes
+
+    // Use Web3j to sign the typed data and get the expected signature
+    final Sign.SignatureData expectedSignatureData = Sign.signTypedData(message, KEY_PAIR);
+    final String expectedHexSignature = hexFromSignatureData(expectedSignatureData);
 
     doAnswer(
             answer -> {
               Bytes data = answer.getArgument(1, Bytes.class);
-              final Sign.SignatureData signatureData = signMessage(data.toArrayUnsafe(), KEY_PAIR);
-              return Optional.of(hexFromSignatureData(signatureData));
+              // Verify that the data passed to signHashed matches the expected EIP-712 hash
+              assertThat(data.toArrayUnsafe()).isEqualTo(expectedHashedData);
+
+              // Return the expected signature that matches what Web3j would produce
+              return Optional.of(expectedHexSignature);
             })
         .when(transactionSignerProvider)
-        .sign(anyString(), any(Bytes.class));
+        .signHashed(anyString(), any(Bytes.class));
 
     final EthSignTypedDataResultProvider resultProvider =
         new EthSignTypedDataResultProvider(transactionSignerProvider);
@@ -131,8 +142,9 @@ public class EthSignTypedDataResultProviderTest {
     final Object result = resultProvider.createResponseResult(request);
     assertThat(result).isInstanceOf(String.class);
     final String hexSignature = (String) result;
-    Sign.SignatureData expectedSignature = Sign.signTypedData(message, KEY_PAIR);
-    assertThat(hexSignature).isEqualTo(hexFromSignatureData(expectedSignature));
+
+    // The signature should match what Web3j produces for the same typed data
+    assertThat(hexSignature).isEqualTo(expectedHexSignature);
   }
 
   private static class InvalidParamsProvider implements ArgumentsProvider {
