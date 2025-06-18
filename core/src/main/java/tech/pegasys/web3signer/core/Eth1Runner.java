@@ -103,7 +103,7 @@ public class Eth1Runner extends Runner {
                   new AwsKmsSignerFactory(cachedAwsKmsClientFactory, true);
               signers.addAll(
                   loadSignersFromKeyConfigFiles(
-                          vertx, azureKeyVaultFactory, azureSignerFactory, awsKmsSignerFactory)
+                          azureKeyVaultFactory, azureSignerFactory, awsKmsSignerFactory)
                       .getValues());
               signers.addAll(
                   bulkLoadSigners(
@@ -126,7 +126,6 @@ public class Eth1Runner extends Runner {
   }
 
   private MappedResults<ArtifactSigner> loadSignersFromKeyConfigFiles(
-      final Vertx vertx,
       final AzureKeyVaultFactory azureKeyVaultFactory,
       final AzureKeyVaultSignerFactory azureSignerFactory,
       final AwsKmsSignerFactory awsKmsSignerFactory) {

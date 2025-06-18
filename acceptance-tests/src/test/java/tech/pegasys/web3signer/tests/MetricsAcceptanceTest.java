@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -97,13 +96,17 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final Set<String> metricsOfInterest =
         Set.of(
-            "signing_" + SECP256K1.name().toLowerCase(Locale.ROOT) + "_signing_duration_count",
-            "signing_"
-                + SECP256K1.name().toLowerCase(Locale.ROOT)
-                + "_missing_identifier_count_total");
+            "signing_secp256k1_signing_duration_count",
+            "signing_secp256k1_missing_identifier_count_total");
     final Map<String, String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
-    assertThat(initialMetrics).values().allMatch(s -> s.endsWith("0.0"));
+    assertThat(initialMetrics)
+        .containsAllEntriesOf(
+            Map.of(
+                "signing_secp256k1_signing_duration_count",
+                "0",
+                "signing_secp256k1_missing_identifier_count_total",
+                "0.0"));
 
     signer.eth1Sign(
         Numeric.toHexStringWithPrefixZeroPadded(keyPair.getPublicKey(), 128),
@@ -113,11 +116,9 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     assertThat(metricsAfterSign)
         .containsAllEntriesOf(
             Map.of(
-                "signing_" + SECP256K1.name().toLowerCase(Locale.ROOT) + "_signing_duration_count",
-                "1.0",
-                "signing_"
-                    + SECP256K1.name().toLowerCase(Locale.ROOT)
-                    + "_missing_identifier_count_total",
+                "signing_secp256k1_signing_duration_count",
+                "1",
+                "signing_secp256k1_missing_identifier_count_total",
                 "0.0"));
   }
 
@@ -143,12 +144,16 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     startSigner(signerConfiguration);
 
     final Set<String> metricsOfInterest =
-        Set.of(
-            "signing_" + BLS.name().toLowerCase(Locale.ROOT) + "_signing_duration_count",
-            "signing_" + BLS.name().toLowerCase(Locale.ROOT) + "_missing_identifier_count_total");
+        Set.of("signing_bls_signing_duration_count", "signing_bls_missing_identifier_count_total");
     final Map<String, String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
-    assertThat(initialMetrics).values().allMatch(s -> s.endsWith("0.0"));
+    assertThat(initialMetrics)
+        .containsAllEntriesOf(
+            Map.of(
+                "signing_bls_signing_duration_count",
+                "0",
+                "signing_bls_missing_identifier_count_total",
+                "0.0"));
 
     signer.eth2Sign(
         keyPair.getPublicKey().toBytesCompressed().toHexString(),
@@ -158,10 +163,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     assertThat(metricsAfterSign)
         .containsAllEntriesOf(
             Map.of(
-                "signing_" + BLS.name().toLowerCase(Locale.ROOT) + "_signing_duration_count", "1.0",
-                "signing_"
-                        + BLS.name().toLowerCase(Locale.ROOT)
-                        + "_missing_identifier_count_total",
-                    "0.0"));
+                "signing_bls_signing_duration_count", "1",
+                "signing_bls_missing_identifier_count_total", "0.0"));
   }
 }
