@@ -41,11 +41,7 @@ public class SHA256Hasher {
   public static Bytes calculateSHA256(final Bytes input) {
     checkNotNull(input, "Input Bytes must not be null");
     MessageDigest digest = digestThreadLocal.get();
-    try {
       digest.reset(); // Reset before reuse (important!)
       return Bytes.wrap(digest.digest(input.toArrayUnsafe()));
-    } finally {
-      digest.reset();
-    }
   }
 }
