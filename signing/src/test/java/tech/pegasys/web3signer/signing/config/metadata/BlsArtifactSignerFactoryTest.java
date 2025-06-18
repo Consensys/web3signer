@@ -18,6 +18,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.fail;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
+import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.bls.keystore.KeyStore;
 import tech.pegasys.web3signer.bls.keystore.KeyStoreLoader;
 import tech.pegasys.web3signer.bls.keystore.model.Cipher;
@@ -25,7 +26,6 @@ import tech.pegasys.web3signer.bls.keystore.model.CipherFunction;
 import tech.pegasys.web3signer.bls.keystore.model.KdfParam;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.bls.keystore.model.SCryptParam;
-import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
