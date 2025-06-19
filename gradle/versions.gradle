@@ -58,7 +58,6 @@ dependencyManagement {
     dependencySet(group: 'io.consensys.tuweni', version: '2.7.0') {
       entry 'tuweni-net'
       entry 'tuweni-bytes'
-      entry 'tuweni-crypto'
       entry 'tuweni-units'
       entry 'tuweni-io'
     }
@@ -94,9 +93,6 @@ dependencyManagement {
 
     dependencySet(group: 'tech.pegasys.teku.internal', version: '25.5.0') {
       entry ('bls') {
-        exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
-      }
-      entry ('bls-keystore') {
         exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
       }
       entry ('spec') {
