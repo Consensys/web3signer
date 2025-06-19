@@ -52,7 +52,7 @@ public class KeyStoreLoader {
     } catch (final JsonParseException e) {
       throw new KeyStoreValidationException("Invalid KeyStore: " + e.getMessage(), e);
     } catch (final JsonMappingException e) {
-      throw unwrapJacksonException(e);
+      throw convertToKeyStoreValidationException(e);
     } catch (final IOException e) {
       LOG.error("Unexpected IO error while reading KeyStore: " + e.getMessage());
       throw new KeyStoreValidationException(
@@ -74,26 +74,26 @@ public class KeyStoreLoader {
     } catch (final FileNotFoundException e) {
       throw new KeyStoreValidationException("KeyStore file not found: " + keystoreFile, e);
     } catch (final JacksonException e) {
-      throw unwrapJacksonException(e);
+      throw convertToKeyStoreValidationException(e);
     } catch (final IOException e) {
       throw new KeyStoreValidationException("Failed to read keystore file: " + e.getMessage(), e);
     }
   }
 
-  private static KeyStoreValidationException unwrapJacksonException(final JacksonException e) {
-    final String cause;
+  private static KeyStoreValidationException convertToKeyStoreValidationException(
+      final JacksonException e) {
+    // KeyStoreBytesModule throws KeyStoreValidationException for enum validation errors
     if (e.getCause() instanceof final KeyStoreValidationException keyStoreValidationException) {
-      // this is wrapped because it is raised from custom deserializer in KeyStoreBytesModule to
-      // validate enums
       throw keyStoreValidationException;
     }
 
+    final String message;
     if (e instanceof final InvalidTypeIdException invalidTypeIdException) {
-      cause = getKdfFunctionErrorMessage(invalidTypeIdException);
+      message = getKdfFunctionErrorMessage(invalidTypeIdException);
     } else {
-      cause = "Invalid KeyStore: " + e.getMessage();
+      message = "Invalid KeyStore: " + e.getMessage();
     }
-    return new KeyStoreValidationException(cause, e);
+    return new KeyStoreValidationException(message, e);
   }
 
   private static String getKdfFunctionErrorMessage(final InvalidTypeIdException e) {
