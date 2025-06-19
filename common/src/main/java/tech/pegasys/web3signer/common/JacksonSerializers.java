@@ -31,9 +31,12 @@ public class JacksonSerializers {
     @Override
     public Bytes deserialize(final JsonParser p, final DeserializationContext ctxt) {
       try {
-        return Bytes.fromBase64String(p.getValueAsString());
+        final String valueAsString = p.getValueAsString();
+        return Bytes.fromBase64String(valueAsString);
       } catch (final Exception e) {
-        throw new RuntimeException("Failed to decode as a Base64 string.", e);
+        final String valueAsString = safeGetValueAsString(p);
+        throw new RuntimeException(
+            String.format("Failed to decode '%s' as a Base64 string", valueAsString), e);
       }
     }
   }
@@ -52,9 +55,12 @@ public class JacksonSerializers {
     @Override
     public Bytes deserialize(final JsonParser p, final DeserializationContext ctxt) {
       try {
-        return Bytes.fromHexString(p.getValueAsString());
+        final String valueAsString = p.getValueAsString();
+        return Bytes.fromHexString(valueAsString);
       } catch (final Exception e) {
-        throw new RuntimeException("Failed to decode as a hex string", e);
+        final String valueAsString = safeGetValueAsString(p);
+        throw new RuntimeException(
+            String.format("Failed to decode '%s' as a hex string", valueAsString), e);
       }
     }
   }
@@ -73,9 +79,12 @@ public class JacksonSerializers {
     @Override
     public BigInteger deserialize(final JsonParser p, final DeserializationContext ctxt) {
       try {
-        return new BigInteger(p.getValueAsString());
+        final String valueAsString = p.getValueAsString();
+        return new BigInteger(valueAsString);
       } catch (final Exception e) {
-        throw new RuntimeException("Failed to parse string as a BigInteger", e);
+        final String valueAsString = safeGetValueAsString(p);
+        throw new RuntimeException(
+            String.format("Failed to parse '%s' as a BigInteger", valueAsString), e);
       }
     }
   }
@@ -95,7 +104,9 @@ public class JacksonSerializers {
       try {
         return UInt64.valueOf(p.getBigIntegerValue());
       } catch (final Exception e) {
-        throw new RuntimeException("Failed to parse integer as a UInt64", e);
+        final String valueAsString = safeGetValueAsString(p);
+        throw new RuntimeException(
+            String.format("Failed to parse '%s' as a UInt64", valueAsString), e);
       }
     }
   }
@@ -113,9 +124,12 @@ public class JacksonSerializers {
     @Override
     public UInt64 deserialize(final JsonParser p, final DeserializationContext ctxt) {
       try {
-        return UInt64.valueOf(new BigInteger(p.getValueAsString()));
+        final String valueAsString = p.getValueAsString();
+        return UInt64.valueOf(new BigInteger(valueAsString));
       } catch (final Exception e) {
-        throw new RuntimeException("Failed to parse string as a UInt64", e);
+        final String valueAsString = safeGetValueAsString(p);
+        throw new RuntimeException(
+            String.format("Failed to parse '%s' as a UInt64", valueAsString), e);
       }
     }
   }
@@ -126,6 +140,20 @@ public class JacksonSerializers {
         final UInt64 value, final JsonGenerator gen, final SerializerProvider serializers)
         throws IOException {
       gen.writeString(value.toString());
+    }
+  }
+
+  /**
+   * Safely get value as string from parser, handling potential exceptions.
+   *
+   * @param p JsonParser
+   * @return String representation of the value or placeholder if extraction fails
+   */
+  private static String safeGetValueAsString(final JsonParser p) {
+    try {
+      return p.getValueAsString();
+    } catch (Exception e) {
+      return "<unable to extract value>";
     }
   }
 }
