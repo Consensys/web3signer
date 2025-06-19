@@ -39,15 +39,9 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
  */
 public class KeyStore {
   private static final BouncyCastleProvider BC = new BouncyCastleProvider();
-  private static final ThreadLocal<javax.crypto.Cipher> CIPHER_THREAD_LOCAL =
-      ThreadLocal.withInitial(
-          () -> {
-            try {
-              return javax.crypto.Cipher.getInstance("AES/CTR/NoPadding", BC);
-            } catch (GeneralSecurityException e) {
-              throw new KeyStoreValidationException("Failed to initialize Cipher", e);
-            }
-          });
+  private static final String AES_CTR_NO_PADDING = "AES/CTR/NoPadding";
+  public static final int AES_KEY_LENGTH = 16;
+  public static final String AES = "AES";
 
   /**
    * Encrypt the given BLS12-381 key with specified password.
@@ -155,10 +149,10 @@ public class KeyStore {
   private static Bytes applyCipherFunction(
       final Bytes key, final Cipher cipher, final boolean isEncrypt, final byte[] inputMessage) {
     // aes-128-ctr needs first 16 bytes for its key. The 2nd 16 bytes are used to create checksum
-    final SecretKeySpec secretKey = new SecretKeySpec(key.slice(0, 16).toArrayUnsafe(), "AES");
-    final IvParameterSpec iv = new IvParameterSpec(cipher.getCipherParam().getIv().toArrayUnsafe());
+    var secretKey = new SecretKeySpec(key.slice(0, AES_KEY_LENGTH).toArrayUnsafe(), AES);
+    var iv = new IvParameterSpec(cipher.getCipherParam().getIv().toArrayUnsafe());
     try {
-      final javax.crypto.Cipher jceCipher = CIPHER_THREAD_LOCAL.get();
+      var jceCipher = javax.crypto.Cipher.getInstance(AES_CTR_NO_PADDING, BC);
       jceCipher.init(isEncrypt ? ENCRYPT_MODE : DECRYPT_MODE, secretKey, iv);
       return Bytes.wrap(jceCipher.doFinal(inputMessage));
     } catch (final GeneralSecurityException e) {

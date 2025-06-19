@@ -18,31 +18,28 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class SHA256Hasher {
-  // Thread-local MessageDigest for thread safety and performance
-  private static final ThreadLocal<MessageDigest> digestThreadLocal =
-      ThreadLocal.withInitial(
-          () -> {
-            try {
-              return MessageDigest.getInstance("SHA-256");
-            } catch (NoSuchAlgorithmException e) {
-              throw new RuntimeException("Failed to initialize SHA-256 MessageDigest", e);
-            }
-          });
+  private static final BouncyCastleProvider BC = new BouncyCastleProvider();
+  private static final String SHA_256 = "SHA-256";
 
   /**
-   * Computes the SHA-256 hash of the input byte array.
+   * Computes the SHA-256 hash of the input bytes using BouncyCastle provider.
    *
-   * @param input The Bytes to hash (non-null).
-   * @return The SHA-256 hash in Bytes.
-   * @throws NullPointerException if the input is {@code null}.
+   * @param input The Bytes to hash (non-null)
+   * @return 32-byte SHA-256 hash
+   * @throws NullPointerException if input is null
+   * @throws RuntimeException if SHA-256 algorithm is unavailable (unlikely)
    */
   public static Bytes calculateSHA256(final Bytes input) {
     checkNotNull(input, "Input Bytes must not be null");
-    final MessageDigest digest = digestThreadLocal.get();
-    digest.reset(); // Reset before reuse (important!)
-    final byte[] byteDigestArray = digest.digest(input.toArrayUnsafe());
-    return Bytes.wrap(byteDigestArray);
+
+    try {
+      return Bytes.wrap(MessageDigest.getInstance(SHA_256, BC).digest(input.toArrayUnsafe()));
+    } catch (NoSuchAlgorithmException e) {
+      // This should never happen since SHA-256 is a standard algorithm
+      throw new RuntimeException(e);
+    }
   }
 }
