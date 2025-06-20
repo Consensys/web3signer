@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.signing;
 
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
+import tech.pegasys.web3signer.signing.secp256k1.filebased.CredentialSigner;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 
 import java.util.Objects;
@@ -36,6 +37,25 @@ public class EthSecpArtifactSigner implements ArtifactSigner {
   @Override
   public SecpArtifactSignature sign(final Bytes message) {
     return new SecpArtifactSignature(signer.sign(message.toArray()));
+  }
+
+  /**
+   * Signs already hashed data without applying additional hashing. This is specifically for EIP-712
+   * structured data signing where the hash is pre-computed.
+   *
+   * @param hashedMessage the already hashed message to sign
+   * @return the signature
+   * @throws UnsupportedOperationException if the underlying signer doesn't support pre-hashed
+   *     signing
+   */
+  public SecpArtifactSignature signHashed(final Bytes hashedMessage) {
+    if (signer instanceof CredentialSigner) {
+      return new SecpArtifactSignature(
+          ((CredentialSigner) signer).signHashed(hashedMessage.toArray()));
+    }
+    throw new UnsupportedOperationException(
+        "Signing pre-hashed data is not supported by this signer type: "
+            + signer.getClass().getSimpleName());
   }
 
   @Override

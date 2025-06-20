@@ -12,7 +12,9 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
+import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 
 import java.util.Optional;
 
@@ -40,6 +42,30 @@ public class SignerForIdentifier {
    */
   public Optional<String> sign(final String identifier, final Bytes data) {
     return signerProvider.getSigner(identifier).map(signer -> signer.sign(data).asHex());
+  }
+
+  /**
+   * Sign already hashed data for given identifier. This is specifically for EIP-712 structured data
+   * signing where the hash is pre-computed.
+   *
+   * @param identifier The identifier for which to sign data.
+   * @param hashedData Hashed data to be signed
+   * @return Optional String of signature (in hex format). Empty if no signer available for given
+   *     identifier
+   * @throws UnsupportedOperationException if the signer doesn't support pre-hashed signing
+   */
+  public Optional<String> signHashed(final String identifier, final Bytes hashedData) {
+    return signerProvider
+        .getSigner(identifier)
+        .map(
+            signer -> {
+              if (signer instanceof EthSecpArtifactSigner) {
+                return ((EthSecpArtifactSigner) signer).signHashed(hashedData).asHex();
+              }
+              throw new UnsupportedOperationException(
+                  "Signing pre-hashed data is not supported by this signer type: "
+                      + signer.getClass().getSimpleName());
+            });
   }
 
   /**
