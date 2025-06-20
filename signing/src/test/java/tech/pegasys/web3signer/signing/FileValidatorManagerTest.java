@@ -16,15 +16,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static tech.pegasys.teku.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
+import static tech.pegasys.web3signer.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.keystore.KeyStore;
-import tech.pegasys.teku.bls.keystore.model.Cipher;
-import tech.pegasys.teku.bls.keystore.model.CipherFunction;
-import tech.pegasys.teku.bls.keystore.model.KeyStoreData;
-import tech.pegasys.teku.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.web3signer.BLSTestUtil;
+import tech.pegasys.web3signer.bls.keystore.KeyStore;
+import tech.pegasys.web3signer.bls.keystore.model.Cipher;
+import tech.pegasys.web3signer.bls.keystore.model.CipherFunction;
+import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
+import tech.pegasys.web3signer.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SigningMetadataModule;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 
