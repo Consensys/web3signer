@@ -17,12 +17,12 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
 import static org.web3j.crypto.Keys.getAddress;
 import static org.web3j.crypto.Sign.signMessage;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignTypedDataResultProvider;
@@ -64,7 +64,8 @@ public class EthSignTypedDataResultProviderTest {
       "0x506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aab"
           + "a645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76";
 
-  private static final String EIP712_VALID_JSON = """
+  private static final String EIP712_VALID_JSON =
+      """
     {
         "types": {
             "EIP712Domain": [
@@ -144,6 +145,8 @@ public class EthSignTypedDataResultProviderTest {
         .when(transactionSignerProvider)
         .sign(anyString(), any(Bytes.class));
 
+    when(transactionSignerProvider.isSignerAvailable(anyString())).thenReturn(true);
+
     final EthSignTypedDataResultProvider resultProvider =
         new EthSignTypedDataResultProvider(transactionSignerProvider);
 
@@ -151,8 +154,6 @@ public class EthSignTypedDataResultProviderTest {
     final int id = 1;
     request.setId(new JsonRpcRequestId(id));
     request.setParams(List.of("address", message));
-
-    // System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(request));
 
     final Object result = resultProvider.createResponseResult(request);
     assertThat(result).isInstanceOf(String.class);
