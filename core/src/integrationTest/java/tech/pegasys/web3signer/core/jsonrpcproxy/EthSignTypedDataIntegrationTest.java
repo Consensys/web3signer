@@ -99,6 +99,7 @@ public class EthSignTypedDataIntegrationTest extends IntegrationTestBase {
         new JsonRpcSuccessResponse(
             requestBody.getId(),
             "0x11cb46f70ad43da86e15ca7c6bb28356859a5f4ba430b44dbf1e65726d467be6072be9d1e5b40bd5b7abe8888eb91a69f0e6d56a8a094718ed8080baf02d61c31c");
+
     sendPostRequestAndVerifyResponse(
         request.web3Signer(Json.encode(requestBody)),
         response.web3Signer(expectedHeaders, Json.encode(responseBody)));

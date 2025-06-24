@@ -17,9 +17,6 @@ import java.util.Locale;
 public class IdentifierUtils {
 
   public static String normaliseIdentifier(final String signerIdentifier) {
-    if (signerIdentifier == null) {
-      return "";
-    }
     final String lowerCaseIdentifier = signerIdentifier.toLowerCase(Locale.ROOT);
     return lowerCaseIdentifier.startsWith("0x") ? lowerCaseIdentifier : "0x" + lowerCaseIdentifier;
   }
