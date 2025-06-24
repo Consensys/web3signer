@@ -24,6 +24,10 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.ResultProvider;
 import java.io.IOException;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -32,6 +36,12 @@ import org.web3j.crypto.StructuredDataEncoder;
 public class EthSignTypedDataResultProvider implements ResultProvider<String> {
 
   private static final Logger LOG = LogManager.getLogger();
+  // This is not a global instance because it is only meant to decode the typed data JSON
+  private static final ObjectMapper OBJECT_MAPPER =
+      new ObjectMapper()
+          .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+          .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+          .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
   private final SignerForIdentifier transactionSignerProvider;
 
@@ -41,42 +51,66 @@ public class EthSignTypedDataResultProvider implements ResultProvider<String> {
 
   @Override
   public String createResponseResult(final JsonRpcRequest request) {
-    final List<String> params = getParams(request);
-    if (params == null || params.size() != 2) {
-      LOG.debug(
-          "eth_signTypedData should have a list of 2 parameters, but has {}",
-          params == null ? "null" : params.size());
+    LOG.debug("Processing eth_signTypedData request {}", request.getId());
+
+    final List<?> params = validateAndGetParams(request);
+
+    // Address validation
+    final Object addressParam = params.get(0);
+    if (!(addressParam instanceof String)) {
       throw new JsonRpcException(INVALID_PARAMS);
     }
+    final String normalizedAddress = normaliseIdentifier((String) addressParam);
 
-    final String eth1Address = params.get(0);
-    final String jsonData = params.get(1);
-
-    final StructuredDataEncoder dataEncoder;
-    try {
-      dataEncoder = new StructuredDataEncoder(jsonData);
-    } catch (IOException e) {
-      throw new RuntimeException("Exception thrown while encoding the json provided");
+    if (!transactionSignerProvider.isSignerAvailable(normalizedAddress)) {
+      LOG.debug("Address {} not available for signing", normalizedAddress);
+      throw new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
     }
-    final Bytes structuredData = Bytes.of(dataEncoder.getStructuredData());
-    return transactionSignerProvider
-        .sign(normaliseIdentifier(eth1Address), structuredData)
-        .orElseThrow(
-            () -> {
-              LOG.debug("Address ({}) does not match any available account", eth1Address);
-              return new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
-            });
+
+    // Typed data processing
+    final String typedDataJson = convertToTypedDataJson(params.get(1));
+
+    try {
+      final StructuredDataEncoder dataEncoder = new StructuredDataEncoder(typedDataJson);
+      final Bytes structuredData = Bytes.of(dataEncoder.getStructuredData());
+
+      return transactionSignerProvider
+          .sign(normalizedAddress, structuredData)
+          .orElseThrow(
+              () -> {
+                LOG.debug("Unexpected failure signing for {}", normalizedAddress);
+                return new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
+              });
+    } catch (final IOException e) {
+      LOG.warn("EIP-712 encoding failed for request {}", request.getId(), e);
+      throw new JsonRpcException(INVALID_PARAMS);
+    }
   }
 
-  private List<String> getParams(final JsonRpcRequest request) {
+  private List<?> validateAndGetParams(final JsonRpcRequest request) {
+    final Object params = request.getParams();
+    if (params == null) {
+      throw new JsonRpcException(INVALID_PARAMS);
+    }
+    // param 1: account address, param 2: JSON data
+    if (params instanceof List<?> paramList) {
+      if (paramList.size() < 2) {
+        throw new JsonRpcException(INVALID_PARAMS);
+      }
+      return paramList;
+    } else {
+      throw new JsonRpcException(INVALID_PARAMS);
+    }
+  }
+
+  private String convertToTypedDataJson(final Object jsonData) {
     try {
-      @SuppressWarnings("unchecked")
-      final List<String> params = (List<String>) request.getParams();
-      return params;
-    } catch (final ClassCastException e) {
-      LOG.debug(
-          "eth_signTypedData should have a list of 2 parameters, but received an object: {}",
-          request.getParams());
+      if (jsonData instanceof String) {
+        OBJECT_MAPPER.readTree((String) jsonData); // Validate
+        return (String) jsonData;
+      }
+      return OBJECT_MAPPER.writeValueAsString(jsonData);
+    } catch (IOException e) {
       throw new JsonRpcException(INVALID_PARAMS);
     }
   }

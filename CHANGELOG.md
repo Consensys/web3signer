@@ -1,5 +1,13 @@
 # Changelog
 
+## Next Release
+
+### Bug Fixes
+- Fixed EIP-712 `eth_signTypedData` JSON-RPC method. [#1012][issue_1012]
+
+[issue_1012]: https://github.com/Consensys/web3signer/issues/1012
+
+---
 ## 25.6.0
 ### Breaking Changes
 - Deprecated CLI option `--azure-secrets-tags` has been removed. Use `--azure-tags` instead.

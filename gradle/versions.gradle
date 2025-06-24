@@ -110,7 +110,7 @@ dependencyManagement {
 
     dependency 'io.rest-assured:rest-assured:5.5.0'
     dependency 'org.zeroturnaround:zt-exec:1.12'
-    dependencySet(group: 'org.web3j', version: '4.12.2') {
+    dependencySet(group: 'org.web3j', version: '4.14.0') {
       entry 'besu'
       entry ('core') {
         exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
