@@ -18,19 +18,25 @@ import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequestId;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.NonceProvider;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.base.MoreObjects;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.web3j.crypto.Blob;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.Sign.SignatureData;
 import org.web3j.crypto.TransactionEncoder;
 import org.web3j.rlp.RlpEncoder;
 import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpType;
+import org.web3j.utils.Numeric;
 
 public class EthTransaction implements Transaction {
 
+  private static final Logger LOG = LogManager.getLogger();
   private static final String JSON_RPC_METHOD = "eth_sendRawTransaction";
   private final long chainId;
   protected final EthSendTransactionJsonParameters transactionJsonParameters;
@@ -99,6 +105,11 @@ public class EthTransaction implements Transaction {
   }
 
   @Override
+  public boolean isEip4844() {
+    return transactionJsonParameters.maxFeePerBlobGas().isPresent()
+        && transactionJsonParameters.blobs().isPresent();
+  }
+
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("chainId", chainId)
@@ -110,7 +121,27 @@ public class EthTransaction implements Transaction {
   }
 
   protected RawTransaction createTransaction() {
-    if (isEip1559()) {
+    if (isEip4844()) {
+      List<Blob> blobs = new ArrayList<>();
+      for (String blob : transactionJsonParameters.blobs().orElseThrow()) {
+        byte[] data = Numeric.hexStringToByteArray(blob);
+        blobs.add(new Blob(data));
+      }
+      LOG.info("Create BlobTransactionBetter chainId: {}, blobs number: {}", chainId, blobs.size());
+      var rawTransaction =
+          RawTransaction.createTransaction(
+              blobs,
+              chainId,
+              nonce,
+              transactionJsonParameters.maxPriorityFeePerGas().orElseThrow(),
+              transactionJsonParameters.maxFeePerGas().orElseThrow(),
+              transactionJsonParameters.gas().orElse(DEFAULT_GAS),
+              transactionJsonParameters.receiver().orElse(DEFAULT_TO),
+              transactionJsonParameters.value().orElse(DEFAULT_VALUE),
+              transactionJsonParameters.data().orElse(DEFAULT_DATA),
+              transactionJsonParameters.maxFeePerBlobGas().orElseThrow());
+      return rawTransaction;
+    } else if (isEip1559()) {
       return RawTransaction.createTransaction(
           chainId,
           nonce,
