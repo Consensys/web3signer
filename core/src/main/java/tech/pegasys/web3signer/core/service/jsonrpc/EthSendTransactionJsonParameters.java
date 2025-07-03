@@ -34,6 +34,9 @@ public class EthSendTransactionJsonParameters {
   private String data;
   private BigInteger maxFeePerGas;
   private BigInteger maxPriorityFeePerGas;
+  private BigInteger maxFeePerBlobGas;
+  private String[] blobVersionedHashes;
+  private String[] blobs;
 
   @JsonCreator
   public EthSendTransactionJsonParameters(@JsonProperty("from") final String sender) {
@@ -81,6 +84,21 @@ public class EthSendTransactionJsonParameters {
     this.maxFeePerGas = decodeBigInteger(maxFeePerGas);
   }
 
+  @JsonSetter("maxFeePerBlobGas")
+  public void maxFeePerBlobGas(final String maxFeePerBlobGas) {
+    this.maxFeePerBlobGas = decodeBigInteger(maxFeePerBlobGas);
+  }
+
+  @JsonSetter("blobVersionedHashes")
+  public void blobVersionedHashes(final String[] blobVersionedHashes) {
+    this.blobVersionedHashes = blobVersionedHashes;
+  }
+
+  @JsonSetter("blobs")
+  public void blobs(final String[] blobs) {
+    this.blobs = blobs;
+  }
+
   public Optional<String> data() {
     return Optional.ofNullable(data);
   }
@@ -115,5 +133,17 @@ public class EthSendTransactionJsonParameters {
 
   public Optional<BigInteger> maxFeePerGas() {
     return Optional.ofNullable(maxFeePerGas);
+  }
+
+  public Optional<BigInteger> maxFeePerBlobGas() {
+    return Optional.ofNullable(maxFeePerBlobGas);
+  }
+
+  public Optional<String[]> blobVersionedHashes() {
+    return Optional.ofNullable(blobVersionedHashes);
+  }
+
+  public Optional<String[]> blobs() {
+    return Optional.ofNullable(blobs);
   }
 }
