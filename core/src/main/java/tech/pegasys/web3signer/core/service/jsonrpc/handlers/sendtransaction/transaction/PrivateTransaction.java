@@ -100,7 +100,8 @@ public abstract class PrivateTransaction implements Transaction {
   @Override
   public boolean isEip4844() {
     return transactionJsonParameters.maxFeePerBlobGas().isPresent()
-        && transactionJsonParameters.blobs().isPresent();
+        && (transactionJsonParameters.blobs().isPresent()
+            || transactionJsonParameters.blobVersionedHashes().isPresent());
   }
 
   @Override
