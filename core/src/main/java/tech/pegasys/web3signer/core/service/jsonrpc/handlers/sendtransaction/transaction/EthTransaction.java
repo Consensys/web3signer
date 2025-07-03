@@ -107,7 +107,8 @@ public class EthTransaction implements Transaction {
 
   @Override
   public boolean isEip4844() {
-    return transactionJsonParameters.maxFeePerBlobGas().isPresent()
+    return isEip1559()
+        && transactionJsonParameters.maxFeePerBlobGas().isPresent()
         && (transactionJsonParameters.blobs().isPresent()
             || transactionJsonParameters.blobVersionedHashes().isPresent());
   }
