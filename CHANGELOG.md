@@ -1,6 +1,8 @@
 # Changelog
 
 ## Next Release
+### Upcoming Breaking Changes
+- `eea*` RPC methods and other privacy supporting classes will be removed since Privacy feature has been removed from Besu 25.6.0 https://github.com/hyperledger/besu/releases/tag/25.6.0
 
 ### Bug Fixes
 - Fixed EIP-712 `eth_signTypedData` JSON-RPC method. [#1012][issue_1012]
