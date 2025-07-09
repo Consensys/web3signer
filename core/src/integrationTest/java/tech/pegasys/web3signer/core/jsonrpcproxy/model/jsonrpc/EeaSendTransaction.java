@@ -27,6 +27,7 @@ import io.vertx.core.json.JsonObject;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 
+@Deprecated(since = "25.6.0")
 public class EeaSendTransaction {
   public static final String FIELD_PRIVATE_FROM = "privateFrom";
   public static final String FIELD_PRIVATE_FOR = "privateFor";

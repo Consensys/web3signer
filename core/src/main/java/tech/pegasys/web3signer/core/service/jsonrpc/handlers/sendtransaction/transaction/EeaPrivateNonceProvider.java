@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.web3j.utils.Base64String;
 
+@Deprecated(since = "25.6.0")
 public class EeaPrivateNonceProvider implements NonceProvider {
 
   private final String accountAddress;

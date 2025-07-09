@@ -19,6 +19,7 @@ import java.math.BigInteger;
 
 import org.web3j.utils.Base64String;
 
+@Deprecated(since = "25.6.0")
 public class BesuPrivateNonceProvider implements NonceProvider {
 
   private final VertxNonceRequestTransmitter vertxNonceRequestTransmitter;
