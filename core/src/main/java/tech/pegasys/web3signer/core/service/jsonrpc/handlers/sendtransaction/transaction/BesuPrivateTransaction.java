@@ -20,6 +20,7 @@ import org.web3j.protocol.eea.crypto.RawPrivateTransaction;
 import org.web3j.utils.Base64String;
 import org.web3j.utils.Restriction;
 
+@Deprecated(since = "25.6.0")
 public class BesuPrivateTransaction extends PrivateTransaction {
 
   public static BesuPrivateTransaction from(
