@@ -15,15 +15,16 @@ FROM ubuntu:latest
 ARG BUILD_DATE
 ARG VCS_REF
 ARG VERSION
-LABEL org.label-schema.build-date=$BUILD_DATE \
-      org.label-schema.name="Web3Signer" \
-      org.label-schema.description="Ethereum 2.0 Signing Service" \
-      org.label-schema.url="https://docs.web3signer.consensys.net" \
-      org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.vcs-url="https://github.com/ConsenSys/web3signer.git" \
-      org.label-schema.vendor="Consensys" \
-      org.label-schema.version=$VERSION \
-      org.label-schema.schema-version="1.0"
+LABEL org.opencontainers.image.title="Web3Signer" \
+      org.opencontainers.image.description="Ethereum 2.0 Signing Service" \
+      org.opencontainers.image.version=$VERSION \
+      org.opencontainers.image.url="https://docs.web3signer.consensys.net" \
+      org.opencontainers.image.source="https://github.com/ConsenSys/web3signer.git" \
+      org.opencontainers.image.revision=$VCS_REF \
+      org.opencontainers.image.vendor="Consensys" \
+      org.opencontainers.image.created=$BUILD_DATE \
+      org.opencontainers.image.licenses="Apache 2.0"
+
 
 # Web3Signer tar.gz file (from gradlew distTar)
 ARG TAR_FILE
