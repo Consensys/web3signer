@@ -40,6 +40,23 @@ public class EthSendTransactionJsonParametersTest {
   }
 
   @Test
+  public void transactionStoredInJsonArrayWithInputFieldCanBeDecoded() throws Throwable {
+    final JsonObject parameters = validEthTransactionParametersWithInputField();
+
+    final JsonRpcRequest request = wrapParametersInRequest(parameters);
+    final EthSendTransactionJsonParameters txnParams =
+        factory.fromRpcRequestToJsonParam(EthSendTransactionJsonParameters.class, request);
+
+    assertThat(txnParams.gas()).isEqualTo(getStringAsOptionalBigInteger(parameters, "gas"));
+    assertThat(txnParams.gasPrice())
+        .isEqualTo(getStringAsOptionalBigInteger(parameters, "gasPrice"));
+    assertThat(txnParams.nonce()).isEqualTo(getStringAsOptionalBigInteger(parameters, "nonce"));
+    assertThat(txnParams.receiver()).isEqualTo(Optional.of(parameters.getString("to")));
+    assertThat(txnParams.value()).isEqualTo(getStringAsOptionalBigInteger(parameters, "value"));
+    assertThat(txnParams.data()).isEqualTo(Optional.of(parameters.getString("input")));
+  }
+
+  @Test
   public void transactionStoredInJsonArrayCanBeDecoded() throws Throwable {
     final JsonObject parameters = validEthTransactionParameters();
 
@@ -145,5 +162,20 @@ public class EthSendTransactionJsonParametersTest {
     input.put("params", parameters);
 
     return input.mapTo(JsonRpcRequest.class);
+  }
+
+  private JsonObject validEthTransactionParametersWithInputField() {
+    final JsonObject parameters = new JsonObject();
+    parameters.put("from", "0xb60e8dd61c5d32be8058bb8eb970870f07233155");
+    parameters.put("to", "0xd46e8dd67c5d32be8058bb8eb970870f07244567");
+    parameters.put("nonce", "0x1");
+    parameters.put("gas", "0x76c0");
+    parameters.put("gasPrice", "0x9184e72a000");
+    parameters.put("value", "0x9184e72a");
+    parameters.put(
+        "input",
+        "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675");
+
+    return parameters;
   }
 }
