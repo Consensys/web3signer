@@ -24,7 +24,7 @@
 - Updated Teku libraries to handle BPO configurations
 
 ### Known Issues
-Few customers have reported increasing memory usage with `/reload` API endpoint. We are investigating this issue and
+Few customers have reported increasing memory usage with `/reload` API endpoint. We are investigating this issue and 
 will provide a fix in the next release. As a workaround, please restart Web3Signer instance when adding or removing keys.
 
 ---
