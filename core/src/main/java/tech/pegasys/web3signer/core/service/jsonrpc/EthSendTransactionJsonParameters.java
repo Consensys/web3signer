@@ -88,9 +88,9 @@ public class EthSendTransactionJsonParameters {
   }
 
   public Optional<String> data() {
-    if (data != null && !data.isEmpty()) {
+    if (data != null) {
       return Optional.of(data);
-    } else if (input != null && !input.isEmpty()) {
+    } else if (input != null) {
       return Optional.of(input);
     }
     return Optional.empty();
