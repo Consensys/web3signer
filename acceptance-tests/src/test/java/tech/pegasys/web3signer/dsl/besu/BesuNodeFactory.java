@@ -65,13 +65,8 @@ public class BesuNodeFactory {
     params.add("--rpc-ws-host");
     params.add(config.getHostName());
     params.add("--rpc-http-apis");
-    params.add("ETH,NET,WEB3,EEA");
+    params.add("ETH,NET,WEB3");
     params.add("--min-gas-price=0");
-    params.add("--data-storage-format=FOREST"); // Required for privacy
-    // Besu 25.6.0 has removed privacy support.
-    // params.add("--privacy-enabled");
-    // params.add("--privacy-public-key-file");
-    // params.add(privacyPublicKeyFilePath());
 
     config.getCors().ifPresent(cors -> params.addAll(List.of("--rpc-http-cors-origins", cors)));
 

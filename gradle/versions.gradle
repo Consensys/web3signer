@@ -86,12 +86,12 @@ dependencyManagement {
       entry 'mockito-junit-jupiter'
     }
 
-    dependency "org.hyperledger.besu:plugin-api:${besuVersion}"
-    dependency "org.hyperledger.besu.internal:metrics-core:${besuVersion}"
+    dependency "org.hyperledger.besu:besu-plugin-api:${besuVersion}"
+    dependency "org.hyperledger.besu.internal:besu-metrics-core:${besuVersion}"
 
     dependency 'org.xipki.iaik:sunpkcs11-wrapper:1.4.10'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '25.5.0') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '25.7.1') {
       entry ('bls') {
         exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
       }
