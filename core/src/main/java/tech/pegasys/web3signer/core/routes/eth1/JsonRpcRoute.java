@@ -148,6 +148,8 @@ public class JsonRpcRoute implements Web3SignerRoute {
             new EthSignTransactionResultProvider(chainId, secpSigner, JSON_DECODER)));
     requestMapper.addHandler("eth_sendTransaction", sendTransactionHandler);
     requestMapper.addHandler("eea_sendTransaction", sendTransactionHandler);
+    requestMapper.addHandler(
+        "health_status", new InternalResponseHandler<>(HTTP_RESPONSE_FACTORY, request -> "OK"));
 
     return requestMapper;
   }
