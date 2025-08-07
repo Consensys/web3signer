@@ -28,6 +28,7 @@ import org.web3j.rlp.RlpEncoder;
 import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpType;
 
+@Deprecated(since = "25.6.0")
 public abstract class PrivateTransaction implements Transaction {
 
   protected static final String JSON_RPC_METHOD = "eea_sendRawTransaction";

@@ -22,6 +22,7 @@ import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.EeaSendTra
 import java.util.List;
 import java.util.Optional;
 
+@Deprecated(since = "25.6.0")
 public class PrivateTransaction {
   // Values are held using a value holder as an Optional cannot contain a null value and we want to
   // represent missing values using Optional.empty, null values and non-null values
