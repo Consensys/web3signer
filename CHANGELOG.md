@@ -7,6 +7,7 @@
 ### Features Added
 - `health_status` RPC method under the eth1 subcommand
 - Support for Optimism op-signer
+- Acceptance tests for FULU fork.
 
 ### Bug Fixes
 - Fixed EIP-712 `eth_signTypedData` JSON-RPC method. [#1012][issue_1012]

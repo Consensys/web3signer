@@ -422,6 +422,10 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
           "eth2.Xnetwork-electra-fork-epoch", signerConfig.getElectraForkEpoch().get());
     }
 
+    if (signerConfig.getFuluForkEpoch().isPresent()) {
+      yamlConfigMap.put("eth2.Xnetwork-fulu-fork-epoch", signerConfig.getFuluForkEpoch().get());
+    }
+
     if (signerConfig.getNetwork().isPresent()) {
       yamlConfigMap.put("eth2.network", signerConfig.getNetwork().get());
     }

@@ -137,6 +137,15 @@ public class Eth2SubCommand extends ModeSubCommand {
   private UInt64 electraForkEpoch;
 
   @CommandLine.Option(
+      names = {"--Xnetwork-fulu-fork-epoch"},
+      hidden = true,
+      paramLabel = "<epoch>",
+      description = "Override the Fulu fork activation epoch.",
+      arity = "1",
+      converter = UInt64Converter.class)
+  private UInt64 fuluForkEpoch;
+
+  @CommandLine.Option(
       names = {"--Xtrusted-setup"},
       hidden = true,
       paramLabel = "<STRING>",
@@ -229,6 +238,9 @@ public class Eth2SubCommand extends ModeSubCommand {
     }
     if (electraForkEpoch != null) {
       builder.electraForkEpoch(electraForkEpoch);
+    }
+    if (fuluForkEpoch != null) {
+      builder.fuluForkEpoch(fuluForkEpoch);
     }
     if (trustedSetup != null) {
       builder.trustedSetup(trustedSetup);
