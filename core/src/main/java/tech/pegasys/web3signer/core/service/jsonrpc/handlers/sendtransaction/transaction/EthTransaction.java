@@ -152,7 +152,6 @@ public class EthTransaction implements Transaction {
       for (String blobVersionedHash : blobVersionedHashes) {
         versionedHashes.add(Bytes.fromHexString(blobVersionedHash));
       }
-
       var rawTransaction =
           RawTransaction.createTransaction(
               chainId,
