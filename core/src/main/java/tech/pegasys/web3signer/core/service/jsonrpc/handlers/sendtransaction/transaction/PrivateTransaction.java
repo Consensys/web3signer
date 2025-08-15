@@ -99,6 +99,14 @@ public abstract class PrivateTransaction implements Transaction {
   }
 
   @Override
+  public boolean isEip4844() {
+    return isEip1559()
+        && transactionJsonParameters.maxFeePerBlobGas().isPresent()
+        && (transactionJsonParameters.blobs().isPresent()
+            || transactionJsonParameters.blobVersionedHashes().isPresent());
+  }
+
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("chainId", chainId)
