@@ -22,7 +22,8 @@ public enum Version {
   capella,
   deneb,
   electra,
-  fulu;
+  fulu,
+  gloas;
 
   public static Version fromMilestone(final SpecMilestone milestone) {
     return switch (milestone) {
@@ -33,6 +34,7 @@ public enum Version {
       case DENEB -> deneb;
       case ELECTRA -> electra;
       case FULU -> fulu;
+      case GLOAS -> gloas;
     };
   }
 }
