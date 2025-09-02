@@ -28,8 +28,8 @@ dependencyManagement {
     dependency 'com.google.guava:guava:33.3.1-jre'
 
     dependency 'commons-cli:commons-cli:1.5.0'
-    dependency 'commons-io:commons-io:2.18.0'
-    dependency 'org.apache.commons:commons-lang3:3.17.0'
+    dependency 'commons-io:commons-io:2.20.0'
+    dependency 'org.apache.commons:commons-lang3:3.18.0'
     dependency 'commons-logging:commons-logging:1.3.4'
 
     dependency 'info.picocli:picocli:4.7.6'
@@ -62,9 +62,9 @@ dependencyManagement {
       entry 'tuweni-io'
     }
 
-    dependency 'org.assertj:assertj-core:3.26.3'
+    dependency 'org.assertj:assertj-core:3.27.3'
 
-    dependency 'org.awaitility:awaitility:4.2.2'
+    dependency 'org.awaitility:awaitility:4.3.0'
 
     dependencySet(group: 'org.bouncycastle', version: '1.79') {
       entry 'bcpkix-jdk18on'
@@ -174,7 +174,7 @@ dependencyManagement {
     dependency 'com.squareup.okio:okio:3.4.0'
 
     // addressing CVE-2025-24970
-    dependencySet(group: 'io.netty', version: '4.1.118.Final') {
+    dependencySet(group: 'io.netty', version: '4.2.4.Final') {
       entry 'netty-all'
       entry 'netty-codec-http2'
       entry 'netty-handler'
@@ -200,7 +200,7 @@ dependencyManagement {
     /* commons-net:commons-net:3.8.0
        \-- io.tmio:tuweni-net:2.3.1
      */
-    dependency 'commons-net:commons-net:3.9.0'
+    dependency 'commons-net:commons-net:3.12.0'
 
     // manual overriding of json-smart to avoid CVE-2023-1370
     /*
