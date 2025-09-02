@@ -71,16 +71,16 @@ dependencyManagement {
       entry 'bcprov-jdk18on'
     }
 
-    dependencySet(group: 'org.junit.jupiter', version: '5.11.3') {
+    dependencySet(group: 'org.junit.jupiter', version: '5.11.4') {
       entry 'junit-jupiter-api'
       entry 'junit-jupiter-engine'
       entry 'junit-jupiter-params'
     }
-    dependency 'org.junit.vintage:junit-vintage-engine:5.11.3'
+    dependency 'org.junit.vintage:junit-vintage-engine:5.11.4'
 
     dependency 'org.mock-server:mockserver-netty:5.15.0'
 
-    dependencySet(group: 'org.mockito', version: '5.14.2') {
+    dependencySet(group: 'org.mockito', version: '5.15.2') {
       entry 'mockito-core'
       entry 'mockito-inline'
       entry 'mockito-junit-jupiter'
@@ -188,18 +188,8 @@ dependencyManagement {
       entry 'netty-resolver-dns-native-macos'
     }
 
-    /* io.projectreactor.netty:reactor-netty-http:1.0.38 -> 1.0.39 // CVE-2023-34062
-       \--- com.azure:azure-core-http-netty:1.13.10
-            +--- com.azure:azure-security-keyvault-keys:4.7.1 (requested com.azure:azure-core-http-netty:1.13.9)
-            +--- com.azure:azure-identity:1.11.0
-            \--- com.azure:azure-security-keyvault-secrets:4.7.1 (requested com.azure:azure-core-http-netty:1.13.9)
-     */
-    dependency 'io.projectreactor.netty:reactor-netty-http:1.0.39'
+    dependency 'io.projectreactor.netty:reactor-netty-http:1.2.8'
 
-    // manual overriding of commons-net to avoid CVE-2021-37533
-    /* commons-net:commons-net:3.8.0
-       \-- io.tmio:tuweni-net:2.3.1
-     */
     dependency 'commons-net:commons-net:3.12.0'
 
     // manual overriding of json-smart to avoid CVE-2023-1370
@@ -213,14 +203,7 @@ dependencyManagement {
 
     dependency 'net.minidev:json-smart:2.4.10'
 
-    // manual overriding of nimbus-jose-jwt to avoid CVE-2023-52428
-    /*
-    com.nimbusds:nimbus-jose-jwt:9.30.2 -> 9.31
-    \--- com.nimbusds:oauth2-oidc-sdk:10.7.1
-         \--- com.microsoft.azure:msal4j:1.14.0
-              +--- com.azure:azure-identity:1.11.1
-     */
-    dependency 'com.nimbusds:nimbus-jose-jwt:9.37.3'
+    dependency 'com.nimbusds:nimbus-jose-jwt:9.37.4'
 
     // used in tests to assert log message
     dependency 'de.neuland-bfi:assertj-logging-log4j:0.5.0'
