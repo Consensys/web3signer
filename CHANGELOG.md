@@ -1,10 +1,11 @@
 # Changelog
 
-## Next Release
+## 25.9.0
 ### Upcoming Breaking Changes
 - `eea*` RPC methods and other privacy supporting classes will be removed since Privacy feature has been removed from Besu 25.6.0 https://github.com/hyperledger/besu/releases/tag/25.6.0
 
 ### Features Added
+- Updated Teku libraries dependencies for latest network configurations
 - `health_status` RPC method under the eth1 subcommand
 - Support for Optimism op-signer
 - Acceptance tests for FULU fork.
