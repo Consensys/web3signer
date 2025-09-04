@@ -12,6 +12,10 @@
  */
 
 dependencyManagement {
+  imports {
+    // Import log4j BOM first with higher priority
+    mavenBom "org.apache.logging.log4j:log4j-bom:2.25.1"
+  }
   dependencies {
     dependency 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
     dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.2'
@@ -47,13 +51,6 @@ dependencyManagement {
     }
 
     dependency 'javax.activation:activation:1.1.1'
-
-    dependencySet(group: 'org.apache.logging.log4j', version: '2.24.2') {
-      entry 'log4j-api'
-      entry 'log4j'
-      entry 'log4j-core'
-      entry 'log4j-slf4j2-impl'
-    }
 
     dependencySet(group: 'io.consensys.tuweni', version: '2.7.0') {
       entry 'tuweni-net'
