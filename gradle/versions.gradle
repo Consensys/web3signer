@@ -171,7 +171,7 @@ dependencyManagement {
     dependency 'com.squareup.okio:okio:3.4.0'
 
     // addressing CVE-2025-24970
-    dependencySet(group: 'io.netty', version: '4.2.4.Final') {
+    dependencySet(group: 'io.netty', version: '4.2.5.Final') {
       entry 'netty-all'
       entry 'netty-codec-http2'
       entry 'netty-handler'
