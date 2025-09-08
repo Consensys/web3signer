@@ -369,22 +369,22 @@ jar { enabled = false }
 apply plugin: 'application'
 application {
   mainClass = "tech.pegasys.web3signer.Web3SignerApp"
+  applicationDefaultJvmArgs = [
+    "-Dvertx.disableFileCPResolving=true",
+    // We shutdown log4j ourselves, as otherwise his shutdown hook runs before our own and whatever
+    // happens during shutdown is not logged.
+    "-Dlog4j.shutdownHookEnabled=false",
+    "-Dlog4j2.formatMsgNoLookups=true",
+    // address netty warnings
+    "--add-opens",
+    "java.base/jdk.internal.misc=ALL-UNNAMED",
+    "--add-opens",
+    "java.base/java.nio=ALL-UNNAMED",
+    "-Dio.netty.tryReflectionSetAccessible=true",
+    "--add-exports",
+    "jdk.crypto.cryptoki/sun.security.pkcs11.wrapper=ALL-UNNAMED",
+  ]
 }
-applicationDefaultJvmArgs = [
-  "-Dvertx.disableFileCPResolving=true",
-  // We shutdown log4j ourselves, as otherwise his shutdown hook runs before our own and whatever
-  // happens during shutdown is not logged.
-  "-Dlog4j.shutdownHookEnabled=false",
-  "-Dlog4j2.formatMsgNoLookups=true",
-  // address netty warnings
-  "--add-opens",
-  "java.base/jdk.internal.misc=ALL-UNNAMED",
-  "--add-opens",
-  "java.base/java.nio=ALL-UNNAMED",
-  "-Dio.netty.tryReflectionSetAccessible=true",
-  "--add-exports",
-  "jdk.crypto.cryptoki/sun.security.pkcs11.wrapper=ALL-UNNAMED",
-]
 
 run {
   args project.hasProperty("web3signer.run.args") ? project.property("web3signer.run.args").toString().split("\\s+") : []
