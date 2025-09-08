@@ -105,7 +105,7 @@ allprojects {
 
   task javadocJar(type: Jar, dependsOn: javadoc) {
     archiveClassifier = 'javadoc'
-    from javadoc.destinationDirectory
+    from javadoc.destinationDir
   }
 
   java {
@@ -367,7 +367,9 @@ subprojects {
 jar { enabled = false }
 
 apply plugin: 'application'
-mainClass = "tech.pegasys.web3signer.Web3SignerApp"
+application {
+  mainClass = "tech.pegasys.web3signer.Web3SignerApp"
+}
 applicationDefaultJvmArgs = [
   "-Dvertx.disableFileCPResolving=true",
   // We shutdown log4j ourselves, as otherwise his shutdown hook runs before our own and whatever
