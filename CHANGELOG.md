@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+### Breaking changes
+- `eea*` RPC methods and other privacy supporting classes have been removed since Privacy feature has been removed from Besu 25.6.0 https://github.com/hyperledger/besu/releases/tag/25.6.0
+
 ## 25.9.0
 ### Upcoming Breaking Changes
 - `eea*` RPC methods and other privacy supporting classes will be removed since Privacy feature has been removed from Besu 25.6.0 https://github.com/hyperledger/besu/releases/tag/25.6.0
