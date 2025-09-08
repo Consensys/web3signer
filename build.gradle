@@ -460,7 +460,7 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   reports {
     xml.required = true
     csv.required = true
-    html.destination file("build/reports/jacocoHtml")
+    html.outputLocation = file("build/reports/jacocoHtml")
   }
   onlyIf = { true }
   doFirst {
