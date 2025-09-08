@@ -105,11 +105,13 @@ allprojects {
 
   task javadocJar(type: Jar, dependsOn: javadoc) {
     archiveClassifier = 'javadoc'
-    from javadoc.destinationDir
+    from javadoc.destinationDirectory
   }
 
-  sourceCompatibility = 21
-  targetCompatibility = 21
+  java {
+    sourceCompatibility = 21
+    targetCompatibility = 21
+  }
 
   repositories {
     // mavenLocal() //for local testing only, uncomment while testing locally build signers.
@@ -365,7 +367,7 @@ subprojects {
 jar { enabled = false }
 
 apply plugin: 'application'
-mainClassName = "tech.pegasys.web3signer.Web3SignerApp"
+mainClass = "tech.pegasys.web3signer.Web3SignerApp"
 applicationDefaultJvmArgs = [
   "-Dvertx.disableFileCPResolving=true",
   // We shutdown log4j ourselves, as otherwise his shutdown hook runs before our own and whatever
