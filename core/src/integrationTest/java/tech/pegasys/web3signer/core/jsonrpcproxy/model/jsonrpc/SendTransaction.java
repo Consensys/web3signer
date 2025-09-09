@@ -54,10 +54,10 @@ public class SendTransaction {
   }
 
   private Request<?, EthSendTransaction> createRequest(final JsonObject transaction) {
-    final Request<Object, EthSendTransaction> eea_sendTransaction =
+    final Request<Object, EthSendTransaction> eth_sendTransaction =
         new Request<>(
             "eth_sendTransaction", singletonList(transaction), null, EthSendTransaction.class);
-    eea_sendTransaction.setId(DEFAULT_ID);
-    return eea_sendTransaction;
+    eth_sendTransaction.setId(DEFAULT_ID);
+    return eth_sendTransaction;
   }
 }

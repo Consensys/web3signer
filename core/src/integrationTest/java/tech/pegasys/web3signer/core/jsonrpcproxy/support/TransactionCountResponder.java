@@ -34,9 +34,7 @@ public class TransactionCountResponder implements ExpectationResponseCallback {
   private static final Logger LOG = LogManager.getLogger();
 
   public enum TRANSACTION_COUNT_METHOD {
-    ETH_GET_TRANSACTION_COUNT(".*eth_getTransactionCount.*"),
-    PRIV_EEA_GET_TRANSACTION_COUNT(".*priv_getEeaTransactionCount.*"),
-    PRIV_GET_TRANSACTION_COUNT(".*priv_getTransactionCount.*");
+    ETH_GET_TRANSACTION_COUNT(".*eth_getTransactionCount.*");
 
     private final String regexPattern;
 

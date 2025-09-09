@@ -12,12 +12,13 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc;
 
-import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.EeaSendTransaction.UNLOCKED_ACCOUNT;
 import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.SendTransaction.FIELD_VALUE_DEFAULT;
 
 import java.util.Optional;
 
 public class Transaction {
+  public static final String UNLOCKED_ACCOUNT = "0x7577919ae5df4941180eac211965f275cdce314d";
+
   // Values are held using a value holder as an Optional cannot contain a null value and we want to
   // represent missing values using Optional.empty, null values and non-null values
   private final Optional<ValueHolder<String>> from;
