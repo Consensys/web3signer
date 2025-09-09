@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction;
 
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitterFactory;
-import tech.pegasys.web3signer.core.service.jsonrpc.EeaSendTransactionJsonParameters;
 import tech.pegasys.web3signer.core.service.jsonrpc.EthSendTransactionJsonParameters;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonDecoder;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
@@ -24,12 +23,8 @@ import java.util.Locale;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class TransactionFactory {
-
-  private static final Logger LOG = LogManager.getLogger();
 
   private final VertxRequestTransmitterFactory transmitterFactory;
   private final JsonDecoder decoder;
@@ -52,8 +47,6 @@ public class TransactionFactory {
     switch (method) {
       case "eth_sendtransaction":
         return createEthTransaction(chainId, request, nonceRequestTransmitter);
-      case "eea_sendtransaction":
-        return createEeaTransaction(chainId, request, nonceRequestTransmitter);
       default:
         throw new IllegalStateException("Unknown send transaction method " + method);
     }
@@ -70,35 +63,6 @@ public class TransactionFactory {
         new EthNonceProvider(params.sender(), nonceRequestTransmitter);
 
     return new EthTransaction(chainId, params, ethNonceProvider, request.getId());
-  }
-
-  private Transaction createEeaTransaction(
-      final long chainId,
-      final JsonRpcRequest request,
-      final VertxNonceRequestTransmitter requestTransmitter) {
-
-    final EeaSendTransactionJsonParameters params =
-        fromRpcRequestToJsonParam(EeaSendTransactionJsonParameters.class, request);
-
-    if (params.privacyGroupId().isPresent() == params.privateFor().isPresent()) {
-      LOG.warn(
-          "Illegal private transaction received; privacyGroup (present = {}) and privateFor (present = {}) are mutually exclusive.",
-          params.privacyGroupId().isPresent(),
-          params.privateFor().isPresent());
-      throw new IllegalArgumentException("PrivacyGroup and PrivateFor are mutually exclusive.");
-    }
-
-    if (params.privacyGroupId().isPresent()) {
-      final NonceProvider nonceProvider =
-          new BesuPrivateNonceProvider(
-              params.sender(), params.privacyGroupId().get(), requestTransmitter);
-      return BesuPrivateTransaction.from(chainId, params, nonceProvider, request.getId());
-    }
-
-    final NonceProvider nonceProvider =
-        new EeaPrivateNonceProvider(
-            params.sender(), params.privateFrom(), params.privateFor().get(), requestTransmitter);
-    return EeaPrivateTransaction.from(chainId, params, nonceProvider, request.getId());
   }
 
   public <T> T fromRpcRequestToJsonParam(final Class<T> type, final JsonRpcRequest request) {

@@ -81,8 +81,6 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
-import org.web3j.protocol.eea.Eea;
-import org.web3j.protocol.eea.JsonRpc2_0Eea;
 
 public class IntegrationTestBase {
 
@@ -96,7 +94,6 @@ public class IntegrationTestBase {
   static ClientAndServer clientAndServer;
   static Credentials credentials;
   private JsonRpc2_0Web3j jsonRpc;
-  private JsonRpc2_0Eea eeaJsonRpc;
 
   protected final EthRequestFactory request = new EthRequestFactory();
   protected final EthResponseFactory response = new EthResponseFactory();
@@ -175,14 +172,9 @@ public class IntegrationTestBase {
     return jsonRpc;
   }
 
-  Eea eeaJsonRpc() {
-    return eeaJsonRpc;
-  }
-
   @BeforeEach
   public void setup() {
     jsonRpc = new JsonRpc2_0Web3j(null, 2000, defaultExecutorService());
-    eeaJsonRpc = new JsonRpc2_0Eea(null);
     if (clientAndServer.isRunning()) {
       clientAndServer.reset();
     }
