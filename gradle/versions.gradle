@@ -12,6 +12,10 @@
  */
 
 dependencyManagement {
+  imports {
+    // Import log4j BOM first with higher priority
+    mavenBom "org.apache.logging.log4j:log4j-bom:2.25.1"
+  }
   dependencies {
     dependency 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
     dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.2'
@@ -28,8 +32,8 @@ dependencyManagement {
     dependency 'com.google.guava:guava:33.3.1-jre'
 
     dependency 'commons-cli:commons-cli:1.5.0'
-    dependency 'commons-io:commons-io:2.18.0'
-    dependency 'org.apache.commons:commons-lang3:3.17.0'
+    dependency 'commons-io:commons-io:2.20.0'
+    dependency 'org.apache.commons:commons-lang3:3.18.0'
     dependency 'commons-logging:commons-logging:1.3.4'
 
     dependency 'info.picocli:picocli:4.7.6'
@@ -48,13 +52,6 @@ dependencyManagement {
 
     dependency 'javax.activation:activation:1.1.1'
 
-    dependencySet(group: 'org.apache.logging.log4j', version: '2.24.2') {
-      entry 'log4j-api'
-      entry 'log4j'
-      entry 'log4j-core'
-      entry 'log4j-slf4j2-impl'
-    }
-
     dependencySet(group: 'io.consensys.tuweni', version: '2.7.0') {
       entry 'tuweni-net'
       entry 'tuweni-bytes'
@@ -62,25 +59,25 @@ dependencyManagement {
       entry 'tuweni-io'
     }
 
-    dependency 'org.assertj:assertj-core:3.26.3'
+    dependency 'org.assertj:assertj-core:3.27.3'
 
-    dependency 'org.awaitility:awaitility:4.2.2'
+    dependency 'org.awaitility:awaitility:4.3.0'
 
     dependencySet(group: 'org.bouncycastle', version: '1.79') {
       entry 'bcpkix-jdk18on'
       entry 'bcprov-jdk18on'
     }
 
-    dependencySet(group: 'org.junit.jupiter', version: '5.11.3') {
+    dependencySet(group: 'org.junit.jupiter', version: '5.11.4') {
       entry 'junit-jupiter-api'
       entry 'junit-jupiter-engine'
       entry 'junit-jupiter-params'
     }
-    dependency 'org.junit.vintage:junit-vintage-engine:5.11.3'
+    dependency 'org.junit.vintage:junit-vintage-engine:5.11.4'
 
     dependency 'org.mock-server:mockserver-netty:5.15.0'
 
-    dependencySet(group: 'org.mockito', version: '5.14.2') {
+    dependencySet(group: 'org.mockito', version: '5.15.2') {
       entry 'mockito-core'
       entry 'mockito-inline'
       entry 'mockito-junit-jupiter'
@@ -91,7 +88,7 @@ dependencyManagement {
 
     dependency 'org.xipki.iaik:sunpkcs11-wrapper:1.4.10'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '25.7.1') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '25.9.1') {
       entry ('bls') {
         exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
       }
@@ -129,7 +126,7 @@ dependencyManagement {
     dependency 'com.azure:azure-identity:1.14.2'
 
     dependency 'com.zaxxer:HikariCP:6.2.1'
-    dependency 'org.postgresql:postgresql:42.7.4'
+    dependency 'org.postgresql:postgresql:42.7.7'
 
     dependencySet(group: 'org.jdbi', version: '3.47.0') {
       entry 'jdbi3-core'
@@ -174,7 +171,7 @@ dependencyManagement {
     dependency 'com.squareup.okio:okio:3.4.0'
 
     // addressing CVE-2025-24970
-    dependencySet(group: 'io.netty', version: '4.1.118.Final') {
+    dependencySet(group: 'io.netty', version: '4.2.5.Final') {
       entry 'netty-all'
       entry 'netty-codec-http2'
       entry 'netty-handler'
@@ -188,19 +185,9 @@ dependencyManagement {
       entry 'netty-resolver-dns-native-macos'
     }
 
-    /* io.projectreactor.netty:reactor-netty-http:1.0.38 -> 1.0.39 // CVE-2023-34062
-       \--- com.azure:azure-core-http-netty:1.13.10
-            +--- com.azure:azure-security-keyvault-keys:4.7.1 (requested com.azure:azure-core-http-netty:1.13.9)
-            +--- com.azure:azure-identity:1.11.0
-            \--- com.azure:azure-security-keyvault-secrets:4.7.1 (requested com.azure:azure-core-http-netty:1.13.9)
-     */
-    dependency 'io.projectreactor.netty:reactor-netty-http:1.0.39'
+    dependency 'io.projectreactor.netty:reactor-netty-http:1.2.8'
 
-    // manual overriding of commons-net to avoid CVE-2021-37533
-    /* commons-net:commons-net:3.8.0
-       \-- io.tmio:tuweni-net:2.3.1
-     */
-    dependency 'commons-net:commons-net:3.9.0'
+    dependency 'commons-net:commons-net:3.12.0'
 
     // manual overriding of json-smart to avoid CVE-2023-1370
     /*
@@ -213,14 +200,7 @@ dependencyManagement {
 
     dependency 'net.minidev:json-smart:2.4.10'
 
-    // manual overriding of nimbus-jose-jwt to avoid CVE-2023-52428
-    /*
-    com.nimbusds:nimbus-jose-jwt:9.30.2 -> 9.31
-    \--- com.nimbusds:oauth2-oidc-sdk:10.7.1
-         \--- com.microsoft.azure:msal4j:1.14.0
-              +--- com.azure:azure-identity:1.11.1
-     */
-    dependency 'com.nimbusds:nimbus-jose-jwt:9.37.3'
+    dependency 'com.nimbusds:nimbus-jose-jwt:9.37.4'
 
     // used in tests to assert log message
     dependency 'de.neuland-bfi:assertj-logging-log4j:0.5.0'

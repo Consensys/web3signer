@@ -320,6 +320,11 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(Long.toString(signerConfig.getElectraForkEpoch().get()));
     }
 
+    if (signerConfig.getFuluForkEpoch().isPresent()) {
+      params.add("--Xnetwork-fulu-fork-epoch");
+      params.add(Long.toString(signerConfig.getFuluForkEpoch().get()));
+    }
+
     if (signerConfig.getNetwork().isPresent()) {
       params.add("--network");
       params.add(signerConfig.getNetwork().get());

@@ -59,7 +59,7 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @ParameterizedTest(name = "#{index} - Sign and verify BlockV2 Signature for spec {0}")
   @EnumSource(
       value = SpecMilestone.class,
-      names = {"PHASE0", "ALTAIR", "BELLATRIX", "CAPELLA", "DENEB", "ELECTRA"})
+      names = {"PHASE0", "ALTAIR", "BELLATRIX", "CAPELLA", "DENEB", "ELECTRA", "FULU"})
   void signAndVerifyBlockV2Signature(final SpecMilestone specMilestone) throws Exception {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(specMilestone);
 

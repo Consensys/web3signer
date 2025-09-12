@@ -72,6 +72,7 @@ public class SignerConfiguration {
   private final Optional<Long> capellaForkEpoch;
   private final Optional<Long> denebForkEpoch;
   private final Optional<Long> electraForkEpoch;
+  private final Optional<Long> fuluForkEpoch;
   private final Optional<String> network;
   private final boolean keyManagerApiEnabled;
   private Optional<WatermarkRepairParameters> watermarkRepairParameters;
@@ -123,6 +124,7 @@ public class SignerConfiguration {
       final Optional<Long> capellaForkEpoch,
       final Optional<Long> denebForkEpoch,
       final Optional<Long> electraForkEpoch,
+      final Optional<Long> fuluForkEpoch,
       final Optional<String> network,
       final boolean keyManagerApiEnabled,
       final Optional<WatermarkRepairParameters> watermarkRepairParameters,
@@ -170,6 +172,7 @@ public class SignerConfiguration {
     this.capellaForkEpoch = capellaForkEpoch;
     this.denebForkEpoch = denebForkEpoch;
     this.electraForkEpoch = electraForkEpoch;
+    this.fuluForkEpoch = fuluForkEpoch;
     this.network = network;
     this.keyManagerApiEnabled = keyManagerApiEnabled;
     this.watermarkRepairParameters = watermarkRepairParameters;
@@ -331,6 +334,10 @@ public class SignerConfiguration {
 
   public Optional<Long> getElectraForkEpoch() {
     return electraForkEpoch;
+  }
+
+  public Optional<Long> getFuluForkEpoch() {
+    return fuluForkEpoch;
   }
 
   public Optional<String> getNetwork() {
