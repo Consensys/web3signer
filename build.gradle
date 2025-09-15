@@ -118,6 +118,7 @@ allprojects {
     maven { url "https://artifacts.consensys.net/public/teku/maven/" }
     maven { url "https://hyperledger.jfrog.io/artifactory/besu-maven" }
     maven { url "https://jitpack.io" }
+    maven { url "https://central.sonatype.com/repository/maven-snapshots/" }
   }
 
   dependencies {
