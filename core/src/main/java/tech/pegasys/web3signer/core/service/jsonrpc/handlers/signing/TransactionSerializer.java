@@ -71,7 +71,7 @@ public class TransactionSerializer {
     return prependEip4844TransactionType(serializedBytes);
   }
 
-  private static byte[] prependEip4844TransactionType(byte[] bytesToSign) {
+  private static byte[] prependEip4844TransactionType(final byte[] bytesToSign) {
     return ByteBuffer.allocate(bytesToSign.length + 1)
         .put(TransactionType.EIP4844.getRlpType())
         .put(bytesToSign)
