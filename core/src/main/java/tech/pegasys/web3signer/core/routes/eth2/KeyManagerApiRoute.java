@@ -21,6 +21,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.Imp
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.list.ListKeystoresHandler;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.FileValidatorManager;
+import tech.pegasys.web3signer.signing.InMemoryValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
@@ -109,23 +110,29 @@ public class KeyManagerApiRoute implements Web3SignerRoute {
   }
 
   private ValidatorManager createValidatorManager() {
-    final FileValidatorManager fileValidatorManager =
-        new FileValidatorManager(
-            blsSignerProvider,
-            new KeystoreFileManager(
-                baseConfig.getKeyConfigPath(),
-                YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())),
-            objectMapper);
+    final ValidatorManager baseValidatorManager;
+
+    if (baseConfig.isKeystoreStorageSkipped()) {
+      baseValidatorManager = new InMemoryValidatorManager(blsSignerProvider, objectMapper);
+    } else {
+      baseValidatorManager =
+          new FileValidatorManager(
+              blsSignerProvider,
+              new KeystoreFileManager(
+                  baseConfig.getKeyConfigPath(),
+                  YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())),
+              objectMapper);
+    }
 
     return slashingProtectionContext
         .map(
             ctx ->
                 (ValidatorManager)
                     new DbValidatorManager(
-                        fileValidatorManager,
+                        baseValidatorManager,
                         ctx.getRegisteredValidators(),
                         ctx.getSlashingProtectionJdbi(),
                         new ValidatorsDao()))
-        .orElse(fileValidatorManager);
+        .orElse(baseValidatorManager);
   }
 }
