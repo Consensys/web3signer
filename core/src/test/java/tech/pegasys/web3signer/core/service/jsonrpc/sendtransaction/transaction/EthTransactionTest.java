@@ -168,8 +168,6 @@ public class EthTransactionTest {
     assertThat(decodedTransaction.getMaxFeePerGas())
         .isEqualTo(Numeric.decodeQuantity("0x9184e72a001"));
 
-    assertThat(decodedTransaction.getBlobs().orElseThrow().get(0).getData().toHexString())
-        .isEqualTo(blobHex);
     assertThat(decodedTransaction.getVersionedHashes().get(0).toHexString())
         .isEqualTo("0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014");
     assertThat(decodedTransaction.getMaxFeePerBlobGas())

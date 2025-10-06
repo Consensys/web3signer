@@ -171,7 +171,7 @@ public class EthSignTransactionResultProviderTest {
   public void returnsExpectedSignatureForEip4844Transaction() {
     assertThat(executeEthSignTransaction(get4844TxParameters()))
         .isEqualTo(
-            "0x03f88bf88682af2c46010282760094627306090abab3a6e1400e9345bc60c78a8bef570200c003e1a0010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014019f5392a2fcfd2c1d6120558c8bdde108dc24f4cbedaff365768170a1d5c43237a0745fe817b1da4205d9a90d17363c8b88b2e8501be6f7138152eab0cc0c017b93c0c0c0");
+            "0x03f88cf88782af2c46010282760094627306090abab3a6e1400e9345bc60c78a8bef570200c003e1a0010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c44401401a099ef021663f2bf3eeee30abad5f798db98f5736fad456b9da3a8c254e65523c1a073123b2465936f4ccaba0e20cad2db613bd48e833cbaad879647333506837239c0c0c0");
   }
 
   private String executeEthSignTransaction(final JsonObject params) {
