@@ -1,5 +1,11 @@
 # Changelog
 
+## 25.10.0
+### Features Added
+- Added support for signing EIP-4844 transactions with blob data and versioned hashes
+- Updated web3j library to 5.0.1
+
+---
 ## 25.9.1
 ### Breaking changes
 - `eea*` RPC methods and other privacy supporting classes have been removed since Privacy feature has been removed from [Besu 25.6.0](https://github.com/hyperledger/besu/releases/tag/25.6.0)
