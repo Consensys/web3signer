@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.routes.eth2;
 
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.config.BaseConfig;
+import tech.pegasys.web3signer.core.config.KeyManagerApiConfig;
 import tech.pegasys.web3signer.core.routes.Web3SignerRoute;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.DeleteKeystoresHandler;
@@ -44,13 +45,16 @@ public class KeyManagerApiRoute implements Web3SignerRoute {
   private final Optional<SlashingProtection> slashingProtection;
   private final ObjectMapper objectMapper = SigningObjectMapperFactory.createObjectMapper();
   private final BaseConfig baseConfig;
+  private final KeyManagerApiConfig keyManagerApiConfig;
 
   public KeyManagerApiRoute(
       final Context context,
       final BaseConfig baseConfig,
+      final KeyManagerApiConfig keyManagerApiConfig,
       final Optional<SlashingProtectionContext> slashingProtectionContext) {
     this.context = context;
     this.baseConfig = baseConfig;
+    this.keyManagerApiConfig = keyManagerApiConfig;
     this.slashingProtectionContext = slashingProtectionContext;
 
     slashingProtection =
@@ -112,7 +116,7 @@ public class KeyManagerApiRoute implements Web3SignerRoute {
   private ValidatorManager createValidatorManager() {
     final ValidatorManager baseValidatorManager;
 
-    if (baseConfig.isKeystoreStorageSkipped()) {
+    if (keyManagerApiConfig.skipKeystoreStorage()) {
       baseValidatorManager = new InMemoryValidatorManager(blsSignerProvider, objectMapper);
     } else {
       baseValidatorManager =

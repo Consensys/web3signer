@@ -64,6 +64,4 @@ public interface BaseConfig {
   boolean keystoreParallelProcessingEnabled();
 
   int getVertxWorkerPoolSize();
-
-  boolean isKeystoreStorageSkipped();
 }
