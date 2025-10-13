@@ -1,9 +1,16 @@
 # Changelog
 
-## Unreleased
+## 25.9.1
 ### Breaking changes
-- `eea*` RPC methods and other privacy supporting classes have been removed since Privacy feature has been removed from Besu 25.6.0 https://github.com/hyperledger/besu/releases/tag/25.6.0
+- `eea*` RPC methods and other privacy supporting classes have been removed since Privacy feature has been removed from [Besu 25.6.0](https://github.com/hyperledger/besu/releases/tag/25.6.0)
 
+### Features Added
+- Updated Teku libraries to add scheduling for Fulu testnets:
+  - Holesky fork at epoch 165120 (2025-10-01 08:48:00 UTC)
+  - Sepolia fork at epoch 272640 (2025-10-14 07:36:00 UTC)
+  - Hoodi fork at epoch 50688 (2025-10-28 18:53:12 UTC)
+
+---
 ## 25.9.0
 ### Upcoming Breaking Changes
 - `eea*` RPC methods and other privacy supporting classes will be removed since Privacy feature has been removed from Besu 25.6.0 https://github.com/hyperledger/besu/releases/tag/25.6.0
