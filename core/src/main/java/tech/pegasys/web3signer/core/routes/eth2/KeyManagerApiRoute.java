@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.routes.eth2;
 
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.config.BaseConfig;
+import tech.pegasys.web3signer.core.config.KeyManagerApiConfig;
 import tech.pegasys.web3signer.core.routes.Web3SignerRoute;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.DeleteKeystoresHandler;
@@ -21,6 +22,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.Imp
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.list.ListKeystoresHandler;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.FileValidatorManager;
+import tech.pegasys.web3signer.signing.InMemoryValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
@@ -43,13 +45,16 @@ public class KeyManagerApiRoute implements Web3SignerRoute {
   private final Optional<SlashingProtection> slashingProtection;
   private final ObjectMapper objectMapper = SigningObjectMapperFactory.createObjectMapper();
   private final BaseConfig baseConfig;
+  private final KeyManagerApiConfig keyManagerApiConfig;
 
   public KeyManagerApiRoute(
       final Context context,
       final BaseConfig baseConfig,
+      final KeyManagerApiConfig keyManagerApiConfig,
       final Optional<SlashingProtectionContext> slashingProtectionContext) {
     this.context = context;
     this.baseConfig = baseConfig;
+    this.keyManagerApiConfig = keyManagerApiConfig;
     this.slashingProtectionContext = slashingProtectionContext;
 
     slashingProtection =
@@ -109,23 +114,29 @@ public class KeyManagerApiRoute implements Web3SignerRoute {
   }
 
   private ValidatorManager createValidatorManager() {
-    final FileValidatorManager fileValidatorManager =
-        new FileValidatorManager(
-            blsSignerProvider,
-            new KeystoreFileManager(
-                baseConfig.getKeyConfigPath(),
-                YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())),
-            objectMapper);
+    final ValidatorManager baseValidatorManager;
+
+    if (keyManagerApiConfig.skipKeystoreStorage()) {
+      baseValidatorManager = new InMemoryValidatorManager(blsSignerProvider, objectMapper);
+    } else {
+      baseValidatorManager =
+          new FileValidatorManager(
+              blsSignerProvider,
+              new KeystoreFileManager(
+                  baseConfig.getKeyConfigPath(),
+                  YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())),
+              objectMapper);
+    }
 
     return slashingProtectionContext
         .map(
             ctx ->
                 (ValidatorManager)
                     new DbValidatorManager(
-                        fileValidatorManager,
+                        baseValidatorManager,
                         ctx.getRegisteredValidators(),
                         ctx.getSlashingProtectionJdbi(),
                         new ValidatorsDao()))
-        .orElse(fileValidatorManager);
+        .orElse(baseValidatorManager);
   }
 }

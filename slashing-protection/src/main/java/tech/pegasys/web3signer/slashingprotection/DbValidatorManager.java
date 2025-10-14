@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import tech.pegasys.web3signer.signing.FileValidatorManager;
 import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
@@ -23,17 +22,17 @@ import org.jdbi.v3.core.Jdbi;
 
 public class DbValidatorManager implements ValidatorManager {
 
-  private final FileValidatorManager fileValidatorManager;
+  private final ValidatorManager validatorManager;
   private final RegisteredValidators registeredValidators;
   private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;
 
   public DbValidatorManager(
-      final FileValidatorManager fileValidatorManager,
+      final ValidatorManager validatorManager,
       final RegisteredValidators registeredValidators,
       final Jdbi jdbi,
       final ValidatorsDao validatorsDao) {
-    this.fileValidatorManager = fileValidatorManager;
+    this.validatorManager = validatorManager;
     this.registeredValidators = registeredValidators;
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
@@ -43,11 +42,10 @@ public class DbValidatorManager implements ValidatorManager {
   public void deleteValidator(final Bytes publicKey) {
     jdbi.useTransaction(
         handle -> {
-          // First disable the validator in the database to prevent all w3s from signing
           final int validatorId = registeredValidators.mustGetValidatorIdForPublicKey(publicKey);
           DbLocker.lockAllForValidator(handle, validatorId);
           validatorsDao.setEnabled(handle, validatorId, false);
-          fileValidatorManager.deleteValidator(publicKey);
+          validatorManager.deleteValidator(publicKey);
         });
   }
 
@@ -55,7 +53,7 @@ public class DbValidatorManager implements ValidatorManager {
   public void addValidator(final Bytes publicKey, final String keystore, final String password) {
     jdbi.useTransaction(
         handle -> {
-          fileValidatorManager.addValidator(publicKey, keystore, password);
+          validatorManager.addValidator(publicKey, keystore, password);
           registeredValidators.registerValidators(List.of(publicKey));
           final int validatorId = registeredValidators.mustGetValidatorIdForPublicKey(publicKey);
           DbLocker.lockAllForValidator(handle, validatorId);

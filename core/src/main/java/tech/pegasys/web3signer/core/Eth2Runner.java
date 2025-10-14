@@ -23,6 +23,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.config.BaseConfig;
+import tech.pegasys.web3signer.core.config.KeyManagerApiConfig;
 import tech.pegasys.web3signer.core.routes.PublicKeysListRoute;
 import tech.pegasys.web3signer.core.routes.ReloadRoute;
 import tech.pegasys.web3signer.core.routes.eth2.CommitBoostGenerateProxyKeyRoute;
@@ -89,7 +90,7 @@ public class Eth2Runner extends Runner {
   private final boolean pruningEnabled;
   private final KeystoresParameters keystoresParameters;
   private final Spec eth2Spec;
-  private final boolean isKeyManagerApiEnabled;
+  private final KeyManagerApiConfig keyManagerApiConfig;
   private final boolean signingExtEnabled;
   private final KeystoresParameters commitBoostApiParameters;
 
@@ -101,7 +102,7 @@ public class Eth2Runner extends Runner {
       final AwsVaultParameters awsVaultParameters,
       final GcpSecretManagerParameters gcpSecretManagerParameters,
       final Spec eth2Spec,
-      final boolean isKeyManagerApiEnabled,
+      final KeyManagerApiConfig keyManagerApiConfig,
       final boolean signingExtEnabled,
       final KeystoresParameters commitBoostApiParameters) {
     super(baseConfig);
@@ -111,7 +112,7 @@ public class Eth2Runner extends Runner {
     this.pruningEnabled = slashingProtectionParameters.isPruningEnabled();
     this.keystoresParameters = keystoresParameters;
     this.eth2Spec = eth2Spec;
-    this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
+    this.keyManagerApiConfig = keyManagerApiConfig;
     this.awsVaultParameters = awsVaultParameters;
     this.gcpSecretManagerParameters = gcpSecretManagerParameters;
     this.signingExtEnabled = signingExtEnabled;
@@ -140,8 +141,9 @@ public class Eth2Runner extends Runner {
     if (signingExtEnabled) {
       new Eth2SignExtensionRoute(context).register();
     }
-    if (isKeyManagerApiEnabled) {
-      new KeyManagerApiRoute(context, baseConfig, slashingProtectionContext).register();
+    if (keyManagerApiConfig.isKeyManagerApiEnabled()) {
+      new KeyManagerApiRoute(context, baseConfig, keyManagerApiConfig, slashingProtectionContext)
+          .register();
     }
     if (commitBoostApiParameters.isEnabled()) {
       new CommitBoostPublicKeysRoute(context).register();
