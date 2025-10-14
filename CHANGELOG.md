@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+### Features Added
+- Add CLI option `-Xkey-manager-skip-keystore-storage` to eth2 subcommand preventing web3signer from writing keystores imported via the keymanager API to disk. This is *not* safe for operators who do not backup keystore.
+
 ## 25.9.1
 ### Breaking changes
 - `eea*` RPC methods and other privacy supporting classes have been removed since Privacy feature has been removed from [Besu 25.6.0](https://github.com/hyperledger/besu/releases/tag/25.6.0)
