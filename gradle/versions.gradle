@@ -155,9 +155,7 @@ dependencyManagement {
       entry 'sts'
       entry 'kms'
     }
-
-    dependency 'io.rest-assured:rest-assured:5.5.0'
-
+      
     dependencySet(group: 'com.squareup.okhttp3', version: '5.2.1') {
       entry 'okhttp'
       entry 'mockwebserver'
