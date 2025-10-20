@@ -149,9 +149,7 @@ allprojects {
   }
 
   dependencyCheck {
-    nvd {
-      apiKey = System.getenv('NVD_API_KEY')
-    }
+    nvd.apiKey = System.getenv('NVD_API_KEY')
     failBuildOnCVSS = 7 // Fail on high CVSS severity
     suppressionFile = "${rootDir}/gradle/owasp-suppression.xml"
     skipConfigurations = [
@@ -161,12 +159,8 @@ allprojects {
     skipProjects = [
       ':acceptance-tests'
     ]
-    analyzers {
-      retirejs {
-        enabled = false
-      }
-      assemblyEnabled = false
-    }
+    analyzers.retirejs.enabled = false
+    analyzers.assemblyEnabled = false
   }
 
   tasks.withType(JavaCompile).configureEach {
