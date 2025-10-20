@@ -149,12 +149,17 @@ public class Eth2RequestUtils {
         SIGNING_ROOT_UTIL.signingRootForSignAggregateAndProof(
             aggregateAndProof.asInternalAggregateAndProof(SPEC), forkInfo.asInternalForkInfo());
     return Eth2SigningRequestBodyBuilder.anEth2SigningRequestBody()
-        .withType(isLegacy ? ArtifactType.AGGREGATE_AND_PROOF : ArtifactType.AGGREGATE_AND_PROOF_V2)
+        .withType(getAggregateAndProofType(isLegacy))
         .withSigningRoot(signingRoot)
         .withForkInfo(forkInfo)
         .withAggregateAndProofV2(
             new AggregateAndProofV2(isLegacy ? null : SpecMilestone.PHASE0, aggregateAndProof))
         .build();
+  }
+
+  @SuppressWarnings("deprecation")
+  private static ArtifactType getAggregateAndProofType(final boolean isLegacy) {
+    return isLegacy ? ArtifactType.AGGREGATE_AND_PROOF : ArtifactType.AGGREGATE_AND_PROOF_V2;
   }
 
   private static Eth2SigningRequestBody createAggregationSlot() {
