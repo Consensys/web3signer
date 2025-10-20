@@ -14,7 +14,7 @@
 dependencyManagement {
   imports {
     // Import log4j BOM first with higher priority
-    mavenBom "org.apache.logging.log4j:log4j-bom:2.25.1"
+    mavenBom "org.apache.logging.log4j:log4j-bom:2.25.2"
   }
   dependencies {
     dependency 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
