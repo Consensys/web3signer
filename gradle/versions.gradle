@@ -17,8 +17,8 @@ dependencyManagement {
     mavenBom "org.apache.logging.log4j:log4j-bom:2.25.2"
   }
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
-    dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.2'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.20.0'
+    dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.20.0'
 
     dependencySet(group: 'com.google.errorprone', version: '2.36.0') {
       entry 'error_prone_annotation'
