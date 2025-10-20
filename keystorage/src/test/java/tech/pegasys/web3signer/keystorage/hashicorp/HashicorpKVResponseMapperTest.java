@@ -22,27 +22,28 @@ import org.junit.jupiter.api.Test;
 class HashicorpKVResponseMapperTest {
 
   private static final String VALID_JSON_RESPONSE =
-      "{\n"
-          + "  \"request_id\": \"39ae72e7-ef58-ab8b-9aef-4473a4ea2c46\",\n"
-          + "  \"lease_id\": \"\",\n"
-          + "  \"renewable\": false,\n"
-          + "  \"lease_duration\": 0,\n"
-          + "  \"data\": {\n"
-          + "    \"data\": {\n"
-          + "      \"dbKey1\": \"1c2c450cedaa416329fef5900854d55c00046224dffd0075b5057a088b48f9bf\",\n"
-          + "      \"value\": \"ccccaaacedaa416329fef5900854d55c00046224dffd0075b5057a088b48f9bf\"\n"
-          + "    },\n"
-          + "    \"metadata\": {\n"
-          + "      \"created_time\": \"2019-11-06T08:21:41.656367376Z\",\n"
-          + "      \"deletion_time\": \"\",\n"
-          + "      \"destroyed\": false,\n"
-          + "      \"version\": 1\n"
-          + "    }\n"
-          + "  },\n"
-          + "  \"wrap_info\": null,\n"
-          + "  \"warnings\": null,\n"
-          + "  \"auth\": null\n"
-          + "}";
+      """
+    {
+      "request_id": "39ae72e7-ef58-ab8b-9aef-4473a4ea2c46",
+      "lease_id": "",
+      "renewable": false,
+      "lease_duration": 0,
+      "data": {
+        "data": {
+          "dbKey1": "1c2c450cedaa416329fef5900854d55c00046224dffd0075b5057a088b48f9bf",
+          "value": "ccccaaacedaa416329fef5900854d55c00046224dffd0075b5057a088b48f9bf"
+        },
+        "metadata": {
+          "created_time": "2019-11-06T08:21:41.656367376Z",
+          "deletion_time": "",
+          "destroyed": false,
+          "version": 1
+        }
+      },
+      "wrap_info": null,
+      "warnings": null,
+      "auth": null
+    }""";
 
   @Test
   void exceptionThrownWhenParsingNullJsonInput() {

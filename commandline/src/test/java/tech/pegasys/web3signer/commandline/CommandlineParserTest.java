@@ -464,7 +464,7 @@ class CommandlineParserTest {
     cmdline +=
         String.format(
             "eth2 --slashing-protection-enabled=false %s=%s %s=UNKNOWN",
-            AWS_SECRETS_ENABLED_OPTION, Boolean.TRUE, AWS_SECRETS_AUTH_MODE_OPTION);
+            AWS_SECRETS_ENABLED_OPTION, true, AWS_SECRETS_AUTH_MODE_OPTION);
 
     parser.registerSubCommands(new MockEth2SubCommand());
     final int result = parser.parseCommandLine(cmdline.split(" "));
@@ -482,7 +482,7 @@ class CommandlineParserTest {
         String.format(
             "eth2 --slashing-protection-enabled=false %s=%s %s=%s %s=test %s=test %s=us-east-2",
             AWS_SECRETS_ENABLED_OPTION,
-            Boolean.TRUE,
+            true,
             AWS_SECRETS_AUTH_MODE_OPTION,
             AwsAuthenticationMode.SPECIFIED,
             AWS_SECRETS_ACCESS_KEY_ID_OPTION,
@@ -502,7 +502,7 @@ class CommandlineParserTest {
         String.format(
             "eth2 --slashing-protection-enabled=false %s=%s %s=%s %s=test %s=test %s=us-east-2 %s=p1,p2,p3 %9$s=t1=v1 %9$s t2=v2 %9$s=t3=v3",
             AWS_SECRETS_ENABLED_OPTION,
-            Boolean.TRUE,
+            true,
             AWS_SECRETS_AUTH_MODE_OPTION,
             AwsAuthenticationMode.SPECIFIED,
             AWS_SECRETS_ACCESS_KEY_ID_OPTION,

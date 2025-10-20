@@ -35,7 +35,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.common.mapper.TypeRef;
@@ -67,7 +67,11 @@ public class Signer {
   public static final String SIGN_EXT_ENDPOINT = "/api/v1/eth2/ext/sign/{identifier}";
 
   public static final ObjectMapper ETH_2_INTERFACE_OBJECT_MAPPER =
-      SigningObjectMapperFactory.createObjectMapper().setSerializationInclusion(Include.NON_NULL);
+      SigningObjectMapperFactory.createObjectMapper()
+          .copy()
+          .setDefaultPropertyInclusion(
+              JsonInclude.Value.construct(
+                  JsonInclude.Include.NON_NULL, JsonInclude.Include.USE_DEFAULTS));
   private static final String METRICS_ENDPOINT = "/metrics";
   private static final String HEALTHCHECK_ENDPOINT = "/healthcheck";
 

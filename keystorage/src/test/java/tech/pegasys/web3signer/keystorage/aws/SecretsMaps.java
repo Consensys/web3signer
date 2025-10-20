@@ -64,21 +64,11 @@ public class SecretsMaps {
 
   private static AwsSecret computeSecretValue(final int i) {
     final String value = String.format("secret-value%d", i);
-    final AwsSecret awsSecret;
-    switch (i) {
-      case 1:
-        awsSecret = new AwsSecret(value, "tagKey1", "tagValA");
-        break;
-      case 2:
-        awsSecret = new AwsSecret(value, "tagKey1", "tagValB");
-        break;
-      case 3:
-        awsSecret = new AwsSecret(value, "tagKey2", "tagValC");
-        break;
-      default:
-        awsSecret = new AwsSecret(value, "tagKey2", "tagValB");
-        break;
-    }
-    return awsSecret;
+    return switch (i) {
+      case 1 -> new AwsSecret(value, "tagKey1", "tagValA");
+      case 2 -> new AwsSecret(value, "tagKey1", "tagValB");
+      case 3 -> new AwsSecret(value, "tagKey2", "tagValC");
+      default -> new AwsSecret(value, "tagKey2", "tagValB");
+    };
   }
 }

@@ -93,9 +93,9 @@ public class VertxNonceRequestTransmitter {
       final JsonRpcSuccessResponse response =
           decoder.decodeValue(Buffer.buffer(body), JsonRpcSuccessResponse.class);
       final Object suppliedNonce = response.getResult();
-      if (suppliedNonce instanceof String) {
+      if (suppliedNonce instanceof String nonceString) {
         try {
-          result.complete(Numeric.decodeQuantity((String) suppliedNonce));
+          result.complete(Numeric.decodeQuantity(nonceString));
           return;
         } catch (final MessageDecodingException ex) {
           result.completeExceptionally(ex);

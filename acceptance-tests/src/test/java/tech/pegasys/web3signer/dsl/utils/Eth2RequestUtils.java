@@ -89,36 +89,34 @@ public class Eth2RequestUtils {
       new Eth2BlockSigningRequestUtil(SpecMilestone.ALTAIR);
 
   public static Eth2SigningRequestBody createCannedRequest(final ArtifactType artifactType) {
-    switch (artifactType) {
-      case DEPOSIT:
-        return createDepositRequest();
-      case VOLUNTARY_EXIT:
-        return createVoluntaryExit();
-      case RANDAO_REVEAL:
-        return createRandaoReveal();
-      case BLOCK:
-        return createBlockRequest();
-      case BLOCK_V2:
-        return ALTAIR_BLOCK_UTIL.createBlockV2Request();
-      case ATTESTATION:
-        return createAttestationRequest();
-      case AGGREGATION_SLOT:
-        return createAggregationSlot();
-      case AGGREGATE_AND_PROOF:
-        return createAggregateAndProof(true);
-      case AGGREGATE_AND_PROOF_V2:
-        return createAggregateAndProof(false);
-      case SYNC_COMMITTEE_MESSAGE:
-        return createSyncCommitteeMessageRequest();
-      case SYNC_COMMITTEE_SELECTION_PROOF:
-        return createSyncCommitteeSelectionProofRequest();
-      case SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF:
-        return createSyncCommitteeContributionAndProofRequest();
-      case VALIDATOR_REGISTRATION:
-        return createValidatorRegistrationRequest();
-      default:
-        throw new IllegalStateException("Unknown eth2 signing type");
-    }
+    return switch (artifactType) {
+      case DEPOSIT -> createDepositRequest();
+
+      case VOLUNTARY_EXIT -> createVoluntaryExit();
+
+      case RANDAO_REVEAL -> createRandaoReveal();
+
+      case BLOCK -> createBlockRequest();
+
+      case BLOCK_V2 -> ALTAIR_BLOCK_UTIL.createBlockV2Request();
+
+      case ATTESTATION -> createAttestationRequest();
+
+      case AGGREGATION_SLOT -> createAggregationSlot();
+
+      case AGGREGATE_AND_PROOF -> createAggregateAndProof(true);
+
+      case AGGREGATE_AND_PROOF_V2 -> createAggregateAndProof(false);
+
+      case SYNC_COMMITTEE_MESSAGE -> createSyncCommitteeMessageRequest();
+
+      case SYNC_COMMITTEE_SELECTION_PROOF -> createSyncCommitteeSelectionProofRequest();
+
+      case SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF ->
+          createSyncCommitteeContributionAndProofRequest();
+
+      case VALIDATOR_REGISTRATION -> createValidatorRegistrationRequest();
+    };
   }
 
   private static Eth2SigningRequestBody createAggregateAndProof(final boolean isLegacy) {

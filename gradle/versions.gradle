@@ -16,6 +16,7 @@ dependencyManagement {
   imports {
     // Import log4j BOM first with higher priority
     mavenBom "org.apache.logging.log4j:log4j-bom:2.25.2"
+    mavenBom 'org.junit:junit-bom:5.14.0'
   }
   dependencies {
     dependency 'com.fasterxml.jackson.core:jackson-databind:2.20.0'
@@ -68,13 +69,6 @@ dependencyManagement {
       entry 'bcpkix-jdk18on'
       entry 'bcprov-jdk18on'
     }
-
-    dependencySet(group: 'org.junit.jupiter', version: '5.14.0') {
-      entry 'junit-jupiter-api'
-      entry 'junit-jupiter-engine'
-      entry 'junit-jupiter-params'
-    }
-    dependency 'org.junit.vintage:junit-vintage-engine:5.14.0'
 
     dependency 'org.mock-server:mockserver-netty:5.15.0'
 
@@ -155,7 +149,7 @@ dependencyManagement {
       entry 'sts'
       entry 'kms'
     }
-      
+
     dependencySet(group: 'com.squareup.okhttp3', version: '5.2.1') {
       entry 'okhttp'
       entry 'mockwebserver'

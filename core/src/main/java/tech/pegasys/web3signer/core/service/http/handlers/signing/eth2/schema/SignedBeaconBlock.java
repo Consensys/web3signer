@@ -110,14 +110,8 @@ public class SignedBeaconBlock implements SignedBlock {
   }
 
   @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof SignedBeaconBlock)) {
-      return false;
-    }
-    SignedBeaconBlock that = (SignedBeaconBlock) o;
+  public boolean equals(Object o) {
+    if (!(o instanceof SignedBeaconBlock that)) return false;
     return Objects.equals(message, that.message) && Objects.equals(signature, that.signature);
   }
 

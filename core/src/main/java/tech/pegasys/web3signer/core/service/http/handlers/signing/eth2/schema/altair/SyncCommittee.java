@@ -54,14 +54,8 @@ public class SyncCommittee {
   }
 
   @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof SyncCommittee)) {
-      return false;
-    }
-    SyncCommittee that = (SyncCommittee) o;
+  public boolean equals(Object o) {
+    if (!(o instanceof SyncCommittee that)) return false;
     return Objects.equals(pubkeys, that.pubkeys)
         && Objects.equals(aggregatePubkey, that.aggregatePubkey);
   }

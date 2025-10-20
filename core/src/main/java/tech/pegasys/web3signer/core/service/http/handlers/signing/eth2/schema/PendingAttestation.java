@@ -61,14 +61,8 @@ public class PendingAttestation {
   }
 
   @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof PendingAttestation)) {
-      return false;
-    }
-    PendingAttestation that = (PendingAttestation) o;
+  public boolean equals(Object o) {
+    if (!(o instanceof PendingAttestation that)) return false;
     return Objects.equals(aggregation_bits, that.aggregation_bits)
         && Objects.equals(data, that.data)
         && Objects.equals(inclusion_delay, that.inclusion_delay)
