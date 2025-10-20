@@ -29,15 +29,15 @@ buildscript {
 }
 
 plugins {
-  id 'org.owasp.dependencycheck' version "12.1.0"
+  id 'org.owasp.dependencycheck' version "12.1.8"
   id 'java-test-fixtures'
   id 'com.diffplug.spotless' version '8.0.0'
   id 'com.github.ben-manes.versions' version '0.53.0' //`./gradlew dependencyUpdates --no-parallel` to report outdated dependencies
   id 'com.github.jk1.dependency-license-report' version '2.9'
   id 'io.spring.dependency-management' version '1.1.7'
-  id 'me.champeau.jmh' version '0.7.2' apply false
-  id 'net.ltgt.errorprone' version '4.1.0'
-  id 'org.ajoberstar.grgit' version '5.3.0'
+  id 'me.champeau.jmh' version '0.7.3' apply false
+  id 'net.ltgt.errorprone' version '4.3.0'
+  id 'org.ajoberstar.grgit' version '5.3.3'
 }
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
