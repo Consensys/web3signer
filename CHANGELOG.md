@@ -3,6 +3,7 @@
 ## Unreleased
 ### Features Added
 - Add CLI option `-Xkey-manager-skip-keystore-storage` to eth2 subcommand preventing web3signer from writing keystores imported via the keymanager API to disk. This is *not* safe for operators who do not backup keystore.
+- Reduced Web3Signer docker image size. Removed unnecessary tools `iputils-ping, net-tools` from the image.
 
 ## 25.9.1
 ### Breaking changes
