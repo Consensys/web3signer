@@ -46,25 +46,20 @@ public class TrustManagerFactoryProvider {
                 () ->
                     new HashicorpException(
                         "Cannot create TrustManagerFactory from empty truststore type."));
-    switch (trustStoreType) {
-      case JKS:
-      case PKCS12:
-        trustManagerFactory =
-            buildFromKeystore(
-                tlsOptions.getTrustStorePath(), tlsOptions.getTrustStorePassword(), trustStoreType);
-        break;
-      case PEM:
-        trustManagerFactory =
-            TrustManagerFactoryProvider.buildFromPemFile(tlsOptions.getTrustStorePath());
-        break;
-      default:
-        // Tuweni throws an NPE if the trustStorePath has no directory prefix, thus requiring
-        // the use of absolutePath.
-        trustManagerFactory =
-            TrustManagerFactories.allowlistServers(
-                tlsOptions.getTrustStorePath().toAbsolutePath(), true);
-        break;
-    }
+    trustManagerFactory =
+        switch (trustStoreType) {
+          case JKS, PKCS12 ->
+              buildFromKeystore(
+                  tlsOptions.getTrustStorePath(),
+                  tlsOptions.getTrustStorePassword(),
+                  trustStoreType);
+          case PEM -> TrustManagerFactoryProvider.buildFromPemFile(tlsOptions.getTrustStorePath());
+          default ->
+              // Tuweni throws an NPE if the trustStorePath has no directory prefix, thus requiring
+              // the use of absolutePath.
+              TrustManagerFactories.allowlistServers(
+                  tlsOptions.getTrustStorePath().toAbsolutePath(), true);
+        };
     return trustManagerFactory;
   }
 

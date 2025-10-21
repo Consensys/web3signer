@@ -70,47 +70,44 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
   private void setForkEpochs(
       final SpecMilestone specMilestone, final SignerConfigurationBuilder builder) {
     switch (specMilestone) {
-      case PHASE0:
-        break;
-      case ALTAIR:
-        builder.withAltairForkEpoch(0L);
-        break;
-      case BELLATRIX:
+      case PHASE0 -> {}
+      case ALTAIR -> builder.withAltairForkEpoch(0L);
+      case BELLATRIX -> {
         // As we are setting manual epoch, Teku libraries doesn't seem to work when Bellatrix epoch
         // is set to 0 while Altair is not set (as it attempts to calculate difference
         // between two forks). Hence, set both forks to 0.
         builder.withAltairForkEpoch(0L);
         builder.withBellatrixForkEpoch(0L);
-        break;
-      case CAPELLA:
+      }
+      case CAPELLA -> {
         builder.withAltairForkEpoch(0L);
         builder.withBellatrixForkEpoch(0L);
         builder.withCapellaForkEpoch(0L);
-        break;
-      case DENEB:
+      }
+      case DENEB -> {
         builder.withAltairForkEpoch(0L);
         builder.withBellatrixForkEpoch(0L);
         builder.withCapellaForkEpoch(0L);
         builder.withDenebForkEpoch(0L);
-        break;
-      case ELECTRA:
+      }
+      case ELECTRA -> {
         builder.withAltairForkEpoch(0L);
         builder.withBellatrixForkEpoch(0L);
         builder.withCapellaForkEpoch(0L);
         builder.withDenebForkEpoch(0L);
         builder.withElectraForkEpoch(0L);
-        break;
-      case FULU:
+      }
+      case FULU -> {
         builder.withAltairForkEpoch(0L);
         builder.withBellatrixForkEpoch(0L);
         builder.withCapellaForkEpoch(0L);
         builder.withDenebForkEpoch(0L);
         builder.withElectraForkEpoch(0L);
         builder.withFuluForkEpoch(0L);
-        break;
-      default:
-        throw new IllegalStateException(
-            "Setting manual fork epoch is not yet implemented for " + specMilestone);
+      }
+      default ->
+          throw new IllegalStateException(
+              "Setting manual fork epoch is not yet implemented for " + specMilestone);
     }
   }
 

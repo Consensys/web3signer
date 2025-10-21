@@ -77,7 +77,7 @@ public class AwsSecretsManagerUtil {
     final DeleteSecretRequest secretRequest =
         DeleteSecretRequest.builder()
             .secretId(secretNamePrefix + secretName)
-            .forceDeleteWithoutRecovery(Boolean.TRUE)
+            .forceDeleteWithoutRecovery(true)
             .build();
     secretsManagerClient.deleteSecret(secretRequest);
   }

@@ -100,17 +100,9 @@ public class ExecutionPayloadDeneb extends ExecutionPayloadCapella implements Ex
   }
 
   @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof ExecutionPayloadDeneb)) {
-      return false;
-    }
-    if (!super.equals(o)) {
-      return false;
-    }
-    final ExecutionPayloadDeneb that = (ExecutionPayloadDeneb) o;
+  public boolean equals(Object o) {
+    if (!(o instanceof ExecutionPayloadDeneb that)) return false;
+    if (!super.equals(o)) return false;
     return Objects.equals(blobGasUsed, that.blobGasUsed)
         && Objects.equals(excessBlobGas, that.excessBlobGas);
   }

@@ -124,8 +124,7 @@ public class DeleteKeystoresProcessor {
       }
 
       // Check that key is read only, if so return an error status
-      if (signer.get() instanceof BlsArtifactSigner
-          && ((BlsArtifactSigner) signer.get()).isReadOnlyKey()) {
+      if (signer.get() instanceof BlsArtifactSigner blsSigner && blsSigner.isReadOnlyKey()) {
         return new DeleteKeystoreResult(
             DeleteKeystoreStatus.ERROR, "Unable to delete readonly key: " + pubkey);
       }

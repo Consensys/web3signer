@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -38,10 +39,13 @@ public class EthSignTypedDataResultProvider implements ResultProvider<String> {
   private static final Logger LOG = LogManager.getLogger();
   // This is not a global instance because it is only meant to decode the typed data JSON
   private static final ObjectMapper OBJECT_MAPPER =
-      new ObjectMapper()
+      JsonMapper.builder()
           .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-          .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-          .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+          .defaultPropertyInclusion(
+              JsonInclude.Value.construct(
+                  JsonInclude.Include.NON_NULL, JsonInclude.Include.USE_DEFAULTS))
+          .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+          .build();
 
   private final SignerForIdentifier transactionSignerProvider;
 
@@ -56,11 +60,11 @@ public class EthSignTypedDataResultProvider implements ResultProvider<String> {
     final List<?> params = validateAndGetParams(request);
 
     // Address validation
-    final Object addressParam = params.get(0);
-    if (!(addressParam instanceof String)) {
+    final Object addressParam = params.getFirst();
+    if (!(addressParam instanceof String addressStr)) {
       throw new JsonRpcException(INVALID_PARAMS);
     }
-    final String normalizedAddress = normaliseIdentifier((String) addressParam);
+    final String normalizedAddress = normaliseIdentifier(addressStr);
 
     if (!transactionSignerProvider.isSignerAvailable(normalizedAddress)) {
       LOG.debug("Address {} not available for signing", normalizedAddress);
@@ -105,9 +109,9 @@ public class EthSignTypedDataResultProvider implements ResultProvider<String> {
 
   private String convertToTypedDataJson(final Object jsonData) {
     try {
-      if (jsonData instanceof String) {
-        OBJECT_MAPPER.readTree((String) jsonData); // Validate
-        return (String) jsonData;
+      if (jsonData instanceof String jsonStr) {
+        OBJECT_MAPPER.readTree(jsonStr); // Validate
+        return jsonStr;
       }
       return OBJECT_MAPPER.writeValueAsString(jsonData);
     } catch (IOException e) {

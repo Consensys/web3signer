@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat
 
 buildscript {
   repositories {
-    maven { url "https://artifacts.consensys.net/public/maven/maven/" }
+    maven { url = "https://artifacts.consensys.net/public/maven/maven/" }
   }
   dependencies {
     classpath 'tech.pegasys.internal.license.reporter:license-reporter:1.1.1'
@@ -29,15 +29,15 @@ buildscript {
 }
 
 plugins {
-  id 'org.owasp.dependencycheck' version "12.1.0"
+  id 'org.owasp.dependencycheck' version "12.1.8"
   id 'java-test-fixtures'
-  id 'com.diffplug.spotless' version '7.0.0.BETA4'
-  id 'com.github.ben-manes.versions' version '0.51.0' //`./gradlew dependencyUpdates` to report outdated dependencies
-  id 'com.github.jk1.dependency-license-report' version '2.8'
-  id 'io.spring.dependency-management' version '1.1.6'
-  id 'me.champeau.jmh' version '0.7.2' apply false
-  id 'net.ltgt.errorprone' version '4.1.0'
-  id 'org.ajoberstar.grgit' version '5.3.0'
+  id 'com.diffplug.spotless' version '8.0.0'
+  id 'com.github.ben-manes.versions' version '0.53.0' //`./gradlew dependencyUpdates --no-parallel` to report outdated dependencies
+  id 'com.github.jk1.dependency-license-report' version '2.9'
+  id 'io.spring.dependency-management' version '1.1.7'
+  id 'me.champeau.jmh' version '0.7.3' apply false
+  id 'net.ltgt.errorprone' version '4.3.0'
+  id 'org.ajoberstar.grgit' version '5.3.3'
 }
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
@@ -98,12 +98,14 @@ allprojects {
 
   jacoco { toolVersion = '0.8.11' }
 
-  task sourcesJar(type: Jar, dependsOn: classes) {
+  tasks.register('sourcesJar', Jar) {
+    dependsOn classes
     archiveClassifier = 'sources'
     from sourceSets.main.allSource
   }
 
-  task javadocJar(type: Jar, dependsOn: javadoc) {
+  tasks.register('javadocJar', Jar) {
+    dependsOn javadoc
     archiveClassifier = 'javadoc'
     from javadoc.destinationDir
   }
@@ -116,10 +118,10 @@ allprojects {
   repositories {
     // mavenLocal() //for local testing only, uncomment while testing locally build signers.
     mavenCentral()
-    maven { url "https://artifacts.consensys.net/public/maven/maven/" }
-    maven { url "https://artifacts.consensys.net/public/teku/maven/" }
-    maven { url "https://hyperledger.jfrog.io/artifactory/besu-maven" }
-    maven { url "https://jitpack.io" }
+    maven { url = "https://artifacts.consensys.net/public/maven/maven/" }
+    maven { url = "https://artifacts.consensys.net/public/teku/maven/" }
+    maven { url = "https://hyperledger.jfrog.io/artifactory/besu-maven" }
+    maven { url = "https://jitpack.io" }
   }
 
   dependencies {
@@ -147,9 +149,7 @@ allprojects {
   }
 
   dependencyCheck {
-    nvd {
-      apiKey = System.getenv('NVD_API_KEY')
-    }
+    nvd.apiKey = System.getenv('NVD_API_KEY')
     failBuildOnCVSS = 7 // Fail on high CVSS severity
     suppressionFile = "${rootDir}/gradle/owasp-suppression.xml"
     skipConfigurations = [
@@ -159,15 +159,11 @@ allprojects {
     skipProjects = [
       ':acceptance-tests'
     ]
-    analyzers {
-      retirejs {
-        enabled = false
-      }
-      assemblyEnabled = false
-    }
+    analyzers.retirejs.enabled = false
+    analyzers.assemblyEnabled = false
   }
 
-  tasks.withType(JavaCompile) {
+  tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += [
       '-Xlint:unchecked',
       '-Xlint:cast',
@@ -255,8 +251,6 @@ allprojects {
   }
 }
 
-task deploy() {}
-
 licenseReport {
   outputDir = "${buildDir}/reports/licenses"
   excludes = [
@@ -272,12 +266,12 @@ licenseReport {
 }
 
 subprojects {
-  tasks.withType(Test) {
+  tasks.withType(Test).configureEach {
     // If GRADLE_MAX_TEST_FORKS is not set, use half the available processors
     maxParallelForks = (System.getenv('GRADLE_MAX_TEST_FORKS') ?: (Runtime.runtime.availableProcessors().intdiv(2) ?: 1)).toInteger()
   }
 
-  tasks.withType(JavaCompile) {
+  tasks.withType(JavaCompile).configureEach {
     options.fork = true
     options.incremental = true
     options.compilerArgs = ['-Xlint:deprecation']
@@ -309,7 +303,7 @@ subprojects {
     testSupportArtifacts
   }
 
-  task testSupportJar (type: Jar) {
+  tasks.register('testSupportJar', Jar) {
     archiveBaseName = "${project.name}-support-test"
     from sourceSets.testSupport.output
   }
@@ -319,7 +313,7 @@ subprojects {
     integrationTestImplementation sourceSets.testSupport.output
   }
 
-  configurations.all {
+  configurations.configureEach {
     // transitive versions conflict with io.protocols.tuweni, prefer ours
     exclude group: 'io.tmio', module: 'tuweni-bytes'
     exclude group: 'io.tmio', module: 'tuweni-crypto'
@@ -328,16 +322,14 @@ subprojects {
   }
 
 
-  task integrationTest(type: Test, dependsOn:["compileTestJava"]){
+  tasks.register('integrationTest', Test) {
+    dependsOn "compileTestJava"
     group = "verification"
     description = "Runs the Web3Signer integration tests"
-
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
     outputs.upToDateWhen { false }
-
     jvmArgs = ['-Xms512m', '-Xmx1g']
-
     useJUnitPlatform()
   }
 
@@ -452,7 +444,7 @@ distZip {
 check.dependsOn checkLicense
 
 
-task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
+tasks.register('jacocoRootReport', JacocoReport) {
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
   sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
   classDirectories.from files(subprojects.sourceSets.main.output)
@@ -515,24 +507,25 @@ def calculateVersion() {
   return version
 }
 
-task printVersion() {
+tasks.register('printVersion') {
   doFirst {
     println "specific-version=${specificVersion}"
     println "publish-version=${project.version}"
   }
 }
 
-task releaseIntegrationTest(type: Test){
-  for(TaskContainer taskList : subprojects.tasks){
+tasks.register('releaseIntegrationTest', Test) {
+  for(TaskContainer taskList : subprojects.tasks) {
     def subProjectIntegrationTask = taskList.findByName('integrationTest')
-
     if (subProjectIntegrationTask != null) {
       dependsOn subProjectIntegrationTask
     }
   }
 }
 
-task releaseAcceptanceTest(type: Test, dependsOn : ':acceptance-tests:acceptanceTest') {}
+tasks.register('releaseAcceptanceTest', Test) {
+  dependsOn ':acceptance-tests:acceptanceTest'
+}
 
 def calculateJarName(Project project) {
   def jarName = project.name

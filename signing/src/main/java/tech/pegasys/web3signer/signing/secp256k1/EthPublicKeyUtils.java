@@ -253,9 +253,9 @@ public class EthPublicKeyUtils {
    */
   private static Bytes getEncoded(final ECPublicKey publicKey, final boolean compressed) {
     final ECPoint point;
-    if (publicKey instanceof BCECPublicKey) {
+    if (publicKey instanceof BCECPublicKey bCECPublicKey) {
       // If it's already a Bouncy Castle key, we can get the ECPoint directly
-      point = ((BCECPublicKey) publicKey).getQ();
+      point = bCECPublicKey.getQ();
     } else {
       // If it's not a BC key, we need to create the ECPoint from the coordinates
       final BigInteger x = publicKey.getW().getAffineX();

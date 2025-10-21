@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.dsl.besu;
 
-import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,10 +94,5 @@ public class BesuNodeFactory {
           "Besu binary doesn't exist. Either run 'gradle extractBesu' or set system property 'besuInstallDir'");
       throw new IllegalStateException("Besu binary doesn't exist " + executablePath);
     }
-  }
-
-  private static String privacyPublicKeyFilePath() {
-    final URL resource = Resources.getResource("besu/enclave_key.pub");
-    return resource.getPath();
   }
 }

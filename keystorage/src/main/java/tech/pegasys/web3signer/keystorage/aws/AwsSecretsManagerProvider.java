@@ -57,12 +57,14 @@ public class AwsSecretsManagerProvider implements Closeable {
   }
 
   public AwsSecretsManager createAwsSecretsManager(final Optional<URI> awsEndpointOverride) {
-    final String accessKeyId =
-        DefaultCredentialsProvider.create().resolveCredentials().accessKeyId();
-    final Region region = DefaultAwsRegionProviderChain.builder().build().getRegion();
-    return fromCacheOrCallable(
-        new AwsKeyIdentifier(accessKeyId, region),
-        () -> AwsSecretsManager.createAwsSecretsManager(awsEndpointOverride));
+    try (final DefaultCredentialsProvider credentialsProvider =
+        DefaultCredentialsProvider.builder().build()) {
+      final String accessKeyId = credentialsProvider.resolveCredentials().accessKeyId();
+      final Region region = DefaultAwsRegionProviderChain.builder().build().getRegion();
+      return fromCacheOrCallable(
+          new AwsKeyIdentifier(accessKeyId, region),
+          () -> AwsSecretsManager.createAwsSecretsManager(awsEndpointOverride));
+    }
   }
 
   @Override

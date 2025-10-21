@@ -95,7 +95,7 @@ class YamlConfigFileDefaultProviderTest {
 
   @Test
   void aliasesFromConfigFileArePopulated(@TempDir final Path tempDir) throws IOException {
-    final String subcommandOptions = String.join(lineSeparator(), "demo.alias: \"test alias\"");
+    final String subcommandOptions = lineSeparator() + "demo.alias: \"test alias\"";
     final String config = CmdlineHelpers.validBaseYamlAliasOptions() + subcommandOptions;
     final File configFile = Files.writeString(tempDir.resolve("config.yaml"), config).toFile();
     final Web3SignerBaseCommand web3SignerBaseCommand = new Web3SignerBaseCommand();
@@ -165,7 +165,7 @@ class YamlConfigFileDefaultProviderTest {
   void invalidYamlConfigFileThrowsExceptionDuringParsing(@TempDir final Path tempDir)
       throws IOException {
     final String extraYamlOptions =
-        CmdlineHelpers.validBaseYamlOptions() + String.join(lineSeparator(), "extra-option= True");
+        CmdlineHelpers.validBaseYamlOptions() + lineSeparator() + "extra-option= True";
     final File configFile =
         Files.writeString(tempDir.resolve("config.yaml"), extraYamlOptions).toFile();
     final Web3SignerBaseCommand web3SignerBaseCommand = new Web3SignerBaseCommand();

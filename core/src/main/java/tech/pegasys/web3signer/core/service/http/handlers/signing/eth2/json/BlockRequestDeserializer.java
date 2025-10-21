@@ -41,21 +41,21 @@ public class BlockRequestDeserializer extends JsonDeserializer<BlockRequest> {
     final BeaconBlockHeader beaconBlockHeader;
     final BlockRequest blockRequest;
     switch (specMilestone) {
-      case PHASE0:
+      case PHASE0 -> {
         beaconBlock = codec.treeToValue(node.findValue("block"), BeaconBlock.class);
         if (beaconBlock == null) {
           throw new BadRequestException("No beacon block in request");
         }
         blockRequest = new BlockRequest(specMilestone, beaconBlock);
-        break;
-      case ALTAIR:
+      }
+      case ALTAIR -> {
         beaconBlock = codec.treeToValue(node.findValue("block"), BeaconBlockAltair.class);
         if (beaconBlock == null) {
           throw new BadRequestException("No beacon block in request");
         }
         blockRequest = new BlockRequest(specMilestone, beaconBlock);
-        break;
-      default:
+      }
+      default -> {
         // for BELLATRIX and onward we only need block_header instead of complete block
         beaconBlockHeader =
             codec.treeToValue(node.findValue("block_header"), BeaconBlockHeader.class);
@@ -63,7 +63,7 @@ public class BlockRequestDeserializer extends JsonDeserializer<BlockRequest> {
           throw new BadRequestException("No beacon block header in request");
         }
         blockRequest = new BlockRequest(specMilestone, beaconBlockHeader);
-        break;
+      }
     }
     return blockRequest;
   }

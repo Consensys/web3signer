@@ -64,14 +64,8 @@ public class AttestationData {
   }
 
   @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof AttestationData)) {
-      return false;
-    }
-    AttestationData that = (AttestationData) o;
+  public boolean equals(Object o) {
+    if (!(o instanceof AttestationData that)) return false;
     return Objects.equals(slot, that.slot)
         && Objects.equals(index, that.index)
         && Objects.equals(beacon_block_root, that.beacon_block_root)

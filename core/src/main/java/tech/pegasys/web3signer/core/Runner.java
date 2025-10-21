@@ -140,7 +140,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
           .route()
           .handler(
               CorsHandler.create()
-                  .addRelativeOrigin(buildCorsRegexFromConfig())
+                  .addOriginWithRegex(buildCorsRegexFromConfig())
                   .allowedHeader("*")
                   .allowedMethod(HttpMethod.GET)
                   .allowedMethod(HttpMethod.POST)

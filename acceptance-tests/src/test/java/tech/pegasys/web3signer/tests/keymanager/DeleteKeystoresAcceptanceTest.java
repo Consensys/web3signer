@@ -29,8 +29,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.vertx.core.json.JsonArray;
@@ -39,38 +39,49 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
+  private static final JsonMapper mapper = JsonMapper.builder().build();
   private static final String BLS_PRIVATE_KEY_1 =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
   private static final String SINGLE_ENTRY_SLASHING_DATA =
-      "{\"metadata\" : {\n"
-          + "  \"interchange_format_version\" : \"5\",\n"
-          + "  \"genesis_validators_root\" : \"0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673\"\n"
-          + "},\n"
-          + "\"data\" : [ {\n"
-          + "  \"pubkey\" : \"0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884\",\n"
-          + "  \"signed_blocks\" : [ {\n"
-          + "    \"slot\" : \"19999\",\n"
-          + "    \"signing_root\" : \"0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b\"\n"
-          + "  } ],\n"
-          + "  \"signed_attestations\" : [ {\n"
-          + "    \"source_epoch\" : \"6\",\n"
-          + "    \"target_epoch\" : \"7\",\n"
-          + "    \"signing_root\" : \"0x30752da173420e64a66f6ca6b97c55a96390a3158a755ecd277812488bb84e57\"\n"
-          + "  } ]\n"
-          + "} ]\n"
-          + "}";
+      """
+    {
+      "metadata" : {
+        "interchange_format_version" : "5",
+        "genesis_validators_root" : "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"
+      },
+      "data" : [ {
+        "pubkey" : "0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884",
+        "signed_blocks" : [ {
+          "slot" : "19999",
+          "signing_root" : "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b"
+        } ],
+        "signed_attestations" : [ {
+          "source_epoch" : "6",
+          "target_epoch" : "7",
+          "signing_root" : "0x30752da173420e64a66f6ca6b97c55a96390a3158a755ecd277812488bb84e57"
+        } ]
+      } ]
+    }""";
 
   private static final String EMPTY_SLASHING_DATA =
-      "{\"metadata\" : {\n"
-          + "  \"interchange_format_version\" : \"5\",\n"
-          + "  \"genesis_validators_root\" : \"0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673\"\n"
-          + "},\n"
-          + "\"data\" : [ ]\n"
-          + "}";
+      """
+    {
+      "metadata" : {
+        "interchange_format_version" : "5",
+        "genesis_validators_root" : "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"
+      },
+      "data" : [ ]
+    }""";
 
   private static final String EMPTY_SLASHING_DATA_WITHOUT_GVR =
-      "{\"metadata\" : {\n  \"interchange_format_version\" : \"5\"\n},\n\"data\" : [ ]\n}";
+      """
+    {
+      "metadata" : {
+        "interchange_format_version" : "5"
+      },
+      "data" : [ ]
+    }""";
 
   @Test
   public void invalidRequestBodyReturnsError() throws URISyntaxException {
@@ -81,72 +92,87 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
 
   @Test
   public void deletingExistingKeyWithNoSlashingProtectionDataTwiceReturnsNotFound()
-      throws URISyntaxException {
+      throws Exception {
     final String pubKey =
         "0xa46bf94016af71e55ca0518fe6a8bd3852e01b3f959780a4faf3bbe461ac553c0a83f232cc5f2a4b827d8d3455b706e4";
     createBlsKey("eth2/bls_keystore_2.json", "otherpassword");
     setupSignerWithKeyManagerApi(WITH_SLASHING_PROTECTION_DATA);
-    callDeleteKeystores(composeRequestBody(pubKey))
-        .then()
-        .contentType(ContentType.JSON)
-        .assertThat()
-        .statusCode(200)
-        .body("data[0].status", is("deleted"))
-        .and()
-        .body("slashing_protection", is(EMPTY_SLASHING_DATA));
+    String slashingJson =
+        callDeleteKeystores(composeRequestBody(pubKey))
+            .then()
+            .contentType(ContentType.JSON)
+            .assertThat()
+            .statusCode(200)
+            .body("data[0].status", is("deleted"))
+            .extract()
+            .path("slashing_protection");
+
+    assertThat(mapper.readTree(slashingJson)).isEqualTo(mapper.readTree(EMPTY_SLASHING_DATA));
 
     // call API again with same key should return not_found
-    callDeleteKeystores(composeRequestBody(pubKey))
-        .then()
-        .contentType(ContentType.JSON)
-        .assertThat()
-        .statusCode(200)
-        .body("data[0].status", is("not_found"))
-        .and()
-        .body("slashing_protection", is(EMPTY_SLASHING_DATA));
+    slashingJson =
+        callDeleteKeystores(composeRequestBody(pubKey))
+            .then()
+            .contentType(ContentType.JSON)
+            .assertThat()
+            .statusCode(200)
+            .body("data[0].status", is("not_found"))
+            .extract()
+            .path("slashing_protection");
+
+    assertThat(mapper.readTree(slashingJson)).isEqualTo(mapper.readTree(EMPTY_SLASHING_DATA));
   }
 
   @Test
-  public void deletingExistingKeyReturnDeleted() throws URISyntaxException {
+  public void deletingExistingKeyReturnDeleted() throws Exception {
     createBlsKey("eth2/bls_keystore.json", "somepassword");
     setupSignerWithKeyManagerApi(WITH_SLASHING_PROTECTION_DATA);
-    callDeleteKeystores(composeRequestBody())
-        .then()
-        .contentType(ContentType.JSON)
-        .assertThat()
-        .statusCode(200)
-        .body("data[0].status", is("deleted"))
-        .and()
-        .body("slashing_protection", is(SINGLE_ENTRY_SLASHING_DATA));
+    String json =
+        callDeleteKeystores(composeRequestBody())
+            .then()
+            .contentType(ContentType.JSON)
+            .assertThat()
+            .statusCode(200)
+            .body("data[0].status", is("deleted"))
+            .extract()
+            .path("slashing_protection");
+
+    assertThat(mapper.readTree(json)).isEqualTo(mapper.readTree(SINGLE_ENTRY_SLASHING_DATA));
   }
 
   @Test
-  public void deletingExistingTwiceReturnsNotActive() throws URISyntaxException {
+  public void deletingExistingTwiceReturnsNotActive() throws Exception {
     createBlsKey("eth2/bls_keystore.json", "somepassword");
     setupSignerWithKeyManagerApi(WITH_SLASHING_PROTECTION_DATA);
-    callDeleteKeystores(composeRequestBody())
-        .then()
-        .contentType(ContentType.JSON)
-        .assertThat()
-        .statusCode(200)
-        .body("data[0].status", is("deleted"))
-        .and()
-        .body("slashing_protection", is(SINGLE_ENTRY_SLASHING_DATA));
+    String json =
+        callDeleteKeystores(composeRequestBody())
+            .then()
+            .contentType(ContentType.JSON)
+            .assertThat()
+            .statusCode(200)
+            .body("data[0].status", is("deleted"))
+            .extract()
+            .path("slashing_protection");
+
+    assertThat(mapper.readTree(json)).isEqualTo(mapper.readTree(SINGLE_ENTRY_SLASHING_DATA));
 
     // call API again with same key should return not_active with the same exported slashing
     // protection data
-    callDeleteKeystores(composeRequestBody())
-        .then()
-        .contentType(ContentType.JSON)
-        .assertThat()
-        .statusCode(200)
-        .body("data[0].status", is("not_active"))
-        .and()
-        .body("slashing_protection", is(SINGLE_ENTRY_SLASHING_DATA));
+    json =
+        callDeleteKeystores(composeRequestBody())
+            .then()
+            .contentType(ContentType.JSON)
+            .assertThat()
+            .statusCode(200)
+            .body("data[0].status", is("not_active"))
+            .extract()
+            .path("slashing_protection");
+
+    assertThat(mapper.readTree(json)).isEqualTo(mapper.readTree(SINGLE_ENTRY_SLASHING_DATA));
   }
 
   @Test
-  public void deletingRemovesSignerFromActiveSigners() throws URISyntaxException {
+  public void deletingRemovesSignerFromActiveSigners() throws Exception {
     final String firstPubkey = createBlsKey("eth2/bls_keystore.json", "somepassword");
     final String secondPubKey = createBlsKey("eth2/bls_keystore_2.json", "otherpassword");
     setupSignerWithKeyManagerApi(WITH_SLASHING_PROTECTION_DATA);
@@ -161,14 +187,16 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
         .and()
         .body("data[1].validating_pubkey", is(secondPubKey));
 
-    callDeleteKeystores(composeRequestBody())
-        .then()
-        .contentType(ContentType.JSON)
-        .assertThat()
-        .statusCode(200)
-        .body("data[0].status", is("deleted"))
-        .and()
-        .body("slashing_protection", is(SINGLE_ENTRY_SLASHING_DATA));
+    String json =
+        callDeleteKeystores(composeRequestBody())
+            .then()
+            .contentType(ContentType.JSON)
+            .assertThat()
+            .statusCode(200)
+            .body("data[0].status", is("deleted"))
+            .extract()
+            .path("slashing_protection");
+    assertThat(mapper.readTree(json)).isEqualTo(mapper.readTree(SINGLE_ENTRY_SLASHING_DATA));
 
     callListKeys()
         .then()
@@ -180,22 +208,25 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
   }
 
   @Test
-  public void deletingReadOnlyKeyReturnError() throws URISyntaxException {
+  public void deletingReadOnlyKeyReturnError() throws Exception {
     final String readOnlyPubkey = createRawPrivateKeyFile(BLS_PRIVATE_KEY_1);
     setupSignerWithKeyManagerApi(WITH_SLASHING_PROTECTION_DATA);
-    callDeleteKeystores(composeRequestBody(readOnlyPubkey))
-        .then()
-        .contentType(ContentType.JSON)
-        .assertThat()
-        .statusCode(200)
-        .body("data[0].status", is("error"))
-        .and()
-        .body("slashing_protection", is(EMPTY_SLASHING_DATA));
+    String json =
+        callDeleteKeystores(composeRequestBody(readOnlyPubkey))
+            .then()
+            .contentType(ContentType.JSON)
+            .assertThat()
+            .statusCode(200)
+            .body("data[0].status", is("error"))
+            .extract()
+            .path("slashing_protection");
+
+    assertThat(mapper.readTree(json)).isEqualTo(mapper.readTree(EMPTY_SLASHING_DATA));
   }
 
   @Test
   public void deletingDisablesSigningForAllWeb3Signers(@TempDir Path signer2KeyStoreDirectory)
-      throws URISyntaxException, JsonProcessingException {
+      throws Exception {
     final String firstPubkey =
         createBlsKey(testDirectory, "eth2/bls_keystore.json", "somepassword");
     final String secondPubKey =
@@ -239,14 +270,17 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
         .body("data[0].validating_pubkey", is(firstPubkey))
         .body("data[1].validating_pubkey", is(secondPubKey));
 
-    callDeleteKeystores(composeRequestBody())
-        .then()
-        .contentType(ContentType.JSON)
-        .assertThat()
-        .statusCode(200)
-        .body("data[0].status", is("deleted"))
-        .and()
-        .body("slashing_protection", is(SINGLE_ENTRY_SLASHING_DATA));
+    String json =
+        callDeleteKeystores(composeRequestBody())
+            .then()
+            .contentType(ContentType.JSON)
+            .assertThat()
+            .statusCode(200)
+            .body("data[0].status", is("deleted"))
+            .extract()
+            .path("slashing_protection");
+
+    assertThat(mapper.readTree(json)).isEqualTo(mapper.readTree(SINGLE_ENTRY_SLASHING_DATA));
 
     // after deleting on first signer, it should only have the 2nd key
     callListKeys()
@@ -287,26 +321,29 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
     final ObjectMapper objectMapper = new ObjectMapper();
     final DeleteKeystoresRequestBody parsedBody =
         objectMapper.readValue(composeRequestBody(), DeleteKeystoresRequestBody.class);
-    assertThat(parsedBody.getPubkeys().get(0))
+    assertThat(parsedBody.getPubkeys().getFirst())
         .isEqualTo(
             "0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884");
   }
 
   @Test
-  public void deletingExistingKeyWithNoSlashingProtectionReturnDeleted() throws URISyntaxException {
+  public void deletingExistingKeyWithNoSlashingProtectionReturnDeleted() throws Exception {
 
     createBlsKey("eth2/bls_keystore.json", "somepassword");
 
     setupSignerWithKeyManagerApi(WITHOUT_SLASHING_PROTECTION_DATA);
 
-    callDeleteKeystores(composeRequestBody())
-        .then()
-        .contentType(ContentType.JSON)
-        .assertThat()
-        .statusCode(200)
-        .body("data[0].status", is("deleted"))
-        .and()
-        .body("slashing_protection", is(EMPTY_SLASHING_DATA_WITHOUT_GVR));
+    String json =
+        callDeleteKeystores(composeRequestBody())
+            .then()
+            .contentType(ContentType.JSON)
+            .assertThat()
+            .statusCode(200)
+            .body("data[0].status", is("deleted"))
+            .extract()
+            .path("slashing_protection");
+
+    assertThat(mapper.readTree(json)).isEqualTo(mapper.readTree(EMPTY_SLASHING_DATA_WITHOUT_GVR));
   }
 
   private String composeRequestBody() {

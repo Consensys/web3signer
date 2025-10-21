@@ -20,7 +20,6 @@ dependencies {
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
   implementation 'com.google.guava:guava'
-  implementation 'com.google.guava:guava'
   implementation 'com.zaxxer:HikariCP'
   implementation 'commons-io:commons-io'
   implementation 'net.jodah:failsafe'
@@ -36,42 +35,49 @@ dependencies {
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j2-impl'
 
+  // Test dependencies
   testImplementation 'org.apache.logging.log4j:log4j-api'
   testImplementation 'org.apache.logging.log4j:log4j-core'
   testImplementation 'io.zonky.test:embedded-postgres'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.flywaydb:flyway-core'
-  testImplementation 'org.junit.jupiter:junit-jupiter-api'
-  testImplementation 'org.junit.jupiter:junit-jupiter-params'
+  testImplementation 'org.flywaydb:flyway-database-postgresql'
   testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
-  testImplementation (testFixtures(project(":signing")))
+  testImplementation(testFixtures(project(":signing")))
 
+  // JUnit test dependencies
+  testImplementation 'org.junit.jupiter:junit-jupiter-api'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-  testImplementation 'org.flywaydb:flyway-database-postgresql'
-
+  // Test fixtures dependencies
   testFixturesImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testFixturesImplementation 'io.zonky.test:embedded-postgres'
   testFixturesImplementation 'org.apache.commons:commons-lang3'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
   testFixturesImplementation 'org.flywaydb:flyway-core'
+  testFixturesImplementation 'org.flywaydb:flyway-database-postgresql'
   testFixturesImplementation 'org.jdbi:jdbi3-core'
   testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api'
   testFixturesImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
-  testFixturesImplementation 'org.flywaydb:flyway-database-postgresql'
 
+  // Integration test dependencies
   integrationTestImplementation 'io.zonky.test:embedded-postgres'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.awaitility:awaitility'
   integrationTestImplementation 'org.flywaydb:flyway-core'
   integrationTestImplementation 'org.flywaydb:flyway-database-postgresql'
-  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
-  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-params'
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
   integrationTestImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
   integrationTestImplementation sourceSets.testFixtures.output
+
+  // JUnit integration test dependencies
+  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
+  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-params'
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  integrationTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

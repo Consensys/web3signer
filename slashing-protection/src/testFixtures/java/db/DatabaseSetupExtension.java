@@ -40,8 +40,8 @@ public class DatabaseSetupExtension
   @Override
   public void afterEach(final ExtensionContext context) throws Exception {
     final TestDbContext dbContext = getDbContext(context);
-    dbContext.getDb().close();
-    dbContext.getHandle().close();
+    dbContext.db().close();
+    dbContext.handle().close();
   }
 
   @Override
@@ -61,11 +61,11 @@ public class DatabaseSetupExtension
     final TestDbContext dbContext = getDbContext(extensionContext);
     final Class<?> type = parameterContext.getParameter().getType();
     if (type.equals(Handle.class)) {
-      return dbContext.getHandle();
+      return dbContext.handle();
     } else if (type.equals(Jdbi.class)) {
-      return dbContext.getJdbi();
+      return dbContext.jdbi();
     } else if (type.equals(EmbeddedPostgres.class)) {
-      return dbContext.getDb();
+      return dbContext.db();
     } else {
       throw new RuntimeException("Unknown parameter type " + type);
     }
@@ -85,28 +85,5 @@ public class DatabaseSetupExtension
     store.put(DB_CONTEXT_KEY, dbContext);
   }
 
-  private static class TestDbContext {
-
-    private final EmbeddedPostgres db;
-    private final Jdbi jdbi;
-    private final Handle handle;
-
-    public TestDbContext(final EmbeddedPostgres db, final Jdbi jdbi, final Handle handle) {
-      this.db = db;
-      this.jdbi = jdbi;
-      this.handle = handle;
-    }
-
-    public EmbeddedPostgres getDb() {
-      return db;
-    }
-
-    public Jdbi getJdbi() {
-      return jdbi;
-    }
-
-    public Handle getHandle() {
-      return handle;
-    }
-  }
+  private record TestDbContext(EmbeddedPostgres db, Jdbi jdbi, Handle handle) {}
 }

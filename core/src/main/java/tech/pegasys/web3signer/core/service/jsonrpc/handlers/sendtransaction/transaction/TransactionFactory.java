@@ -41,15 +41,14 @@ public class TransactionFactory {
 
   public Transaction createTransaction(final RoutingContext context, final JsonRpcRequest request) {
     final String method = request.getMethod().toLowerCase(Locale.ROOT);
-    final VertxNonceRequestTransmitter nonceRequestTransmitter =
-        new VertxNonceRequestTransmitter(context.request().headers(), decoder, transmitterFactory);
 
-    switch (method) {
-      case "eth_sendtransaction":
-        return createEthTransaction(chainId, request, nonceRequestTransmitter);
-      default:
-        throw new IllegalStateException("Unknown send transaction method " + method);
+    if ("eth_sendtransaction".equals(method)) {
+      final VertxNonceRequestTransmitter nonceRequestTransmitter =
+          new VertxNonceRequestTransmitter(
+              context.request().headers(), decoder, transmitterFactory);
+      return createEthTransaction(chainId, request, nonceRequestTransmitter);
     }
+    throw new IllegalStateException("Unknown send transaction method " + method);
   }
 
   private Transaction createEthTransaction(
@@ -75,7 +74,7 @@ public class TransactionFactory {
                 + " json Rpc requires a single parameter, request contained "
                 + paramList.size());
       }
-      object = paramList.get(0);
+      object = paramList.getFirst();
     } else {
       object = params;
     }
