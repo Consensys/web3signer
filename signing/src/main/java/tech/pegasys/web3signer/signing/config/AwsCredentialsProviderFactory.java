@@ -33,24 +33,16 @@ public class AwsCredentialsProviderFactory {
    */
   public static AwsCredentialsProvider createAwsCredentialsProvider(
       final AwsAuthenticationMode authMode, final Optional<AwsCredentials> awsCredentials) {
-    final AwsCredentialsProvider awsCredentialsProvider;
-    switch (authMode) {
-      case ENVIRONMENT:
-        awsCredentialsProvider = DefaultCredentialsProvider.create();
-        break;
-      case SPECIFIED:
-        awsCredentialsProvider =
-            getStaticCredentialsProvider(
-                awsCredentials.orElseThrow(
-                    () ->
-                        new IllegalArgumentException(
-                            "AWS Credentials must be provided for SPECIFIED mode")));
-        break;
-      default:
-        throw new IllegalStateException("Aws Auth mode not implemented: " + authMode);
-    }
 
-    return awsCredentialsProvider;
+    return switch (authMode) {
+      case ENVIRONMENT -> DefaultCredentialsProvider.builder().build();
+      case SPECIFIED ->
+          getStaticCredentialsProvider(
+              awsCredentials.orElseThrow(
+                  () ->
+                      new IllegalArgumentException(
+                          "AWS Credentials must be provided for SPECIFIED mode")));
+    };
   }
 
   /**

@@ -20,16 +20,16 @@ public class AwsSecretsManagerFactory {
   public static AwsSecretsManager createAwsSecretsManager(
       final AwsSecretsManagerProvider awsSecretsManagerProvider,
       final AwsVaultParameters awsVaultParameters) {
-    switch (awsVaultParameters.getAuthenticationMode()) {
-      case SPECIFIED:
-        return awsSecretsManagerProvider.createAwsSecretsManager(
-            awsVaultParameters.getAccessKeyId(),
-            awsVaultParameters.getSecretAccessKey(),
-            awsVaultParameters.getRegion(),
-            awsVaultParameters.getEndpointOverride());
-      default:
-        return awsSecretsManagerProvider.createAwsSecretsManager(
-            awsVaultParameters.getEndpointOverride());
-    }
+    return switch (awsVaultParameters.getAuthenticationMode()) {
+      case SPECIFIED ->
+          awsSecretsManagerProvider.createAwsSecretsManager(
+              awsVaultParameters.getAccessKeyId(),
+              awsVaultParameters.getSecretAccessKey(),
+              awsVaultParameters.getRegion(),
+              awsVaultParameters.getEndpointOverride());
+      case ENVIRONMENT ->
+          awsSecretsManagerProvider.createAwsSecretsManager(
+              awsVaultParameters.getEndpointOverride());
+    };
   }
 }

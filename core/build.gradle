@@ -51,31 +51,39 @@ dependencies {
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 
+  // Test dependencies
   testImplementation (testFixtures(project(":signing")))
   testImplementation 'tech.pegasys.teku.internal:networks'
   testImplementation 'io.vertx:vertx-junit5'
   testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.junit.jupiter:junit-jupiter-api'
-  testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.bouncycastle:bcprov-jdk18on'
-  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 
+  // JUnit test dependencies
+  testImplementation 'org.junit.jupiter:junit-jupiter-api'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params'
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+  // Integration test dependencies
   integrationTestImplementation 'org.apache.logging.log4j:log4j-api'
   integrationTestImplementation 'org.apache.logging.log4j:log4j-core'
   integrationTestImplementation 'org.assertj:assertj-core'
-  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
-  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-params'
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
   integrationTestImplementation sourceSets.testFixtures.output
   integrationTestImplementation 'io.rest-assured:rest-assured'
   integrationTestImplementation('org.mock-server:mockserver-netty') {
-    // mock-server includes a dependency on junit 4 for a junit rule which we aren't using
-    exclude group: 'junit', module: 'junit'
+      // mock-server includes a dependency on junit 4 for a junit rule which we aren't using
+      exclude group: 'junit', module: 'junit'
   }
   integrationTestImplementation 'org.awaitility:awaitility'
-  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   integrationTestImplementation (testFixtures(project(":signing")))
+
+  // JUnit integration test dependencies
+  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
+  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-params'
+  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  integrationTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 processResources {

@@ -139,6 +139,7 @@ jobs:
             VERSION=${{ needs.build.outputs.publish-version }}
           no-cache: true
           load: true
+          pull: true
           tags: consensys/web3signer:test
 
       - name: Get absolute path of reports directory
@@ -192,6 +193,8 @@ jobs:
             VCS_REF=${{ steps.docker-metadata.outputs.vcs-ref }}
             VERSION=${{ needs.build.outputs.publish-version }}
           push: ${{ steps.docker-metadata.outputs.push }}
+          no-cache: true
+          pull: true
           tags: ${{ steps.docker-metadata.outputs.tags }}
 
   release:

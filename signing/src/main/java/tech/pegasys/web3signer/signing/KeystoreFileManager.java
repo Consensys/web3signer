@@ -115,8 +115,7 @@ public class KeystoreFileManager {
                       final SigningMetadata metaDataInfo =
                           yamlMapper.readValue(fileContent, SigningMetadata.class);
                       if (metaDataInfo.getKeyType() == KeyType.BLS
-                          && metaDataInfo instanceof FileKeyStoreMetadata) {
-                        final FileKeyStoreMetadata info = ((FileKeyStoreMetadata) metaDataInfo);
+                          && metaDataInfo instanceof FileKeyStoreMetadata info) {
                         final Path keystoreFile = info.getKeystoreFile();
                         final Path passwordFile = info.getKeystorePasswordFile();
                         final KeyStoreData keyStoreData =

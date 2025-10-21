@@ -1,4 +1,6 @@
 import groovy.text.SimpleTemplateEngine
+import java.time.LocalTime
+
 /*
  * Copyright 2019 ConsenSys AG.
  *
@@ -18,27 +20,16 @@ plugins {
 }
 
 dependencies {
-
   testImplementation project(":app")
   testImplementation project(":core")
   testImplementation project(":signing")
   testImplementation project(":commandline")
   testImplementation project(":common")
   testImplementation project(":bls-keystore")
-
   testImplementation 'io.consensys.tuweni:tuweni-bytes'
   testImplementation 'io.consensys.tuweni:tuweni-units'
-
+  testImplementation 'io.consensys.tuweni:tuweni-net'
   testImplementation 'commons-io:commons-io'
-
-  testRuntimeOnly 'javax.activation:activation'
-  testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
-  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-  testRuntimeOnly 'org.zeroturnaround:zt-exec'
-  testRuntimeOnly 'tech.pegasys:jblst'
-
-  testImplementation 'org.junit.jupiter:junit-jupiter-api'
-  testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testImplementation 'io.vertx:vertx-core'
   testImplementation 'io.vertx:vertx-web'
   testImplementation 'io.vertx:vertx-web-client'
@@ -57,40 +48,45 @@ dependencies {
   testImplementation 'tech.pegasys.teku.internal:async'
   testImplementation 'io.rest-assured:rest-assured'
   testImplementation 'org.web3j:core'
-  testImplementation 'io.consensys.tuweni:tuweni-bytes'
-  testImplementation 'io.consensys.tuweni:tuweni-net'
+  testImplementation 'org.web3j:crypto'
+  testImplementation 'org.web3j:besu'
   testImplementation 'com.github.arteam:simple-json-rpc-server'
   testImplementation 'com.github.arteam:simple-json-rpc-client'
   testImplementation 'org.flywaydb:flyway-core'
   testImplementation 'org.flywaydb:flyway-database-postgresql'
-  testImplementation 'io.rest-assured:rest-assured'
   testImplementation 'org.jdbi:jdbi3-core'
   testImplementation 'org.zeroturnaround:zt-exec'
-  testImplementation 'org.web3j:crypto'
-  testImplementation 'org.web3j:besu'
   testImplementation (testFixtures(project(":keystorage")))
   testImplementation (testFixtures(project(":slashing-protection")))
   testImplementation (testFixtures(project(":signing")))
   testImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
   testImplementation 'io.zonky.test:embedded-postgres'
   testImplementation 'org.bouncycastle:bcprov-jdk18on'
-
   testImplementation 'com.azure:azure-identity'
   testImplementation 'com.azure:azure-security-keyvault-keys'
   testImplementation 'com.azure:azure-security-keyvault-secrets'
+  testImplementation 'software.amazon.awssdk:auth'
+  testImplementation 'software.amazon.awssdk:secretsmanager'
+  testImplementation 'software.amazon.awssdk:kms'
 
-  implementation 'software.amazon.awssdk:auth'
-  implementation 'software.amazon.awssdk:secretsmanager'
-  implementation 'software.amazon.awssdk:kms'
+  // JUnit test dependencies
+  testImplementation 'org.junit.jupiter:junit-jupiter-api'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params'
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+  testRuntimeOnly 'javax.activation:activation'
+  testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
+  testRuntimeOnly 'tech.pegasys:jblst'
 }
 
 test.enabled = false
 
-task cleanBesuInstall(type: Delete) {
+tasks.register('cleanBesuInstall', Delete) {
   delete layout.buildDirectory.dir("besu")
 }
 
-task downloadBesu(type: Download) {
+tasks.register('downloadBesu', Download) {
   src {
     // see gradle.properties for Besu URL
     return new SimpleTemplateEngine().createTemplate(besuDistroUrl).make(["besuVersion":"$besuVersion"]).toString()
@@ -100,11 +96,10 @@ task downloadBesu(type: Download) {
   retries 3
 }
 
-task extractBesu(dependsOn: [
-  'cleanBesuInstall',
-  'downloadBesu'
-], type: Copy) {
-  from(tarTree(downloadBesu.dest)) {
+tasks.register('extractBesu', Copy) {
+  dependsOn tasks.named('cleanBesuInstall'), tasks.named('downloadBesu')
+
+  from(tarTree(tasks.named('downloadBesu').get().dest)) {
     include "besu-${besuVersion}/**"
     eachFile { fcd ->
       fcd.relativePath = new RelativePath(true, fcd.relativePath.segments.drop(1))
@@ -117,18 +112,18 @@ task extractBesu(dependsOn: [
 def vaultBinary () {
   switch (osdetector.os) {
     case "windows":
-      return layout.buildDirectory.file("vault-bin/vault.exe").get().toString()
+      return layout.buildDirectory.file("vault-bin/vault.exe").get().asFile.absolutePath
     default:
-      return layout.buildDirectory.file("vault-bin/vault").get().toString()
+      return layout.buildDirectory.file("vault-bin/vault").get().asFile.absolutePath
   }
 }
 
 def getOsXArchForVault() {
   switch(osdetector.arch) {
     case "aarch_64":
-      "arm64"
-      break
-    default: "amd64"
+      return "arm64"
+    default:
+      return "amd64"
   }
 }
 
@@ -137,17 +132,16 @@ def vaultDownloadUrl() {
   switch (osdetector.os) {
     case "windows":
       return "${hashicorpVaultUrl}/${hashicorpVaultVersion}/vault_${hashicorpVaultVersion}_windows_amd64.zip"
-      break
     case "linux":
       return "${hashicorpVaultUrl}/${hashicorpVaultVersion}/vault_${hashicorpVaultVersion}_linux_amd64.zip"
-      break
     case "osx":
       return "${hashicorpVaultUrl}/${hashicorpVaultVersion}/vault_${hashicorpVaultVersion}_darwin_${getOsXArchForVault()}.zip"
-      break
+    default:
+      throw new GradleException("Unsupported OS: ${osdetector.os}")
   }
 }
 
-task downloadVault(type: Download) {
+tasks.register('downloadVault', Download) {
   src {
     return vaultDownloadUrl()
   }
@@ -155,30 +149,27 @@ task downloadVault(type: Download) {
   onlyIfModified true
 }
 
-task extractVault(dependsOn: downloadVault, type: Copy) {
-  from zipTree(downloadVault.dest)
+tasks.register('extractVault', Copy) {
+  dependsOn tasks.named('downloadVault')
+
+  from zipTree(tasks.named('downloadVault').get().dest)
   into layout.buildDirectory.dir("vault-bin")
 }
 
-task acceptanceTest(dependsOn: [
-  rootProject.installDist,
-  extractBesu,
-  extractVault
-], type: Test) {
-  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
+tasks.register('acceptanceTest', Test) {
+  dependsOn rootProject.installDist, tasks.named('extractBesu'), tasks.named('extractVault')
 
+  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   mustRunAfter rootProject.subprojects*.test
   description = 'Runs Web3Signer acceptance tests.'
   group = 'verification'
-
   //systemProperty 'debugSubProcess', 'true'
   systemProperty 'acctests.runWeb3SignerAsProcess', 'true'
-  systemProperty 'besuInstallDir', "${buildDir}/besu"
+  systemProperty 'besuInstallDir', layout.buildDirectory.dir("besu").get().asFile.absolutePath
   systemProperty 'vaultBinary', vaultBinary()
   // embedded pg initdb needs following
   environment "LC_CTYPE", "en_US.UTF-8"
   environment "LC_ALL", "en_US.UTF-8"
-
   useJUnitPlatform()
   // toggle to show standard out and standard error of the test JVM(s) on the console
   testLogging.showStandardStreams = false

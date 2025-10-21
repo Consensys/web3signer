@@ -43,31 +43,9 @@ public class Metadata {
     this.syncCommitteeSubscriptions = syncCommitteeSubscriptions;
   }
 
-  public Metadata(final MetadataMessage metadataMessage) {
-    this.sequenceNumber = metadataMessage.getSeqNumber().toString();
-    this.attestationSubnetSubscriptions =
-        metadataMessage.getAttnets().sszSerialize().toHexString().toLowerCase(Locale.ROOT);
-    if (metadataMessage instanceof MetadataMessageAltair) {
-      this.syncCommitteeSubscriptions =
-          ((MetadataMessageAltair) metadataMessage)
-              .getSyncnets()
-              .sszSerialize()
-              .toHexString()
-              .toLowerCase(Locale.ROOT);
-    } else {
-      this.syncCommitteeSubscriptions = null;
-    }
-  }
-
   @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    final Metadata metadata = (Metadata) o;
+  public boolean equals(Object o) {
+    if (!(o instanceof Metadata metadata)) return false;
     return Objects.equals(sequenceNumber, metadata.sequenceNumber)
         && Objects.equals(attestationSubnetSubscriptions, metadata.attestationSubnetSubscriptions)
         && Objects.equals(syncCommitteeSubscriptions, metadata.syncCommitteeSubscriptions);
@@ -76,5 +54,17 @@ public class Metadata {
   @Override
   public int hashCode() {
     return Objects.hash(sequenceNumber, attestationSubnetSubscriptions, syncCommitteeSubscriptions);
+  }
+
+  public Metadata(final MetadataMessage metadataMessage) {
+    this.sequenceNumber = metadataMessage.getSeqNumber().toString();
+    this.attestationSubnetSubscriptions =
+        metadataMessage.getAttnets().sszSerialize().toHexString().toLowerCase(Locale.ROOT);
+    if (metadataMessage instanceof MetadataMessageAltair messageAltair) {
+      this.syncCommitteeSubscriptions =
+          messageAltair.getSyncnets().sszSerialize().toHexString().toLowerCase(Locale.ROOT);
+    } else {
+      this.syncCommitteeSubscriptions = null;
+    }
   }
 }

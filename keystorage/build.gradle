@@ -51,13 +51,14 @@ dependencies {
   implementation 'software.amazon.awssdk:secretsmanager'
   implementation 'software.amazon.awssdk:kms'
   implementation 'com.google.cloud:google-cloud-secretmanager'
-  runtimeOnly 'software.amazon.awssdk:sts'
 
+  runtimeOnly 'software.amazon.awssdk:sts'
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j2-impl'
   runtimeOnly 'org.bouncycastle:bcpkix-jdk18on'
   runtimeOnly 'org.bouncycastle:bcprov-jdk18on'
 
+  // Test runtime dependencies
   testRuntimeOnly 'org.bouncycastle:bcpkix-jdk18on'
   testRuntimeOnly 'org.bouncycastle:bcprov-jdk18on'
   testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
@@ -65,19 +66,28 @@ dependencies {
   testRuntimeOnly 'org.apache.logging.log4j:log4j-api'
   testRuntimeOnly 'commons-logging:commons-logging'
 
+  // Test dependencies
   testImplementation 'de.neuland-bfi:assertj-logging-log4j'
   testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.junit.jupiter:junit-jupiter-api'
-  testImplementation 'org.junit.jupiter:junit-jupiter-engine'
-  testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testImplementation 'org.mockito:mockito-core'
 
+  // JUnit Test dependencies
+  testImplementation 'org.junit.jupiter:junit-jupiter-api'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params'
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+  // Integration test dependencies
   integrationTestImplementation 'org.assertj:assertj-core'
-  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
-  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-engine'
   integrationTestImplementation 'org.mock-server:mockserver-netty'
   integrationTestImplementation sourceSets.testFixtures.output
 
+  // JUnit integration test dependencies
+  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
+  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  integrationTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+  // Test fixtures dependencies
   testFixturesImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
   testFixturesImplementation 'io.consensys.tuweni:tuweni-net'

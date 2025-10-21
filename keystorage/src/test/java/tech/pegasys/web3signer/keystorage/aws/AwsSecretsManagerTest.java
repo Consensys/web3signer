@@ -223,14 +223,10 @@ class AwsSecretsManagerTest {
 
     Assertions.assertThat(fetchedKeys)
         .containsAll(
-            expectedSecrets.get(Boolean.TRUE).stream()
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet()));
+            expectedSecrets.get(true).stream().map(Map.Entry::getKey).collect(Collectors.toSet()));
     Assertions.assertThat(fetchedKeys)
         .doesNotContainAnyElementsOf(
-            expectedSecrets.get(Boolean.FALSE).stream()
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet()));
+            expectedSecrets.get(false).stream().map(Map.Entry::getKey).collect(Collectors.toSet()));
     Assertions.assertThat(fetchedKeys)
         .doesNotContainAnyElementsOf(secretsMaps.getPrefixBSecretsMap().keySet());
   }
@@ -254,14 +250,10 @@ class AwsSecretsManagerTest {
 
     Assertions.assertThat(fetchedKeys)
         .containsAll(
-            expectedSecrets.get(Boolean.TRUE).stream()
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet()));
+            expectedSecrets.get(true).stream().map(Map.Entry::getKey).collect(Collectors.toSet()));
     Assertions.assertThat(fetchedKeys)
         .doesNotContainAnyElementsOf(
-            expectedSecrets.get(Boolean.FALSE).stream()
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet()));
+            expectedSecrets.get(false).stream().map(Map.Entry::getKey).collect(Collectors.toSet()));
   }
 
   @Test

@@ -71,9 +71,9 @@ class InMemoryValidatorManagerTest {
         .addSigner(
             argThat(
                 signer ->
-                    signer instanceof BlsArtifactSigner
+                    signer instanceof BlsArtifactSigner blsSigner
                         && signer.getIdentifier().equals(BLS_KEY_PAIR.getPublicKey().toString())
-                        && !((BlsArtifactSigner) signer).isReadOnlyKey()));
+                        && !blsSigner.isReadOnlyKey()));
     verify(futureAddSigner).get();
   }
 

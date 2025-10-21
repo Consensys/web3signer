@@ -49,14 +49,8 @@ public class SignedVoluntaryExit {
   }
 
   @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof SignedVoluntaryExit)) {
-      return false;
-    }
-    SignedVoluntaryExit that = (SignedVoluntaryExit) o;
+  public boolean equals(Object o) {
+    if (!(o instanceof SignedVoluntaryExit that)) return false;
     return Objects.equals(message, that.message) && Objects.equals(signature, that.signature);
   }
 

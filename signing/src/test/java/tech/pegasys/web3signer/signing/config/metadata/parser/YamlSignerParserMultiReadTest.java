@@ -98,14 +98,15 @@ class YamlSignerParserMultiReadTest {
     final String prvKey2 = blsKeyPair2.getSecretKey().toBytes().toHexString();
 
     final String multiYaml =
-        String.format(
-            "---\n"
-                + "privateKey: \"%s\"\n"
-                + "type: \"file-raw\"\n"
-                + "---\n"
-                + "privateKey: \"%s\"\n"
-                + "type: \"file-raw\"",
-            prvKey1, prvKey2);
+        """
+              ---
+              privateKey: "%s"
+              type: "file-raw"
+              ---
+              privateKey: "%s"
+              type: "file-raw"
+              """
+            .formatted(prvKey1, prvKey2);
 
     final List<ArtifactSigner> signingMetadataList =
         signerParser.parse(signerParser.readSigningMetadata(multiYaml));
@@ -148,13 +149,14 @@ class YamlSignerParserMultiReadTest {
 
     // missing type:
     final String multiYaml =
-        String.format(
-            "---\n"
-                + "privateKey: \"%s\"\n"
-                + "type: \"file-raw\"\n"
-                + "---\n"
-                + "privateKey: \"%s\"",
-            prvKey1, prvKey2);
+        """
+              ---
+              privateKey: "%s"
+              type: "file-raw"
+              ---
+              privateKey: "%s"
+              """
+            .formatted(prvKey1, prvKey2);
 
     assertThatExceptionOfType(SigningMetadataException.class)
         .isThrownBy(() -> signerParser.parse(signerParser.readSigningMetadata(multiYaml)))

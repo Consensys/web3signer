@@ -48,6 +48,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.support.ParameterDeclarations;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.web3j.crypto.Credentials;
@@ -249,7 +250,8 @@ public class EthSignTransactionResultProviderTest {
 
   private static class InvalidParamsProvider implements ArgumentsProvider {
     @Override
-    public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
+    public Stream<? extends Arguments> provideArguments(
+        final ParameterDeclarations parameterDeclarations, final ExtensionContext context) {
       return Stream.of(
           Arguments.of(Collections.emptyList()),
           Arguments.of(Collections.singleton(2)),

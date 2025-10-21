@@ -42,22 +42,22 @@ public class AzureKeyVaultFactory implements AutoCloseable {
       final String tenantId,
       final AzureAuthenticationMode mode,
       final long httpClientTimeout) {
-    switch (mode) {
-      case USER_ASSIGNED_MANAGED_IDENTITY:
-        return AzureKeyVault.createUsingManagedIdentity(
-            Optional.of(clientId), keyVaultName, httpClientTimeout);
-      case SYSTEM_ASSIGNED_MANAGED_IDENTITY:
-        return AzureKeyVault.createUsingManagedIdentity(
-            Optional.empty(), keyVaultName, httpClientTimeout);
-      default:
-        return AzureKeyVault.createUsingClientSecretCredentials(
-            clientId,
-            clientSecret,
-            tenantId,
-            keyVaultName,
-            getOrCreateExecutor(),
-            httpClientTimeout);
-    }
+    return switch (mode) {
+      case USER_ASSIGNED_MANAGED_IDENTITY ->
+          AzureKeyVault.createUsingManagedIdentity(
+              Optional.of(clientId), keyVaultName, httpClientTimeout);
+      case SYSTEM_ASSIGNED_MANAGED_IDENTITY ->
+          AzureKeyVault.createUsingManagedIdentity(
+              Optional.empty(), keyVaultName, httpClientTimeout);
+      case CLIENT_SECRET ->
+          AzureKeyVault.createUsingClientSecretCredentials(
+              clientId,
+              clientSecret,
+              tenantId,
+              keyVaultName,
+              getOrCreateExecutor(),
+              httpClientTimeout);
+    };
   }
 
   private ExecutorService getOrCreateExecutor() {

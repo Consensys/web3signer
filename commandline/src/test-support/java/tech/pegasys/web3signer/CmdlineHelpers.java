@@ -25,17 +25,21 @@ public class CmdlineHelpers {
   }
 
   public static String validBaseYamlOptions() {
-    return "http-listen-port: 6001\n"
-        + "http-listen-host: \"localhost\"\n"
-        + "key-config-path: \"./keys_yaml\"\n"
-        + "metrics-categories: \"HTTP\"\n"
-        + "logging: \"INFO\"\n";
+    return """
+      http-listen-port: 6001
+      http-listen-host: "localhost"
+      key-config-path: "./keys_yaml"
+      metrics-categories: "HTTP"
+      logging: "INFO"
+      """;
   }
 
   public static String validBaseYamlAliasOptions() {
-    return "metrics-category: \"HTTP\"\n"
-        + "l: \"INFO\"\n"
-        + "key-store-path: \"./keys_yaml_alias\"\n";
+    return """
+      metrics-category: "HTTP"
+      l: "INFO"
+      key-store-path: "./keys_yaml_alias"
+      """;
   }
 
   public static Map<String, String> validBaseEnvironmentVariableOptions() {

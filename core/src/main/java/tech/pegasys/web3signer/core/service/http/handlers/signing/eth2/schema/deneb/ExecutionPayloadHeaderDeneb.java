@@ -127,17 +127,9 @@ public class ExecutionPayloadHeaderDeneb extends ExecutionPayloadHeaderCapella {
   }
 
   @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof ExecutionPayloadHeaderDeneb)) {
-      return false;
-    }
-    if (!super.equals(o)) {
-      return false;
-    }
-    final ExecutionPayloadHeaderDeneb that = (ExecutionPayloadHeaderDeneb) o;
+  public boolean equals(Object o) {
+    if (!(o instanceof ExecutionPayloadHeaderDeneb that)) return false;
+    if (!super.equals(o)) return false;
     return Objects.equals(blobGasUsed, that.blobGasUsed)
         && Objects.equals(excessBlobGas, that.excessBlobGas);
   }

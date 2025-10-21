@@ -135,17 +135,9 @@ public class BeaconStateBellatrix extends BeaconStateAltair {
   }
 
   @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof BeaconStateBellatrix)) {
-      return false;
-    }
-    if (!super.equals(o)) {
-      return false;
-    }
-    BeaconStateBellatrix that = (BeaconStateBellatrix) o;
+  public boolean equals(Object o) {
+    if (!(o instanceof BeaconStateBellatrix that)) return false;
+    if (!super.equals(o)) return false;
     return Objects.equals(latestExecutionPayloadHeader, that.latestExecutionPayloadHeader);
   }
 

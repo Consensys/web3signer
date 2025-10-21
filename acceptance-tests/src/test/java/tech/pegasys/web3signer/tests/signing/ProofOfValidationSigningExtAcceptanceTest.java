@@ -108,15 +108,16 @@ public class ProofOfValidationSigningExtAcceptanceTest extends SigningAcceptance
   @ValueSource(strings = {"1634025600000", "\"1634025600000\""})
   void timestampAsStringAndNumberResultsInValidSignature(final String timestampValue)
       throws IOException {
-    final var payloadFormat =
-        """
+    final var payload =
+        String.format(
+            """
         {
           "type": "PROOF_OF_VALIDATION",
           "platform": "AT",
           "timestamp": %s
         }
-        """;
-    final var payload = String.format(payloadFormat, timestampValue);
+        """,
+            timestampValue);
 
     final var response = signer.signExtensionPayload(PUBLIC_KEY.toString(), payload, JSON);
     response.then().statusCode(200).contentType(JSON);
