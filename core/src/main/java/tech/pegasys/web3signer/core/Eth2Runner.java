@@ -333,17 +333,15 @@ public class Eth2Runner extends Runner {
         azureKeyVaultFactory.createAzureKeyVault(azureKeyVaultParameters);
 
     return keyVault.mapSecrets(
-        (name, value) -> {
+        (key, value) -> {
           try {
             final Bytes privateKeyBytes = Bytes.fromHexString(value);
             final BLSKeyPair keyPair =
                 new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
             return new BlsArtifactSigner(keyPair, SignerOrigin.AZURE);
           } catch (final Exception e) {
-            LOG.error(
-                "Failed to load secret named {} from azure key vault due to: {}.",
-                name,
-                e.getMessage());
+            LOG.warn("Failed to convert data to BLS KeyPair from Azure key vault");
+            LOG.trace("Failed Azure ID: {}, Reason: {}", key, e.getMessage());
             return null;
           }
         },
