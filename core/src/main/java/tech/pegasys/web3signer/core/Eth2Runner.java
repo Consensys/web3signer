@@ -340,8 +340,7 @@ public class Eth2Runner extends Runner {
                 new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
             return new BlsArtifactSigner(keyPair, SignerOrigin.AZURE);
           } catch (final Exception e) {
-            LOG.warn("Failed to convert data to BLS KeyPair from Azure key vault");
-            LOG.trace("Failed Azure ID: {}, Reason: {}", key, e.getMessage());
+            LOG.warn("Failed to map to BLS KeyPair from Azure key vault");
             return null;
           }
         },
