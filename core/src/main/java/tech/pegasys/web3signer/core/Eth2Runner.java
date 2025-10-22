@@ -333,7 +333,7 @@ public class Eth2Runner extends Runner {
         azureKeyVaultFactory.createAzureKeyVault(azureKeyVaultParameters);
 
     return keyVault.mapSecrets(
-        (key, value) -> {
+        (name, value) -> {
           try {
             final Bytes privateKeyBytes = Bytes.fromHexString(value);
             final BLSKeyPair keyPair =
