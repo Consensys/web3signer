@@ -33,21 +33,25 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.utils.Convert;
 import org.web3j.utils.Convert.Unit;
 
 public class ValueTransferAcceptanceTest extends Eth1RpcAcceptanceTestBase {
-
+  private static final Logger LOG = LogManager.getLogger();
   private static final String RECIPIENT = "0x1b00ba00ca00bb00aa00bc00be00ac00ca00da00";
   private static final long FIFTY_TRANSACTIONS = 50;
   private static final String FRONTIER = "0x0";
   private static final String EIP1559 = "0x2";
 
   @BeforeEach
-  public void setup() {
+  public void setup(final TestInfo testInfo) {
+    LOG.info("--- Starting Besu for test {}", testInfo.getDisplayName());
     startBesu();
     final SignerConfiguration web3SignerConfiguration =
         new SignerConfigurationBuilder()
