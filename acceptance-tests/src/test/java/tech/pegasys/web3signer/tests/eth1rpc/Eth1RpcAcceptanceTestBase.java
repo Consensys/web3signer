@@ -27,12 +27,16 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 
 import com.google.common.io.Resources;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.io.TempDir;
 import org.web3j.utils.Convert;
 
 public class Eth1RpcAcceptanceTestBase extends AcceptanceTestBase {
+  private static final Logger LOG = LogManager.getLogger();
   public static final String RICH_BENEFACTOR = "fe3b557e8fb62b89f4916b721be55ceb828dbd73";
   public static final BigInteger INTRINSIC_GAS = BigInteger.valueOf(21000);
   public static final BigInteger GAS_PRICE =
@@ -64,7 +68,8 @@ public class Eth1RpcAcceptanceTestBase extends AcceptanceTestBase {
   }
 
   @AfterEach
-  public synchronized void shutdownBesu() {
+  public synchronized void shutdownBesu(final TestInfo testInfo) {
+    LOG.info("--- Shutting down Besu for test {}", testInfo.getDisplayName());
     if (besu != null) {
       besu.shutdown();
       besu = null;
