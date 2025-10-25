@@ -41,7 +41,9 @@ public class TransactionSerializer {
   }
 
   public String serialize(final Transaction transaction) {
-    if (transaction.isEip1559()) {
+    if (transaction.isEip4844()) {
+      return toHexString(serializeEip4844(transaction));
+    } else if (transaction.isEip1559()) {
       return toHexString(serializeEip1559(transaction));
     } else {
       return toHexString(serializeFrontier(transaction));
@@ -57,6 +59,23 @@ public class TransactionSerializer {
 
     signatureData = TransactionEncoder.createEip155SignatureData(signatureData, chainId);
     return transaction.rlpEncode(signatureData);
+  }
+
+  private byte[] serializeEip4844(final Transaction transaction) {
+    byte[] bytesToSign = transaction.rlpEncode(null);
+    bytesToSign = prependEip4844TransactionType(bytesToSign);
+
+    final SignatureData signatureData = sign(transaction.sender(), bytesToSign);
+
+    byte[] serializedBytes = transaction.rlpEncode(signatureData);
+    return prependEip4844TransactionType(serializedBytes);
+  }
+
+  private static byte[] prependEip4844TransactionType(final byte[] bytesToSign) {
+    return ByteBuffer.allocate(bytesToSign.length + 1)
+        .put(TransactionType.EIP4844.getRlpType())
+        .put(bytesToSign)
+        .array();
   }
 
   private byte[] serializeEip1559(final Transaction transaction) {
