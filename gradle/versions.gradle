@@ -104,6 +104,7 @@ dependencyManagement {
         exclude group: 'commons-lang', name: 'commons-lang'
       }
       entry 'execution-types'
+      entry 'metrics'
     }
 
     dependency 'tech.pegasys:jblst:0.3.15'
