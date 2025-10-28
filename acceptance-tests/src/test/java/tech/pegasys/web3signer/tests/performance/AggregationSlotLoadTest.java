@@ -288,14 +288,14 @@ public class AggregationSlotLoadTest extends SigningAcceptanceTestBase {
   @Test
   void testAggregationSlotWithLimitedConcurrency() throws Exception {
     LOG.info("Starting load test with limited concurrent request limit");
-      StubMetricsSystem metricsSystem = new StubMetricsSystem();
+    StubMetricsSystem metricsSystem = new StubMetricsSystem();
     long startTime = System.currentTimeMillis();
     AtomicInteger timeouts = new AtomicInteger(0);
     AtomicInteger failures = new AtomicInteger(0);
     AtomicInteger successCount = new AtomicInteger(0);
 
     // Simulate Teku's external signer concurrent request limit
-    final int CONCURRENT_REQUEST_LIMIT = 200;
+    final int CONCURRENT_REQUEST_LIMIT = 32;
     ThrottlingTaskQueueWithPriority taskQueue =
         ThrottlingTaskQueueWithPriority.create(
             CONCURRENT_REQUEST_LIMIT,
