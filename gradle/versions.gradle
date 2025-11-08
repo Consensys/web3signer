@@ -42,7 +42,7 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.7.7'
 
-    dependencySet(group: 'io.vertx', version: '4.5.21') {
+    dependencySet(group: 'io.vertx', version: '4.5.22') {
       entry 'vertx-codegen'
       entry ('vertx-core') {
         exclude group: 'io.netty', name: 'netty-handler'
@@ -95,8 +95,14 @@ dependencyManagement {
       entry 'serializer'
       entry 'unsigned'
       entry 'async'
-      entry 'networks'
-      entry 'json'
+      entry ('networks') {
+        // CVE-2025-48924
+        exclude group: 'commons-lang', name: 'commons-lang'
+      }
+      entry ('json') {
+        // CVE-2025-48924
+        exclude group: 'commons-lang', name: 'commons-lang'
+      }
       entry 'execution-types'
     }
 
