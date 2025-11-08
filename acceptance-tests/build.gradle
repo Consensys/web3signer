@@ -43,6 +43,7 @@ dependencies {
   testImplementation 'tech.pegasys.teku.internal:json'
   testImplementation (group: 'tech.pegasys.teku.internal', name: 'spec', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.teku.internal', name: 'bls', classifier: 'test-fixtures')
+  testImplementation (group: 'tech.pegasys.teku.internal', name: 'kzg', classifier: 'test-fixtures')
   testImplementation 'tech.pegasys.teku.internal:serializer'
   testImplementation 'tech.pegasys.teku.internal:unsigned'
   testImplementation 'tech.pegasys.teku.internal:async'
