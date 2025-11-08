@@ -168,6 +168,13 @@ public class EthSignTransactionResultProviderTest {
             "0x02f86482af2c46010282760094627306090abab3a6e1400e9345bc60c78a8bef570200c080a0c12c61390b8e6c5cded74c3356bdfcace12f2df6ef936bb57b6ae396d430faafa04ac0efe035ef864a63381825e445eb58ad2d01f3927e8c814b5442949847338d");
   }
 
+  @Test
+  public void returnsExpectedSignatureForEip4844Transaction() {
+    assertThat(executeEthSignTransaction(get4844TxParameters()))
+        .isEqualTo(
+            "0x03f88cf88782af2c46010282760094627306090abab3a6e1400e9345bc60c78a8bef570200c003e1a0010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c44401401a099ef021663f2bf3eeee30abad5f798db98f5736fad456b9da3a8c254e65523c1a073123b2465936f4ccaba0e20cad2db613bd48e833cbaad879647333506837239c0c0c0");
+  }
+
   private String executeEthSignTransaction(final JsonObject params) {
     final Credentials cs =
         Credentials.create("0x1618fc3e47aec7e70451256e033b9edb67f4c469258d8e2fbb105552f141ae41");
@@ -221,6 +228,23 @@ public class EthSignTransactionResultProviderTest {
     jsonObject.put("nonce", "0x46");
     jsonObject.put("value", "0x2");
     jsonObject.put("data", "0x0");
+    return jsonObject;
+  }
+
+  private static JsonObject get4844TxParameters() {
+    final JsonObject jsonObject = new JsonObject();
+    jsonObject.put("from", "0x0c8f735bc186ea3842e640ffdcb474def3e767a0");
+    jsonObject.put("to", "0x627306090abaB3A6e1400e9345bC60c78a8BEf57");
+    jsonObject.put("maxPriorityFeePerGas", "0x1");
+    jsonObject.put("maxFeePerGas", "0x2");
+    jsonObject.put("gas", "0x7600");
+    jsonObject.put("nonce", "0x46");
+    jsonObject.put("value", "0x2");
+    jsonObject.put("data", "0x0");
+    jsonObject.put(
+        "blobVersionedHashes",
+        new String[] {"0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014"});
+    jsonObject.put("maxFeePerBlobGas", "0x3");
     return jsonObject;
   }
 
