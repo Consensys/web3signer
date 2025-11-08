@@ -1,9 +1,12 @@
 # Changelog
 
-## Unreleased
+## 25.11.0
 ### Features Added
-- Add CLI option `-Xkey-manager-skip-keystore-storage` to eth2 subcommand preventing web3signer from writing keystores imported via the keymanager API to disk. This is *not* safe for operators who do not backup keystore.
-- Added support for signing EIP-4844 transactions with blob data and versioned hashes
+- Updated Teku libraries to add scheduling for Fulu upgrade for mainnet
+  - Mainnet configuration for Fulu fork at epoch 411392 (2025-12-03 21:49:11 UTC)
+- Added CLI option `-Xkey-manager-skip-keystore-storage` to eth2 subcommand preventing web3signer from writing keystores 
+imported via the keymanager API to disk. This is *not* safe for operators who do not backup keystore.
+- Added support for signing EIP-4844 transactions with blob data and versioned hashes (thanks [@mskrzypkows](https://github.com/mskrzypkows)!)
 - Updated web3j library to 5.0.1
 - Reduced Web3Signer docker image size. Removed unnecessary tools `iputils-ping, net-tools` from the image.
 
