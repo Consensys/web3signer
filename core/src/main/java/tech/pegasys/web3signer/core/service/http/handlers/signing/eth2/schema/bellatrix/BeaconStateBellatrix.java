@@ -17,7 +17,6 @@ import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.SpecVersion;
 import tech.pegasys.teku.spec.datastructures.execution.versions.bellatrix.ExecutionPayloadHeaderSchemaBellatrix;
 import tech.pegasys.teku.spec.datastructures.state.SyncCommittee.SyncCommitteeSchema;
-import tech.pegasys.teku.spec.datastructures.state.beaconstate.BeaconState;
 import tech.pegasys.teku.spec.datastructures.state.beaconstate.MutableBeaconState;
 import tech.pegasys.teku.spec.datastructures.state.beaconstate.versions.bellatrix.BeaconStateSchemaBellatrix;
 import tech.pegasys.teku.spec.datastructures.state.beaconstate.versions.bellatrix.MutableBeaconStateBellatrix;
@@ -123,15 +122,6 @@ public class BeaconStateBellatrix extends BeaconStateAltair {
     state.setLatestExecutionPayloadHeader(
         instance.latestExecutionPayloadHeader.asInternalExecutionPayloadHeader(
             executionPayloadHeaderSchema));
-  }
-
-  public BeaconStateBellatrix(final BeaconState beaconState) {
-    super(beaconState);
-    final tech.pegasys.teku.spec.datastructures.state.beaconstate.versions.bellatrix
-            .BeaconStateBellatrix
-        bellatrix = beaconState.toVersionBellatrix().orElseThrow();
-    this.latestExecutionPayloadHeader =
-        new ExecutionPayloadHeaderBellatrix(bellatrix.getLatestExecutionPayloadHeader());
   }
 
   @Override
