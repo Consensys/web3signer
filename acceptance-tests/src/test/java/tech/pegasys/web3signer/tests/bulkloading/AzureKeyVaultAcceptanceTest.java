@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.tests.bulkloading;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
@@ -21,16 +22,17 @@ import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZ
 import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealtcheckKeysLoaded;
 import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthcheckErrorCount;
 
+import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultAzureKeyVaultParameters;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.commons.lang3.StringUtils;
@@ -46,14 +48,6 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   private static final String CLIENT_SECRET = System.getenv("AZURE_CLIENT_SECRET");
   private static final String TENANT_ID = System.getenv("AZURE_TENANT_ID");
   private static final String VAULT_NAME = System.getenv("AZURE_KEY_VAULT_NAME");
-  private static final String BLS_KEY =
-      "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
-  private static final String BLS_TAGGED_KEY =
-      "0xb3b6fb8dab2a4c9d00247c18c4b7e91c62da3f7ad31c822c00097f93ac8ff2c4a526611f7d0a9c85946e93f371852c69";
-  private static final String SECP_KEY =
-      "0xa95663509e608da3c2af5a48eb4315321f8430cbed5518a44590cc9d367f01dc72ebbc583fc7d94f9fdc20eb6e162c9f8cb35be8a91a3b1d32a63ecc10be4e08";
-  private static final String SECP_TAGGED_KEY =
-      "0x234053dbe014ebe573e5e8f6eab5e0417bf705466009f7c15b8d23593abd1bda426593d92b32efb240afe6efa46d5679fad0dc427e0aa0fc61c2464ce93c7c5e";
 
   @BeforeAll
   public static void setup() {
@@ -63,10 +57,41 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     assumeTrue(!StringUtils.isEmpty(VAULT_NAME), "Set AZURE_KEY_VAULT_NAME environment variable");
   }
 
+  /**
+   * These keys are expected to be pre-created in Azure keystore The first 10 keys are untagged, the
+   * last one is tagged with ENV:TEST
+   *
+   * @return list of expected BLS public keys in hex format
+   */
+  static List<String> expectedBLSPubKeys() {
+    final List<String> keyPairs = new java.util.ArrayList<>();
+    for (int i = 0; i < 10; i++) {
+      keyPairs.add(BLSTestUtil.randomKeyPair(i).getPublicKey().toHexString());
+    }
+    // the last key is the tagged one
+    keyPairs.add(BLSTestUtil.randomKeyPair(10).getPublicKey().toHexString());
+    return keyPairs;
+  }
+
+  /**
+   * The test account 18, 19 and 20 are obtained from ethpandaops kurtosis ethereum-package. They
+   * are manually pre-imported in Azure key vault via cli. Account 20 is tagged with ENV:TEST
+   *
+   * @return List of expected SECP256K1 public keys in hex format
+   */
+  static List<String> expectedSECPPubKeys() {
+    return List.of(
+        "0xdc189ecfe1155474e8f8214e27aa2ab86ced4e9105a7c748363488c4760b52bf325481b6de8bc798a569ad7b62c4df01d3460a401cdcb4583aa339ba68ff53b6",
+        "0x48a00de41ec205cb3924a65db20ec1b8acfcd895bbf2bb91c8c40762641cbdaf62acf04629563234faf4c9d3aea4ccf488de2a438efc8912adddea2c743e7e21",
+        "0x294fc70044d162b88fbc7638d4ad7ce8476960ac964bed43d86c47e9e26d31a81dcf4e0ce24dc083988af4e7c014a2d40bff1952cdcaa7941c0363e7ca6040a8");
+  }
+
   @ParameterizedTest
   @EnumSource(KeyType.class)
-  void ensureSecretsInKeyVaultAreLoadedAndReportedViaPublicKeysApi(final KeyType keyType)
-      throws JsonProcessingException {
+  void ensureSecretsInKeyVaultAreLoadedAndReportedViaPublicKeysApi(final KeyType keyType) {
+    final List<String> expectedPubKeys =
+        keyType == KeyType.BLS ? expectedBLSPubKeys() : expectedSECPPubKeys();
+
     final AzureKeyVaultParameters azureParams =
         new DefaultAzureKeyVaultParameters(VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET);
 
@@ -83,7 +108,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
-        .body("", hasItems(expectedKey(keyType, false)));
+        .body("", containsInAnyOrder(expectedPubKeys.toArray()));
 
     final Response healthcheckResponse = signer.healthcheck();
     healthcheckResponse
@@ -92,20 +117,19 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         .contentType(ContentType.JSON)
         .body("status", equalTo("UP"));
 
-    // BLS keys include additional multi-line key with 200 keys
-    final int expectedKeyLoaded = keyType == KeyType.BLS ? 202 : 2;
-
     final String jsonBody = healthcheckResponse.body().asString();
     final int keysLoaded = getHealtcheckKeysLoaded(jsonBody, KEYS_CHECK_AZURE_BULK_LOADING);
-    assertThat(keysLoaded).isEqualTo(expectedKeyLoaded);
+    assertThat(keysLoaded).isEqualTo(expectedPubKeys.size());
   }
 
   @ParameterizedTest(name = "{index} - KeyType: {0}, using config file: {1}")
-  @MethodSource("azureSecretsViaTag")
+  @MethodSource("argsForTagTest")
   void azureSecretsViaTag(final KeyType keyType, boolean useConfigFile) {
     final AzureKeyVaultParameters azureParams =
         new DefaultAzureKeyVaultParameters(
             VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET, Map.of("ENV", "TEST"));
+    final String expectedPubKey =
+        keyType == KeyType.BLS ? expectedBLSPubKeys().getLast() : expectedSECPPubKeys().getLast();
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
@@ -121,7 +145,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
-        .body("", hasItems(expectedKey(keyType, true)));
+        .body("", hasItems(expectedPubKey));
 
     // the tag filter will return only valid keys. The healthcheck should be UP
     final Response healthcheckResponse = signer.healthcheck();
@@ -139,7 +163,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     assertThat(errorCount).isZero();
   }
 
-  private static Stream<Arguments> azureSecretsViaTag() {
+  static Stream<Arguments> argsForTagTest() {
     return Stream.of(
         Arguments.arguments(KeyType.BLS, false),
         Arguments.arguments(KeyType.BLS, true),
@@ -194,16 +218,12 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     startSigner(configBuilder.build());
 
     final Response response = signer.callApiPublicKeys(keyType);
+    final List<String> expectedPubKeys =
+        keyType == KeyType.BLS ? expectedBLSPubKeys() : expectedSECPPubKeys();
     response
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
-        .body("", hasItems(expectedKey(keyType, false)));
-  }
-
-  private String expectedKey(final KeyType keyType, final boolean tagged) {
-    return keyType == KeyType.BLS
-        ? tagged ? BLS_TAGGED_KEY : BLS_KEY
-        : tagged ? SECP_TAGGED_KEY : SECP_KEY;
+        .body("", containsInAnyOrder(expectedPubKeys.toArray()));
   }
 }
