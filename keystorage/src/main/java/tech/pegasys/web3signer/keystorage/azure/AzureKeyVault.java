@@ -49,6 +49,7 @@ import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
+import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -219,6 +220,15 @@ public class AzureKeyVault {
     return MappedResults.newInstance(result, errorCount.intValue());
   }
 
+  /**
+   * Fetch multiple "Keys" objects from Azure Key Vault. Apply mapper function to transform the key
+   * properties.
+   *
+   * @param mapper Mapper function to transform Azure KeyProperties to type R
+   * @param tags Map of tags. Only keys which contains all the tags entries are processed.
+   * @return Mapped results containing the converted keys and error count.
+   * @param <R> The result type of mapper function.
+   */
   public <R> MappedResults<R> mapKeyProperties(
       final Function<KeyProperties, R> mapper, final Map<String, String> tags) {
     final Set<R> result = ConcurrentHashMap.newKeySet();
@@ -249,6 +259,37 @@ public class AzureKeyVault {
     }
 
     return MappedResults.newInstance(result, errorCount.intValue());
+  }
+
+  /**
+   * Fetch all "Secret" names from the Azure Key Vault. Useful for testing purposes.
+   *
+   * @return List of secret names.
+   */
+  @VisibleForTesting
+  public List<String> getSecretNames() {
+    final PagedIterable<SecretProperties> secretsPagedIterable =
+        secretClient.listPropertiesOfSecrets();
+
+    return secretsPagedIterable
+        .streamByPage()
+        .flatMap(keyPage -> keyPage.getValue().stream().map(SecretProperties::getName))
+        .toList();
+  }
+
+  /**
+   * Fetch all "Key" names from the Azure Key Vault. Useful for testing purposes.
+   *
+   * @return List of key names.
+   */
+  @VisibleForTesting
+  public List<String> getKeyNames() {
+    final PagedIterable<KeyProperties> keysPagedIterable = keyClient.listPropertiesOfKeys();
+
+    return keysPagedIterable
+        .streamByPage()
+        .flatMap(keyPage -> keyPage.getValue().stream().map(KeyProperties::getName))
+        .toList();
   }
 
   private static boolean isEmptyTags(final Map<String, String> tags) {
