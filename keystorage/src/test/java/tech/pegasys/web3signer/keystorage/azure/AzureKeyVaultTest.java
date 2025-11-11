@@ -201,9 +201,10 @@ public class AzureKeyVaultTest {
         createUsingClientSecretCredentials(
             CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor, AZURE_DEFAULT_TIMEOUT);
 
-      // map one remote Secret/Value conversion to raise exception - this is to simulate failure in mapping
-      // function. The assertion assumes that there are more than one Secrets in the remote vault
-      final AtomicInteger counter = new AtomicInteger(0);
+    // map one remote Secret/Value conversion to raise exception - this is to simulate failure in
+    // mapping function. The assertion assumes that there are more than one Secrets in the remote
+    // vault
+    final AtomicInteger counter = new AtomicInteger(0);
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets(
             (name, value) -> {
@@ -213,8 +214,8 @@ public class AzureKeyVaultTest {
               return new SimpleEntry<>(name, value);
             },
             Collections.emptyMap());
-      assertThat(result.getErrorCount()).isOne();
-      assertThat(result.getValues()).isNotEmpty();
+    assertThat(result.getErrorCount()).isOne();
+    assertThat(result.getValues()).isNotEmpty();
   }
 
   @Test
