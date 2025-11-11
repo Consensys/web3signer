@@ -58,8 +58,8 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   }
 
   /**
-   * These keys are expected to be pre-created in Azure keystore The first 10 keys are untagged, the
-   * last one is tagged with ENV:TEST
+   * These keys are expected to be pre-created in Azure keystore The first 10 keys are untagged and created as
+   * a single multiline secret, the last secret is created separate and tagged with ENV:TEST.
    *
    * @return list of expected BLS public keys in hex format
    */
