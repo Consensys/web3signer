@@ -16,6 +16,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.crypto.Sign.signedMessageToKey;
+import static tech.pegasys.web3signer.tests.bulkloading.AzureKeyVaultAcceptanceTest.getSECPKeysFromAzureVault;
 
 import tech.pegasys.web3signer.AwsKmsUtil;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
@@ -56,8 +57,6 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
       "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
   public static final String PUBLIC_KEY_HEX_STRING =
       "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
-  public static final String AZURE_PUBLIC_KEY_HEX_STRING =
-      "a95663509e608da3c2af5a48eb4315321f8430cbed5518a44590cc9d367f01dc72ebbc583fc7d94f9fdc20eb6e162c9f8cb35be8a91a3b1d32a63ecc10be4e08";
 
   private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
 
@@ -105,14 +104,17 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".+")
   })
   public void signDataWithKeyInAzure() {
+    final var azureKey = getSECPKeysFromAzureVault().stream().findAny().orElseThrow();
+
     METADATA_FILE_HELPERS.createAzureKeyYamlFileAt(
-        testDirectory.resolve(AZURE_PUBLIC_KEY_HEX_STRING + ".yaml"),
+        testDirectory.resolve("azure_key.yaml"),
         CLIENT_ID,
         CLIENT_SECRET,
         KEY_VAULT_NAME,
-        TENANT_ID);
+        TENANT_ID,
+        azureKey.name());
 
-    signAndVerifySignature(AZURE_PUBLIC_KEY_HEX_STRING);
+    signAndVerifySignature(azureKey.publicKeyHex());
   }
 
   @Test

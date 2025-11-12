@@ -56,9 +56,10 @@ public class AzureKeyVaultTest {
         createUsingClientSecretCredentials(
             CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor, AZURE_DEFAULT_TIMEOUT);
     // obtain the list of available secret names, then fetch first secret by name
-    final List<String> availableSecrets = azureKeyVault.getSecretNames();
+    final List<AzureKeyVault.AzureSecret> availableSecrets = azureKeyVault.getAzureSecrets();
     assertThat(availableSecrets).isNotEmpty();
-    final Optional<String> data = azureKeyVault.fetchSecret(availableSecrets.getFirst());
+    final var randomSecret = availableSecrets.stream().findAny().orElseThrow();
+    final Optional<String> data = azureKeyVault.fetchSecret(randomSecret.name());
     assertThat(data).isPresent();
   }
 
@@ -97,22 +98,18 @@ public class AzureKeyVaultTest {
         createUsingClientSecretCredentials(
             CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor, AZURE_DEFAULT_TIMEOUT);
 
-    // obtain list of secret names. Then validate mapping function works as expected.
-    final List<String> availableSecrets = azureKeyVault.getSecretNames();
+    // obtain list of secret names directly. Then validate mapping function works as expected.
+    final List<AzureKeyVault.AzureSecret> availableSecrets = azureKeyVault.getAzureSecrets();
     assertThat(availableSecrets).isNotEmpty();
-    final Optional<String> data = azureKeyVault.fetchSecret(availableSecrets.getFirst());
-    assertThat(data).isPresent();
-    final String expectedData = data.get();
+    var valuesCount = availableSecrets.stream().mapToInt(s -> s.values().size()).sum();
 
     // mapSecrets can convert multiple secrets under single key.
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets(SimpleEntry::new, Collections.emptyMap());
     final Collection<SimpleEntry<String, String>> entries = result.getValues();
 
-    final Optional<SimpleEntry<String, String>> testKeyEntry =
-        entries.stream().filter(e -> e.getKey().equals(availableSecrets.getFirst())).findAny();
-    assertThat(testKeyEntry).isPresent();
-    assertThat(expectedData).contains(testKeyEntry.get().getValue());
+    // the number of entries should match the available secret values count
+    assertThat(entries).hasSize(valuesCount);
     assertThat(result.getErrorCount()).isZero();
   }
 
@@ -123,13 +120,14 @@ public class AzureKeyVaultTest {
             CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor, AZURE_DEFAULT_TIMEOUT);
 
     // obtain list of Key names. Then validate mapping function works as expected.
-    final List<String> availableKeys = azureKeyVault.getKeyNames();
-    assertThat(availableKeys).isNotEmpty();
+    final List<String> availableKeyNames =
+        azureKeyVault.getAzureKeys().stream().map(AzureKeyVault.AzureKey::name).toList();
+    assertThat(availableKeyNames).isNotEmpty();
 
     final MappedResults<String> result =
         azureKeyVault.mapKeyProperties(KeyProperties::getName, Collections.emptyMap());
     final Collection<String> entries = result.getValues();
-    assertThat(entries).containsExactlyInAnyOrderElementsOf(availableKeys);
+    assertThat(entries).containsExactlyInAnyOrderElementsOf(availableKeyNames);
     assertThat(result.getErrorCount()).isZero();
   }
 

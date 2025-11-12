@@ -18,6 +18,8 @@ import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.azure.core.credential.AccessToken;
 import com.azure.core.credential.TokenCredential;
@@ -262,34 +265,66 @@ public class AzureKeyVault {
   }
 
   /**
-   * Fetch all "Secret" names from the Azure Key Vault. Useful for testing purposes.
+   * Fetch all "Key" Objects from the Azure Key Vault. Useful for testing purposes.
    *
-   * @return List of secret names.
+   * @return List of Azure Keys containing key name, public key hex and map of tags.
    */
   @VisibleForTesting
-  public List<String> getSecretNames() {
+  public List<AzureKey> getAzureKeys() {
+    final PagedIterable<KeyProperties> keysPagedIterable = keyClient.listPropertiesOfKeys();
+
+    return keysPagedIterable
+        .streamByPage()
+        .flatMap(
+            keyPage ->
+                keyPage.getValue().stream()
+                    .map(
+                        kp -> {
+                          final var cryptoClient = fetchKey(kp.getName(), kp.getVersion());
+                          final var jsonWebKey = cryptoClient.getKey().getKey();
+                          final var rawPublicKey =
+                              Bytes.concatenate(
+                                  Bytes.wrap(jsonWebKey.getX()), Bytes.wrap(jsonWebKey.getY()));
+                          return new AzureKey(
+                              kp.getName(), rawPublicKey.toHexString(), kp.getTags());
+                        }))
+        .toList();
+  }
+
+  /**
+   * Fetch all "Secret" objects from the Azure Key Vault. Useful for testing purposes.
+   *
+   * @return List of Azure Secrets containing name of secrets, set of values and map of tags.
+   */
+  @VisibleForTesting
+  public List<AzureSecret> getAzureSecrets() {
     final PagedIterable<SecretProperties> secretsPagedIterable =
         secretClient.listPropertiesOfSecrets();
 
     return secretsPagedIterable
         .streamByPage()
-        .flatMap(keyPage -> keyPage.getValue().stream().map(SecretProperties::getName))
+        .flatMap(
+            keyPage ->
+                keyPage.getValue().stream()
+                    .map(
+                        sp -> {
+                          var secretName = sp.getName();
+                          var secretValue = secretClient.getSecret(secretName).getValue();
+                          var secretValueSet = splitSecretValues(secretValue);
+                          return new AzureSecret(secretName, secretValueSet, sp.getTags());
+                        }))
         .toList();
   }
 
-  /**
-   * Fetch all "Key" names from the Azure Key Vault. Useful for testing purposes.
-   *
-   * @return List of key names.
-   */
-  @VisibleForTesting
-  public List<String> getKeyNames() {
-    final PagedIterable<KeyProperties> keysPagedIterable = keyClient.listPropertiesOfKeys();
+  private static Set<String> splitSecretValues(final String secretValue) {
+    if (secretValue == null || secretValue.isEmpty()) {
+      return Set.of();
+    }
 
-    return keysPagedIterable
-        .streamByPage()
-        .flatMap(keyPage -> keyPage.getValue().stream().map(KeyProperties::getName))
-        .toList();
+    return Arrays.stream(secretValue.split("\\r?\\n"))
+        .map(String::trim)
+        .filter(s -> !s.isEmpty())
+        .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
   private static boolean isEmptyTags(final Map<String, String> tags) {
@@ -321,4 +356,10 @@ public class AzureKeyVault {
 
     return maybeToken.get().getToken();
   }
+
+  @VisibleForTesting
+  public record AzureSecret(String name, Set<String> values, Map<String, String> tags) {}
+
+  @VisibleForTesting
+  public record AzureKey(String name, String publicKeyHex, Map<String, String> tags) {}
 }
