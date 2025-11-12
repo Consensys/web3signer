@@ -85,7 +85,7 @@ az keyvault key import --curve P-256K --kty EC --vault-name "YOUR VAULT NAME" --
 - Key 19
 
 ```sh
-RIVATE_KEY_HEX="c5114526e042343c6d1899cad05e1c00ba588314de9b96929914ee0df18d46b2"
+PRIVATE_KEY_HEX="c5114526e042343c6d1899cad05e1c00ba588314de9b96929914ee0df18d46b2"
 
 # Create DER format then convert to PEM
 (echo "302e0201010420${PRIVATE_KEY_HEX}a00706052b8104000a" | xxd -r -p) | \
@@ -101,7 +101,7 @@ az keyvault key import --curve P-256K --kty EC --vault-name "YOUR VAULT NAME" --
 - Key 20 (tagged with ENV=TEST)
 
 ```sh
-RIVATE_KEY_HEX="04b9f63ecf84210c5366c66d68fa1f5da1fa4f634fad6dfc86178e4d79ff9e59"
+PRIVATE_KEY_HEX="04b9f63ecf84210c5366c66d68fa1f5da1fa4f634fad6dfc86178e4d79ff9e59"
 
 # Create DER format then convert to PEM
 (echo "302e0201010420${PRIVATE_KEY_HEX}a00706052b8104000a" | xxd -r -p) | \
