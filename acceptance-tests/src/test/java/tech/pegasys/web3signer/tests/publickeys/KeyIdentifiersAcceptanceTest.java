@@ -26,6 +26,7 @@ import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthc
 import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthcheckStatusValue;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
+import static tech.pegasys.web3signer.tests.bulkloading.AzureKeyVaultAcceptanceTest.getSECPKeysFromAzureVault;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
@@ -215,18 +216,20 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
     final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
     final String tenantId = System.getenv("AZURE_TENANT_ID");
-    final String publicKeyHexString =
-        "0xa95663509e608da3c2af5a48eb4315321f8430cbed5518a44590cc9d367f01dc72ebbc583fc7d94f9fdc20eb6e162c9f8cb35be8a91a3b1d32a63ecc10be4e08";
 
+    final var azureKey = getSECPKeysFromAzureVault().stream().findAny().orElseThrow();
+
+    // single key loading via metadata file
     METADATA_FILE_HELPERS.createAzureKeyYamlFileAt(
-        testDirectory.resolve(publicKeyHexString + ".yaml"),
+        testDirectory.resolve("azure_key.yaml"),
         clientId,
         clientSecret,
         keyVaultName,
-        tenantId);
+        tenantId,
+        azureKey.name());
     initAndStartSigner("eth1");
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(SECP256K1);
-    validateApiResponse(response, containsInAnyOrder(publicKeyHexString));
+    validateApiResponse(response, contains(azureKey.publicKeyHex()));
   }
 
   @Test

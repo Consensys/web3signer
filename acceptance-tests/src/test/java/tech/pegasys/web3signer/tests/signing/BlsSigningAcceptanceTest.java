@@ -32,8 +32,10 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2Signi
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
+import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.keystore.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.tests.bulkloading.AzureKeyVaultAcceptanceTest;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -166,14 +168,25 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
     final String tenantId = System.getenv("AZURE_TENANT_ID");
     final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
-    final String secretName = "TEST-KEY";
 
-    final String configFilename = KEY_PAIR.getPublicKey().toString().substring(2);
-    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    // fetch secret which only has single value containing the private key. The metadata file
+    // approach is not able to cater for multiple values in azure secret at present.
+    final AzureKeyVault.AzureSecret azureSecret =
+        AzureKeyVaultAcceptanceTest.getBLSSecretsFromAzureVault().stream()
+            .filter(entry -> entry.values().size() == 1)
+            .findFirst()
+            .orElseThrow();
+
+    final Path keyConfigFile = testDirectory.resolve("azure_key.yaml");
     METADATA_FILE_HELPERS.createAzureYamlFileAt(
-        keyConfigFile, clientId, clientSecret, tenantId, keyVaultName, secretName);
+        keyConfigFile, clientId, clientSecret, tenantId, keyVaultName, azureSecret.name());
 
-    signAndVerifySignature(ArtifactType.BLOCK);
+    final BLSSecretKey azurePrivateKey =
+        BLSSecretKey.fromBytes(
+            Bytes32.fromHexString(azureSecret.values().stream().findFirst().orElseThrow()));
+    final BLSKeyPair blsKeyPair = new BLSKeyPair(azurePrivateKey);
+
+    signAndVerifySignature(ArtifactType.BLOCK, blsKeyPair, TEXT);
   }
 
   @Test
@@ -332,15 +345,24 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private void signAndVerifySignature(
       final ArtifactType artifactType, final ContentType acceptMediaType)
       throws JsonProcessingException {
+    signAndVerifySignature(artifactType, KEY_PAIR, acceptMediaType);
+  }
+
+  private void signAndVerifySignature(
+      final ArtifactType artifactType,
+      final BLSKeyPair blsKeyPair,
+      final ContentType acceptMediaType)
+      throws JsonProcessingException {
     setupMinimalWeb3Signer(artifactType);
 
     // openapi
     final Eth2SigningRequestBody request = Eth2RequestUtils.createCannedRequest(artifactType);
     final Response response =
-        signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, acceptMediaType);
+        signer.eth2Sign(blsKeyPair.getPublicKey().toString(), request, acceptMediaType);
     final Bytes signature =
         verifyAndGetSignatureResponse(response, expectedContentType(acceptMediaType));
-    final BLSSignature expectedSignature = BLS.sign(KEY_PAIR.getSecretKey(), request.signingRoot());
+    final BLSSignature expectedSignature =
+        BLS.sign(blsKeyPair.getSecretKey(), request.signingRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 
