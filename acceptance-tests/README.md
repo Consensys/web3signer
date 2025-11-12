@@ -13,7 +13,7 @@ export AZURE_TENANT_ID=<YOUR AZURE TENANT ID>
 
 ### Azure Key Vault BLS Test Keys
 The "Secret" object contains at least two entries for BLS private keys. The first entry is a multi-line secret and the 
-second one is a single line secret. For example, Web3Signer `BLSTestUtil.java `can generate following keys for 
+second one is a single line secret. For example, Web3Signer `BLSTestUtil.java` can generate following keys for 
 non-production/test environment which can be imported into Azure Key Vault as secrets:
 
 ```
