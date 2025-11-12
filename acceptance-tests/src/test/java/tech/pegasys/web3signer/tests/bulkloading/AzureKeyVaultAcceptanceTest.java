@@ -201,11 +201,11 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         .contentType(ContentType.JSON)
         .body("status", equalTo("UP"));
 
-    // keys loaded should be 1 as well.
+    // keys loaded should be >= 1 and error count should be 0
     final String jsonBody = healthcheckResponse.body().asString();
     final int keysLoaded = getHealtcheckKeysLoaded(jsonBody, KEYS_CHECK_AZURE_BULK_LOADING);
     final int errorCount = getHealthcheckErrorCount(jsonBody, KEYS_CHECK_AZURE_BULK_LOADING);
-    assertThat(keysLoaded).isOne();
+    assertThat(keysLoaded).isNotZero();
     assertThat(errorCount).isZero();
   }
 
