@@ -32,6 +32,7 @@ import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -109,21 +110,25 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
 
   @VisibleForTesting
   public static List<AzureKeyVault.AzureKey> getSECPKeysFromAzureVault() {
-    final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(
-            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, Executors.newCachedThreadPool(), 60);
+    try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+      final AzureKeyVault azureKeyVault =
+          createUsingClientSecretCredentials(
+              CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, executor, 60);
 
-    final var azureKeys = azureKeyVault.getAzureKeys();
-    assertThat(azureKeys).isNotEmpty();
-    return azureKeys;
+      final var azureKeys = azureKeyVault.getAzureKeys();
+      assertThat(azureKeys).isNotEmpty();
+      return azureKeys;
+    }
   }
 
   public static List<AzureKeyVault.AzureSecret> getBLSSecretsFromAzureVault() {
-    final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(
-            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, Executors.newCachedThreadPool(), 60);
+    try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+      final AzureKeyVault azureKeyVault =
+          createUsingClientSecretCredentials(
+              CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, executor, 60);
 
-    return azureKeyVault.getAzureSecrets();
+      return azureKeyVault.getAzureSecrets();
+    }
   }
 
   @ParameterizedTest
