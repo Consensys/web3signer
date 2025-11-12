@@ -1,6 +1,6 @@
 ## Acceptance Tests
 
-Folowing instructions are required to setup environment for running acceptance tests for external vault providers:
+Following instructions are required to setup environment for running acceptance tests for external vault providers:
 
 ### Azure Key Vault
 In order to run Azure Key Vault acceptance tests, you need to set the following environment variables:
