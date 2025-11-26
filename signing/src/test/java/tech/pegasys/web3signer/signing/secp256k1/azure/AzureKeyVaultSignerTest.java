@@ -15,36 +15,37 @@ package tech.pegasys.web3signer.signing.secp256k1.azure;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
-import static tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory.UNSUPPORTED_CURVE_NAME;
+import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.createUsingClientSecretCredentials;
 
+import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
-import tech.pegasys.web3signer.signing.secp256k1.common.SignerInitializationException;
 
 import java.math.BigInteger;
 import java.security.SignatureException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.web3j.crypto.Sign;
 import org.web3j.crypto.Sign.SignatureData;
 import org.web3j.utils.Numeric;
 
+/**
+ * These tests require an Azure Key Vault to be setup with keys created beforehand. One Key without
+ * any tags, the other with ENV=TEST tag.
+ */
 public class AzureKeyVaultSignerTest {
   private static final String AZURE_CLIENT_ID = System.getenv("AZURE_CLIENT_ID");
   private static final String AZURE_CLIENT_SECRET = System.getenv("AZURE_CLIENT_SECRET");
   private static final String AZURE_KEY_VAULT_NAME = System.getenv("AZURE_KEY_VAULT_NAME");
   private static final String AZURE_TENANT_ID = System.getenv("AZURE_TENANT_ID");
-  private static final String AZURE_INVALID_KEY_VAULT_NAME =
-      System.getenv("AZURE_INVALID_KEY_VAULT_NAME");
-
-  private static final String KEY_NAME = "TestKey2"; // uses curve name P-256K
-  private static final String UNSUPPORTED_CURVE_KEY_NAME = "TestKeyP521";
   private static final long AZURE_DEFAULT_TIMEOUT = 60;
+  private final ExecutorService azureExecutor = Executors.newCachedThreadPool();
 
   @BeforeAll
   static void preChecks() {
@@ -52,9 +53,25 @@ public class AzureKeyVaultSignerTest {
         !StringUtils.isEmpty(AZURE_CLIENT_ID)
             && !StringUtils.isEmpty(AZURE_CLIENT_SECRET)
             && !StringUtils.isEmpty(AZURE_KEY_VAULT_NAME)
-            && !StringUtils.isEmpty(AZURE_INVALID_KEY_VAULT_NAME)
             && !StringUtils.isEmpty(AZURE_TENANT_ID),
         "Ensure Azure env variables are set");
+  }
+
+  private String getAzureKeyName() {
+    final AzureKeyVault azureKeyVault =
+        createUsingClientSecretCredentials(
+            AZURE_CLIENT_ID,
+            AZURE_CLIENT_SECRET,
+            AZURE_TENANT_ID,
+            AZURE_KEY_VAULT_NAME,
+            azureExecutor,
+            AZURE_DEFAULT_TIMEOUT);
+
+    // obtain list of secret names. Then validate mapping function works as expected.
+    return azureKeyVault.getAzureKeys().stream()
+        .findAny()
+        .map(AzureKeyVault.AzureKey::name)
+        .orElseThrow();
   }
 
   @Test
@@ -62,7 +79,7 @@ public class AzureKeyVaultSignerTest {
     final AzureConfig config =
         new AzureConfig(
             AZURE_KEY_VAULT_NAME,
-            KEY_NAME,
+            getAzureKeyName(),
             AZURE_CLIENT_ID,
             AZURE_CLIENT_SECRET,
             AZURE_TENANT_ID,
@@ -88,24 +105,5 @@ public class AzureKeyVaultSignerTest {
 
     final BigInteger recoveredPublicKey = Sign.signedMessageToKey(dataToSign, sigData);
     assertThat(recoveredPublicKey).isEqualTo(publicKey);
-  }
-
-  @Test
-  public void azureKeyWithUnsupportedCurveThrowsError() {
-    final AzureConfig config =
-        new AzureConfig(
-            AZURE_INVALID_KEY_VAULT_NAME,
-            UNSUPPORTED_CURVE_KEY_NAME,
-            "",
-            AZURE_CLIENT_ID,
-            AZURE_CLIENT_SECRET,
-            AZURE_TENANT_ID,
-            AZURE_DEFAULT_TIMEOUT);
-
-    final AzureKeyVaultSignerFactory factory =
-        new AzureKeyVaultSignerFactory(new AzureKeyVaultFactory(), new AzureHttpClientFactory());
-    Assertions.assertThatExceptionOfType(SignerInitializationException.class)
-        .isThrownBy(() -> factory.createSigner(config))
-        .withMessage(UNSUPPORTED_CURVE_NAME);
   }
 }
