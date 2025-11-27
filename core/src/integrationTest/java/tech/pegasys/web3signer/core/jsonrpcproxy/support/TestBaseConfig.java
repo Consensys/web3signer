@@ -123,11 +123,6 @@ public class TestBaseConfig implements BaseConfig {
   public void validateArgs() {}
 
   @Override
-  public Boolean isSwaggerUIEnabled() {
-    return false;
-  }
-
-  @Override
   public Boolean isAccessLogsEnabled() {
     return false;
   }

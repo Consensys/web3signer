@@ -29,9 +29,6 @@
     <Logger name="io.netty" level="${sys:dependency.log.level}" additivity="false">
       <AppenderRef ref="Console" />
     </Logger>
-    <Logger name="io.swagger.v3" level="${sys:dependency.log.level}" additivity="false">
-      <AppenderRef ref="Console" />
-    </Logger>
     <Logger name="com.atlassian.oai" level="${sys:dependency.log.level}" additivity="false">
       <AppenderRef ref="Console" />
     </Logger>
