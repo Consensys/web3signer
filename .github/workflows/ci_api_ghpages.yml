@@ -1,0 +1,27 @@
+name: Deploy OpenAPI docs to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      # Monitor specific paths for changes
+      - 'openapi-specs/**'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Deploy OpenAPI specs to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./openapi-specs
+          destination_dir: ./openapi-specs
