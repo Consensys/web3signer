@@ -1,7 +1,7 @@
 {
  "latest": {
   "spec": "latest",
-  "source": "master"
+  "source": "main"
  },
  "stable": {
   "spec": "25.2.0",
