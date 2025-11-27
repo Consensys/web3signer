@@ -1,0 +1,158 @@
+openapi: 3.0.0
+info:
+  title: 'Web3Signer ETH1 API'
+  description: 'Sign ETH1 Artifacts'
+  version: '1.1.0'
+  license:
+    name: 'Apache 2.0'
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+
+servers:
+  - url: /
+  - url: http://localhost:9000/
+
+paths:
+  /api/v1/eth1/sign/{identifier}:
+    post:
+      tags:
+        - 'Signing'
+      summary: 'Signs data for ETH1 SECP256K1 public key'
+      description: 'Signs data for the ETH1 SECP256K1 public key specified as part of the URL and returns the signature'
+      operationId: 'ETH1_SIGN'
+      parameters:
+        - name: 'identifier'
+          in: 'path'
+          required: true
+          description: 'Key for which data to sign'
+          schema:
+            type: 'string'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: string
+              required:
+                - data
+              additionalProperties:
+                type: string
+            example:
+              data: 0x48656c6c6f2c20776f726c6421
+
+      responses:
+        '200':
+          description: 'hex encoded string of signature'
+          content:
+            text/plain; charset=utf-8:
+              schema:
+                type: string
+              example: '0xb3baa751d0a9132cfe93e4e3d5ff9075111100e3789dca219ade5a24d27e19d16b3353149da1833e9b691bb38634e8dc04469be7032132906c927d7e1a49b414730612877bc6b2810c8f202daf793d1ab0d6b5cb21d52f9e52e883859887a5d9'
+        '404':
+          description: 'Public Key not found'
+        '400':
+          description: 'Bad request format'
+        '500':
+          description: 'Internal Web3Signer server error'
+
+  /api/v1/eth1/publicKeys:
+    get:
+      tags:
+        - 'Public Key'
+      summary: 'List of available ETH1 SECP256K1 Public Keys'
+      description: 'Returns the ETH1 SECP256K1 public keys for the private keys that have been loaded into Web3Signer'
+      operationId: 'ETH1_LIST'
+      responses:
+        '200':
+          description: 'list of public keys'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '400':
+          description: 'Bad request format'
+        '500':
+          description: 'Internal Web3Signer server error'
+
+  /reload:
+    post:
+      tags:
+        - 'Reload Signer Keys'
+      summary: 'Reload signer keys asynchronously'
+      description: 'Reload signer keys asynchronously'
+      operationId: 'RELOAD'
+      responses:
+        '200':
+          description: 'Call is successful'
+        '500':
+          description: 'Internal Web3Signer server error'
+
+  /upcheck:
+    get:
+      tags:
+        - 'Server Status'
+      summary: 'Server Status'
+      description: 'Web3Signer server status'
+      operationId: 'UPCHECK'
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            text/plain; charset=utf-8:
+              schema:
+                type: string
+              example: 'OK'
+        '500':
+          description: 'Internal Web3Signer server error'
+
+  /healthcheck:
+    get:
+      tags:
+        - 'Server Health Status'
+      summary: 'Server Health Status'
+      description: 'Web3Signer server health status'
+      operationId: 'HEALTHCHECK'
+      responses:
+        '200':
+          description: 'System is healthy'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HealthCheck"
+        '503':
+          description: 'At least one procedure is unhealthy'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HealthCheck"
+
+components:
+  schemas:
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          description: 'health status'
+        checks:
+          type: array
+          description: 'list of status checks'
+          items:
+            properties:
+              id:
+                type: string
+                description: 'status id'
+              status:
+                type: string
+                description: 'health status'
+        outcome:
+          type: string
+          description: 'the overall outcome of health check'
+
+externalDocs:
+  description: 'Web3Signer User Documentation'
+  url: 'https://docs.web3signer.consensys.net/'
