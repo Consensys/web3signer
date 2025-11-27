@@ -64,7 +64,6 @@ public class SignerConfigurationBuilder {
   private Path slashingImportPath;
   private boolean enableSlashingPruning = false;
   private boolean enableSlashingPruningAtBoot = true;
-  private boolean swaggerUIEnabled = false;
   private boolean useConfigFile = false;
   private long pruningEpochsToKeep = 1;
   private long slashingPruningSlotsPerEpoch = 1;
@@ -246,11 +245,6 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withSwaggerUIEnabled(final boolean swaggerUIEnabled) {
-    this.swaggerUIEnabled = swaggerUIEnabled;
-    return this;
-  }
-
   public SignerConfigurationBuilder withUseConfigFile(final boolean useConfigFile) {
     this.useConfigFile = useConfigFile;
     return this;
@@ -380,7 +374,6 @@ public class SignerConfigurationBuilder {
         pruningEpochsToKeep,
         slashingPruningSlotsPerEpoch,
         slashingPruningInterval,
-        swaggerUIEnabled,
         useConfigFile,
         Optional.ofNullable(slashingProtectionDbPoolConfigurationFile),
         Optional.ofNullable(altairForkEpoch),

@@ -21,7 +21,6 @@ import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.MetricsPushOptions;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.vertx.VertxMetricsAdapterFactory;
-import tech.pegasys.web3signer.core.routes.SwaggerUIRoute;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
@@ -166,9 +165,6 @@ public abstract class Runner implements Runnable, AutoCloseable {
           new Context(router, metricsSystem, errorHandler, vertx, artifactSignerProviders);
 
       populateRouter(context);
-      if (baseConfig.isSwaggerUIEnabled()) {
-        new SwaggerUIRoute(router).register();
-      }
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       final String tlsStatus = baseConfig.getTlsOptions().isPresent() ? "enabled" : "disabled";

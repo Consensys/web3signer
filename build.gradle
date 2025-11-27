@@ -137,7 +137,6 @@ allprojects {
         include '**/*.java'
         exclude '**/.gradle/**'
         exclude '**/build/**'
-        exclude '.openapidoc/**'
       }
       // See gradle.properties for exports/opens flags required by JDK 16 and Google Java Format plugin
       googleJavaFormat('1.22.0')

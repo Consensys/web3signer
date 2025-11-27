@@ -1,9 +1,9 @@
 get:
   tags:
     - 'Public Key'
-  summary: 'List of available ETH2 BLS Public Keys'
-  description: 'Returns a hex-encoded list of ETH2 BLS public keys for the private keys that have been loaded into Web3Signer.'
-  operationId: 'ETH2_LIST'
+  summary: 'List of available BLS Public Keys'
+  description: 'Returns a hex-encoded list of BLS public keys for the private keys that have been loaded into Remote Signer.'
+  operationId: 'PUBLIC_KEY_LIST'
   responses:
     '200':
       description: 'list of public keys'
@@ -17,4 +17,4 @@ get:
     '400':
       description: 'Bad request format'
     '500':
-      description: 'Internal Web3Signer server error'
+      description: 'Internal server error'

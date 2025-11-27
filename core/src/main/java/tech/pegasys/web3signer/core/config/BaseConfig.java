@@ -57,8 +57,6 @@ public interface BaseConfig {
 
   void validateArgs();
 
-  Boolean isSwaggerUIEnabled();
-
   Boolean isAccessLogsEnabled();
 
   boolean keystoreParallelProcessingEnabled();

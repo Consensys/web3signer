@@ -187,11 +187,6 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   private int idleConnectionTimeoutSeconds = 30;
 
   @Option(
-      names = {"--swagger-ui-enabled"},
-      description = "Enable swagger UI (default: ${DEFAULT-VALUE})")
-  private final Boolean swaggerUiEnabled = false;
-
-  @Option(
       names = {"--access-logs-enabled"},
       description = "Enable access logs (default: ${DEFAULT-VALUE})")
   private final Boolean accessLogsEnabled = false;
@@ -300,11 +295,6 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   @Override
   public int getIdleConnectionTimeoutSeconds() {
     return idleConnectionTimeoutSeconds;
-  }
-
-  @Override
-  public Boolean isSwaggerUIEnabled() {
-    return swaggerUiEnabled;
   }
 
   @Override

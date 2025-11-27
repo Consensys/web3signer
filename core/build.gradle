@@ -86,10 +86,3 @@ dependencies {
   integrationTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-processResources {
-  filesMatching('openapi-specs/**/web3signer.yaml') {
-    filter {
-      it.replace('@VERSION@', calculateVersion())
-    }
-  }
-}

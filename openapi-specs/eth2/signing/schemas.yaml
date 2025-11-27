@@ -37,7 +37,8 @@ components:
             type:
               type: "string"
               description: Signing Request type
-              example: 'AGGREGATION_SLOT'
+              enum:
+                - 'AGGREGATION_SLOT'
             aggregation_slot:
               type: "object"
               properties:
@@ -48,6 +49,7 @@ components:
             - type
             - aggregation_slot
     AggregateAndProofSigning:
+      description: '** DEPRECATED ** See AggregateAndProofSigningV2.'
       allOf:
         - $ref: '#/components/schemas/Signing'
         - type: object
@@ -55,12 +57,141 @@ components:
             type:
               type: "string"
               description: Signing Request type
-              example: 'AGGREGATE_AND_PROOF'
+              enum:
+                - 'AGGREGATE_AND_PROOF'
             aggregate_and_proof:
-              $ref: "#/components/schemas/AggregateAndProof"
+              $ref: "#/components/schemas/AggregateAndProofPhase0"
           required:
             - type
             - aggregate_and_proof
+    AggregateAndProofSigningV2:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - $ref: '#/components/schemas/AggregateAndProofRequest'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              enum:
+                - 'AGGREGATE_AND_PROOF_V2'
+          required:
+            - type
+    AggregateAndProofRequest:
+      type: object
+      properties:
+        aggregate_and_proof:
+          oneOf:
+            - $ref: '#/components/schemas/AggregateAndProofRequestPhase0'
+            - $ref: '#/components/schemas/AggregateAndProofRequestAltair'
+            - $ref: '#/components/schemas/AggregateAndProofRequestBellatrix'
+            - $ref: '#/components/schemas/AggregateAndProofRequestCapella'
+            - $ref: '#/components/schemas/AggregateAndProofRequestDeneb'
+            - $ref: '#/components/schemas/AggregateAndProofRequestElectra'
+            - $ref: '#/components/schemas/AggregateAndProofRequestFulu'
+          discriminator:
+            propertyName: version
+            mapping:
+              PHASE0: '#/components/schemas/AggregateAndProofRequestPhase0'
+              ALTAIR: '#/components/schemas/AggregateAndProofRequestAltair'
+              BELLATRIX: '#/components/schemas/AggregateAndProofRequestBellatrix'
+              CAPELLA: '#/components/schemas/AggregateAndProofRequestCapella'
+              DENEB: '#/components/schemas/AggregateAndProofRequestDeneb'
+              ELECTRA: '#/components/schemas/AggregateAndProofRequestElectra'
+              FULU: '#/components/schemas/AggregateAndProofRequestFulu'
+      required:
+        - aggregate_and_proof
+    AggregateAndProofRequestPhase0:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - PHASE0
+          description: 'version to identify AggregateAndProof request type.'
+        data:
+          $ref: "#/components/schemas/AggregateAndProofPhase0"
+      required:
+        - version
+        - data
+    AggregateAndProofRequestAltair:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - ALTAIR
+          description: 'version to identify AggregateAndProof request type.'
+        data:
+          $ref: "#/components/schemas/AggregateAndProofPhase0"
+      required:
+        - version
+        - data
+    AggregateAndProofRequestBellatrix:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - BELLATRIX
+          description: 'version to identify AggregateAndProof request type.'
+        data:
+          $ref: "#/components/schemas/AggregateAndProofPhase0"
+      required:
+        - version
+        - data
+    AggregateAndProofRequestCapella:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - CAPELLA
+          description: 'version to identify AggregateAndProof request type.'
+        data:
+          $ref: "#/components/schemas/AggregateAndProofPhase0"
+      required:
+        - version
+        - data
+    AggregateAndProofRequestDeneb:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - DENEB
+          description: 'version to identify AggregateAndProof request type.'
+        data:
+          $ref: "#/components/schemas/AggregateAndProofPhase0"
+      required:
+        - version
+        - data
+    AggregateAndProofRequestElectra:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - ELECTRA
+          description: 'version to identify AggregateAndProof request type.'
+        data:
+          $ref: "#/components/schemas/AggregateAndProofElectra"
+      required:
+        - version
+        - data
+    AggregateAndProofRequestFulu:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - FULU
+          description: 'version to identify AggregateAndProof request type.'
+        data:
+          $ref: "#/components/schemas/AggregateAndProofElectra"
+      required:
+        - version
+        - data
     AttestationSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'
@@ -69,7 +200,8 @@ components:
             type:
               type: "string"
               description: Signing Request type
-              example: 'ATTESTATION'
+              enum:
+                - 'ATTESTATION'
             attestation:
               $ref: "#/components/schemas/AttestationData"
           required:
@@ -84,7 +216,8 @@ components:
             type:
               type: "string"
               description: Signing Request type
-              example: 'BLOCK'
+              enum:
+                - 'BLOCK'
             block:
               $ref: "#/components/schemas/BeaconBlock"
           required:
@@ -96,7 +229,8 @@ components:
         type:
           type: "string"
           description: 'Signing Request type'
-          example: 'DEPOSIT'
+          enum:
+            - 'DEPOSIT'
         signingRoot:
           description: 'signing root for optional verification if field present'
           type: "string"
@@ -123,7 +257,8 @@ components:
             type:
               type: "string"
               description: Signing Request type
-              example: 'RANDAO_REVEAL'
+              enum:
+                - 'RANDAO_REVEAL'
             randao_reveal:
               $ref: "#/components/schemas/RandaoReveal"
           required:
@@ -137,7 +272,8 @@ components:
             type:
               type: "string"
               description: Signing Request type
-              example: 'VOLUNTARY_EXIT'
+              enum:
+                - 'VOLUNTARY_EXIT'
             voluntary_exit:
               $ref: "#/components/schemas/VoluntaryExit"
           required:
@@ -151,7 +287,8 @@ components:
             type:
               type: "string"
               description: Signing Request type
-              example: 'SYNC_COMMITTEE_MESSAGE'
+              enum:
+                - 'SYNC_COMMITTEE_MESSAGE'
             sync_committee_message:
               $ref: "#/components/schemas/SyncCommitteeMessage"
           required:
@@ -165,7 +302,8 @@ components:
             type:
               type: "string"
               description: Signing Request type
-              example: 'SYNC_COMMITTEE_SELECTION_PROOF'
+              enum:
+                - 'SYNC_COMMITTEE_SELECTION_PROOF'
             sync_aggregator_selection_data:
               $ref: "#/components/schemas/SyncAggregatorSelectionData"
           required:
@@ -179,7 +317,8 @@ components:
             type:
               type: "string"
               description: Signing Request type
-              example: 'SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF'
+              enum:
+                - 'SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF'
             contribution_and_proof:
               $ref: "#/components/schemas/ContributionAndProof"
           required:
@@ -192,7 +331,8 @@ components:
             type:
               type: "string"
               description: Signing Request type
-              example: 'VALIDATOR_REGISTRATION'
+              enum:
+                - 'VALIDATOR_REGISTRATION'
             signingRoot:
               description: 'signing root for optional verification if field present'
               type: "string"
@@ -283,7 +423,7 @@ components:
         attestations:
           type: "array"
           items:
-            $ref: "#/components/schemas/Attestation"
+            $ref: "#/components/schemas/AttestationPhase0"
         deposits:
           type: "array"
           items:
@@ -316,7 +456,7 @@ components:
           "$ref": "#/components/schemas/IndexedAttestation"
         attestation_2:
           "$ref": "#/components/schemas/IndexedAttestation"
-    Attestation:
+    AttestationPhase0:
       type: "object"
       properties:
         aggregation_bits:
@@ -324,6 +464,17 @@ components:
         data:
           $ref: "#/components/schemas/AttestationData"
         signature:
+          type: "string"
+    AttestationElectra:
+      type: "object"
+      properties:
+        aggregation_bits:
+          type: "string"
+        data:
+          $ref: "#/components/schemas/AttestationData"
+        signature:
+          type: "string"
+        committee_bits:
           type: "string"
     Deposit:
       type: "object"
@@ -398,14 +549,25 @@ components:
         body_root:
           type: string
           description: Bytes32 hexadecimal
-    AggregateAndProof:
+    AggregateAndProofPhase0:
       type: object
       properties:
         aggregator_index:
           type: string
           format: uint64
         aggregate:
-          "$ref": "#/components/schemas/Attestation"
+          "$ref": "#/components/schemas/AttestationPhase0"
+        selection_proof:
+          type: string
+          description: Bytes96 hexadecimal
+    AggregateAndProofElectra:
+      type: object
+      properties:
+        aggregator_index:
+          type: string
+          format: uint64
+        aggregate:
+          "$ref": "#/components/schemas/AttestationElectra"
         selection_proof:
           type: string
           description: Bytes96 hexadecimal
@@ -479,7 +641,11 @@ components:
             type:
               type: "string"
               description: Signing Request type
-              example: 'BLOCK_V2'
+              enum:
+                - 'BLOCK_V2'
+          required:
+            - type
+
     BeaconBlockRequest:
       type: object
       properties:
@@ -490,6 +656,8 @@ components:
             - $ref: '#/components/schemas/BlockRequestBellatrix'
             - $ref: '#/components/schemas/BlockRequestCapella'
             - $ref: '#/components/schemas/BlockRequestDeneb'
+            - $ref: '#/components/schemas/BlockRequestElectra'
+            - $ref: '#/components/schemas/BlockRequestFulu'
           discriminator:
             propertyName: version
             mapping:
@@ -498,6 +666,8 @@ components:
               BELLATRIX: '#/components/schemas/BlockRequestBellatrix'
               CAPELLA: '#/components/schemas/BlockRequestCapella'
               DENEB: '#/components/schemas/BlockRequestDeneb'
+              ELECTRA: '#/components/schemas/BlockRequestElectra'
+              FULU: '#/components/schemas/BlockRequestFulu'
       required:
         - beacon_block
     BlockRequestPhase0:
@@ -565,6 +735,32 @@ components:
       required:
         - version
         - block_header
+    BlockRequestElectra:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - ELECTRA
+          description: 'version to identify block request type.'
+        block_header:
+          $ref: "#/components/schemas/BeaconBlockHeader"
+      required:
+        - version
+        - block_header
+    BlockRequestFulu:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - FULU
+          description: 'version to identify block request type.'
+        block_header:
+          $ref: "#/components/schemas/BeaconBlockHeader"
+      required:
+        - version
+        - block_header
     BeaconBlockAltair:
       type: "object"
       properties:
@@ -596,27 +792,3 @@ components:
         sync_committee_signature:
           type: string
           description: Bytes96 hexadecimal
-    HealthCheck:
-      type: object
-      properties:
-        status:
-          type: string
-          description: 'health status'
-        checks:
-          type: array
-          description: 'list of status checks'
-          items:
-            properties:
-              id:
-                type: string
-                description: 'status id'
-              status:
-                type: string
-                description: 'health status'
-        outcome:
-          type: string
-          description: 'the overall outcome of health check'
-
-externalDocs:
-  description: 'Web3Signer User Documentation'
-  url: 'https://docs.web3signer.consensys.net/'
