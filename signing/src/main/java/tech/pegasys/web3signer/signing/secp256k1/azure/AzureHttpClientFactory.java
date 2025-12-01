@@ -15,16 +15,21 @@ package tech.pegasys.web3signer.signing.secp256k1.azure;
 import tech.pegasys.web3signer.keystorage.azure.AzureHttpClient;
 import tech.pegasys.web3signer.keystorage.azure.AzureHttpClientParameters;
 
+import java.io.Closeable;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Duration;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.VisibleForTesting;
 
-public class AzureHttpClientFactory {
-  private final int CLIENT_CACHE_SIZE = 10;
+public class AzureHttpClientFactory implements Closeable {
+  private static final Logger LOG = LogManager.getLogger();
+
+  private static final int CLIENT_CACHE_SIZE = 10;
   private final Cache<URI, AzureHttpClient> httpClientMap =
       Caffeine.newBuilder().maximumSize(CLIENT_CACHE_SIZE).build();
 
@@ -49,5 +54,21 @@ public class AzureHttpClientFactory {
   @VisibleForTesting
   protected Cache<URI, AzureHttpClient> getHttpClientMap() {
     return httpClientMap;
+  }
+
+  @Override
+  public void close() {
+    httpClientMap
+        .asMap()
+        .values()
+        .forEach(
+            client -> {
+              try {
+                client.close();
+              } catch (final Exception e) {
+                LOG.warn("Error closing Azure HTTP client", e);
+              }
+            });
+    httpClientMap.invalidateAll();
   }
 }

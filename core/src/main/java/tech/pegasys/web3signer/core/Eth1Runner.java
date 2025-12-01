@@ -87,20 +87,28 @@ public class Eth1Runner extends Runner {
   @Override
   protected List<ArtifactSignerProvider> createArtifactSignerProvider(
       final Vertx vertx, final MetricsSystem metricsSystem) {
+    // Create factories ONCE at startup
+    final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory();
+    final AzureHttpClientFactory azureHttpClientFactory = new AzureHttpClientFactory();
+    final CachedAwsKmsClientFactory cachedAwsKmsClientFactory =
+        new CachedAwsKmsClientFactory(eth1Config.getAwsKmsClientCacheSize());
+
+    // Register ALL for cleanup ONCE
+    registerClose(azureKeyVaultFactory::close);
+    registerClose(azureHttpClientFactory);
+    registerClose(cachedAwsKmsClientFactory);
+
+    // Create signer factories that use the shared instances
+    final AzureKeyVaultSignerFactory azureSignerFactory =
+        new AzureKeyVaultSignerFactory(azureKeyVaultFactory, azureHttpClientFactory);
+    final AwsKmsSignerFactory awsKmsSignerFactory =
+        new AwsKmsSignerFactory(cachedAwsKmsClientFactory, true);
 
     final ArtifactSignerProvider signerProvider =
         new DefaultArtifactSignerProvider(
             () -> {
+              // Supplier reuses the same factory instances on every reload
               final List<ArtifactSigner> signers = new ArrayList<>();
-              final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory();
-              final AzureHttpClientFactory azureHttpClientFactory = new AzureHttpClientFactory();
-              registerClose(azureKeyVaultFactory::close);
-              final AzureKeyVaultSignerFactory azureSignerFactory =
-                  new AzureKeyVaultSignerFactory(azureKeyVaultFactory, azureHttpClientFactory);
-              final CachedAwsKmsClientFactory cachedAwsKmsClientFactory =
-                  new CachedAwsKmsClientFactory(eth1Config.getAwsKmsClientCacheSize());
-              final AwsKmsSignerFactory awsKmsSignerFactory =
-                  new AwsKmsSignerFactory(cachedAwsKmsClientFactory, true);
               signers.addAll(
                   loadSignersFromKeyConfigFiles(
                           azureKeyVaultFactory, azureSignerFactory, awsKmsSignerFactory)

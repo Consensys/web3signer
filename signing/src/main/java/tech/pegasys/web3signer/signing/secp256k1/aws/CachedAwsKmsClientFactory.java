@@ -18,12 +18,15 @@ import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.common.config.AwsCredentials;
 import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
 
+import java.io.Closeable;
 import java.net.URI;
 import java.util.Optional;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
@@ -31,14 +34,17 @@ import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.KmsClientBuilder;
 
 /**
- * Factory class that provide cached instances of KmsClient. Each cached KmsClient is identified by
- * aws credentials, region and optional override endpoint URL.
+ * Factory class that provides cached instances of KmsClient. Each cached KmsClient is identified by
+ * AWS credentials, region and optional override endpoint URL.
  *
- * <p>It is anticipated that web3signer instance would be using same aws host/credentials for its
- * kms operations, hence the default cache size should be set to 1. The cache size should be
+ * <p>It is anticipated that web3signer instance would be using same AWS host/credentials for its
+ * KMS operations, hence the default cache size should be set to 1. The cache size should be
  * increased if different set of credentials or region is anticipated.
+ *
+ * <p>This factory must be closed during application shutdown to release AWS SDK resources.
  */
-public class CachedAwsKmsClientFactory {
+public class CachedAwsKmsClientFactory implements Closeable {
+  private static final Logger LOG = LogManager.getLogger();
   private final LoadingCache<AwsKmsClientKey, AwsKmsClient> cache;
 
   public CachedAwsKmsClientFactory(final long cacheSize) {
@@ -74,5 +80,21 @@ public class CachedAwsKmsClientFactory {
       final Optional<URI> endpointOverride) {
     return cache.getUnchecked(
         new AwsKmsClientKey(awsAuthenticationMode, awsCredentials, region, endpointOverride));
+  }
+
+  @Override
+  public void close() {
+    cache
+        .asMap()
+        .values()
+        .forEach(
+            client -> {
+              try {
+                client.close();
+              } catch (final Exception e) {
+                LOG.warn("Error closing AWS KMS client", e);
+              }
+            });
+    cache.invalidateAll();
   }
 }

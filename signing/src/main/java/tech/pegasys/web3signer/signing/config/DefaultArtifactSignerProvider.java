@@ -63,7 +63,13 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   private final ConcurrentMap<String, ArtifactSigner> signers = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, Set<ArtifactSigner>> proxySigners = new ConcurrentHashMap<>();
-  private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+  private final ExecutorService executorService =
+      Executors.newSingleThreadExecutor(
+          r -> {
+            final Thread thread = new Thread(r, "artifact-signer-loader");
+            thread.setDaemon(true);
+            return thread;
+          });
 
   public DefaultArtifactSignerProvider(
       final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier,
@@ -211,6 +217,8 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   @Override
   public void close() {
+    // Immediate shutdown is appropriate here since if the app is shutting down,
+    // there's no need to wait for a potentially long-running load operation
     executorService.shutdownNow();
   }
 

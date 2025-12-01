@@ -114,6 +114,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
     final List<ArtifactSignerProvider> artifactSignerProviders =
         Optional.ofNullable(createArtifactSignerProvider(vertx, metricsSystem)).orElse(List.of());
+    artifactSignerProviders.forEach(this::registerClose);
 
     try {
       createVersionMetric(metricsSystem);
@@ -202,7 +203,6 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
       closeables.add(() -> shutdownVertx(vertx));
     } catch (final Throwable e) {
-      artifactSignerProviders.forEach(ArtifactSignerProvider::close);
       shutdownVertx(vertx);
       metricsService.ifPresent(MetricsService::stop);
       LOG.error("Failed to initialise application", e);

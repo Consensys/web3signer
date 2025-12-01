@@ -33,6 +33,7 @@ import tech.pegasys.web3signer.core.routes.eth2.Eth2SignExtensionRoute;
 import tech.pegasys.web3signer.core.routes.eth2.Eth2SignRoute;
 import tech.pegasys.web3signer.core.routes.eth2.HighWatermarkRoute;
 import tech.pegasys.web3signer.core.routes.eth2.KeyManagerApiRoute;
+import tech.pegasys.web3signer.core.util.ExecutorShutdownUtil;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
@@ -67,6 +68,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -299,12 +301,23 @@ public class Eth2Runner extends Runner {
         new DbHealthCheck(
             protectionContext, slashingProtectionParameters.getDbHealthCheckTimeoutMilliseconds());
 
-    Executors.newScheduledThreadPool(1)
-        .scheduleAtFixedRate(
-            dbHealthCheck,
-            0,
-            slashingProtectionParameters.getDbHealthCheckIntervalMilliseconds(),
-            TimeUnit.MILLISECONDS);
+    final ScheduledExecutorService dbHealthCheckExecutor =
+        Executors.newSingleThreadScheduledExecutor(
+            r -> {
+              final Thread thread = new Thread(r, "db-health-check");
+              thread.setDaemon(true);
+              return thread;
+            });
+
+    dbHealthCheckExecutor.scheduleAtFixedRate(
+        dbHealthCheck,
+        0,
+        slashingProtectionParameters.getDbHealthCheckIntervalMilliseconds(),
+        TimeUnit.MILLISECONDS);
+
+    // Register for cleanup on shutdown
+    super.registerClose(
+        () -> ExecutorShutdownUtil.shutdownGracefully(dbHealthCheckExecutor, 5, TimeUnit.SECONDS));
 
     super.registerHealthCheckProcedure(
         SLASHING_PROTECTION_DB,
@@ -316,11 +329,22 @@ public class Eth2Runner extends Runner {
       return;
     }
 
+    final ScheduledExecutorService prunerExecutor =
+        Executors.newSingleThreadScheduledExecutor(
+            r -> {
+              final Thread thread = new Thread(r, "db-pruner");
+              thread.setDaemon(true);
+              return thread;
+            });
+
+    super.registerClose(
+        () -> ExecutorShutdownUtil.shutdownGracefully(prunerExecutor, 5, TimeUnit.SECONDS));
+
     final DbPrunerRunner dbPrunerRunner =
         new DbPrunerRunner(
             slashingProtectionParameters,
             slashingProtectionContext.get().getPruner(),
-            Executors.newScheduledThreadPool(1));
+            prunerExecutor);
     if (slashingProtectionParameters.isPruningAtBootEnabled()) {
       dbPrunerRunner.execute();
     }
