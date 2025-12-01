@@ -84,6 +84,17 @@ public class K256ArtifactSigner implements ArtifactSigner {
     return KeyType.SECP256K1;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof K256ArtifactSigner that)) return false;
+    return Objects.equals(ecKeyPair, that.ecKeyPair);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(ecKeyPair);
+  }
+
   public static byte[] calculateSHA256(byte[] message) {
     try {
       // Create a MessageDigest instance for SHA-256
