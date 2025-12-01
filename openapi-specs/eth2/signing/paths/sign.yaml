@@ -1,9 +1,9 @@
 post:
   tags:
     - 'Signing'
-  summary: 'Signs data for ETH2 BLS public key'
-  description: 'Signs data for the ETH2 BLS public key specified as part of the URL and returns the signature'
-  operationId: 'ETH2_SIGN'
+  summary: 'Signs data for BLS public key'
+  description: 'Signs data for the BLS public key specified as part of the URL and returns the signature'
+  operationId: 'SIGN'
   parameters:
     - name: 'identifier'
       in: 'path'
@@ -20,6 +20,7 @@ post:
           oneOf:
             - $ref: '../schemas.yaml#/components/schemas/AggregationSlotSigning'
             - $ref: '../schemas.yaml#/components/schemas/AggregateAndProofSigning'
+            - $ref: '../schemas.yaml#/components/schemas/AggregateAndProofSigningV2'
             - $ref: '../schemas.yaml#/components/schemas/AttestationSigning'
             - $ref: '../schemas.yaml#/components/schemas/BlockSigning'
             - $ref: '../schemas.yaml#/components/schemas/BeaconBlockSigning'
@@ -35,6 +36,7 @@ post:
             mapping:
               AGGREGATION_SLOT: '../schemas.yaml#/components/schemas/AggregationSlotSigning'
               AGGREGATE_AND_PROOF: '../schemas.yaml#/components/schemas/AggregateAndProofSigning'
+              AGGREGATE_AND_PROOF_V2: '../schemas.yaml#/components/schemas/AggregateAndProofSigningV2'
               ATTESTATION: '../schemas.yaml#/components/schemas/AttestationSigning'
               BLOCK: '../schemas.yaml#/components/schemas/BlockSigning'
               BLOCK_V2: '../schemas.yaml#/components/schemas/BeaconBlockSigning'
@@ -46,6 +48,60 @@ post:
               SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF: '../schemas.yaml#/components/schemas/SyncCommitteeContributionAndProofSigning'
               VALIDATOR_REGISTRATION: '../schemas.yaml#/components/schemas/ValidatorRegistrationSigning'
         examples:
+          BLOCK_V2 (FULU):
+            value:
+              type: "BLOCK_V2"
+              signingRoot: "0xaa2e0c465c1a45d7b6637fcce4ad6ceb71fc12064b548078d619a411f0de8adc"
+              fork_info:
+                fork:
+                  previous_version: "0x00000001"
+                  current_version: "0x00000001"
+                  epoch: "1"
+                genesis_validators_root: "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"
+              beacon_block:
+                version: "FULU"
+                block_header:
+                  slot: "0"
+                  proposer_index: "4666673844721362956"
+                  parent_root: "0x367cbd40ac7318427aadb97345a91fa2e965daf3158d7f1846f1306305f41bef"
+                  state_root: "0xfd18cf40cc907a739be483f1ca0ee23ad65cdd3df23205eabc6d660a75d1f54e"
+                  body_root: "0xa759d8029a69d4fdd8b3996086e9722983977e4efc1f12f4098ea3d93e868a6b"
+          BLOCK_V2 (ELECTRA):
+            value:
+              type: "BLOCK_V2"
+              signingRoot: "0xaa2e0c465c1a45d7b6637fcce4ad6ceb71fc12064b548078d619a411f0de8adc"
+              fork_info:
+                fork:
+                  previous_version: "0x00000001"
+                  current_version: "0x00000001"
+                  epoch: "1"
+                genesis_validators_root: "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"
+              beacon_block:
+                version: "ELECTRA"
+                block_header:
+                  slot: "0"
+                  proposer_index: "4666673844721362956"
+                  parent_root: "0x367cbd40ac7318427aadb97345a91fa2e965daf3158d7f1846f1306305f41bef"
+                  state_root: "0xfd18cf40cc907a739be483f1ca0ee23ad65cdd3df23205eabc6d660a75d1f54e"
+                  body_root: "0xa759d8029a69d4fdd8b3996086e9722983977e4efc1f12f4098ea3d93e868a6b"
+          BLOCK_V2 (DENEB):
+            value:
+              type: "BLOCK_V2"
+              signingRoot: "0xaa2e0c465c1a45d7b6637fcce4ad6ceb71fc12064b548078d619a411f0de8adc"
+              fork_info:
+                fork:
+                  previous_version: "0x00000001"
+                  current_version: "0x00000001"
+                  epoch: "1"
+                genesis_validators_root: "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"
+              beacon_block:
+                version: "DENEB"
+                block_header:
+                  slot: "0"
+                  proposer_index: "4666673844721362956"
+                  parent_root: "0x367cbd40ac7318427aadb97345a91fa2e965daf3158d7f1846f1306305f41bef"
+                  state_root: "0xfd18cf40cc907a739be483f1ca0ee23ad65cdd3df23205eabc6d660a75d1f54e"
+                  body_root: "0xa759d8029a69d4fdd8b3996086e9722983977e4efc1f12f4098ea3d93e868a6b"
           BLOCK_V2 (CAPELLA):
             value:
               type: "BLOCK_V2"
@@ -399,17 +455,17 @@ post:
                         signature: "0xb86aecf4e9673e9ac774883f03c46c2cfe59320e441abfc2e2bbaeda2193f58c57a3aec0ae63ba17d3b1cb81bd548689004773c1867cf047e1a2d5c3c51973fca33040cae49bee51bf4d2e23786f51dc5672bff5e9df8f7bc5fadae6be5c146e"
           BLOCK (DEPRECATED):
             value:
-              type: BLOCK
+              type: "BLOCK"
               signingRoot: '0xf6ab1a0a4a712f544f99b53cb8c2c2625859a134fb5c9f1b2cb96e13dd88bd62'
-              forkInfo:
+              fork_info:
                 fork:
                   previousVersion: '0x00000001'
                   currentVersion: '0x00000001'
-                  epoch: 1
-                genesisValidatorsRoot: '0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673'
+                  epoch: "1"
+                genesis_validators_root: '0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673'
               block:
-                slot: 0
-                proposerIndex: 5
+                slot: "0"
+                proposerIndex: "5"
                 parentRoot: '0xb2eedb01adbd02c828d5eec09b4c70cbba12ffffba525ebf48aca33028e8ad89'
                 stateRoot: '0x0000000000000000000000000000000000000000000000000000000000000000'
                 body:
@@ -449,15 +505,213 @@ post:
             value:
               type: 'AGGREGATION_SLOT'
               signingRoot: '0x1fb90dd6e8b2670e6949347bc4eaacd37f9b6cc6e42c559973e362c800e853b9'
-              forkInfo:
+              fork_info:
                 fork:
                   previousVersion: '0x00000001'
                   currentVersion: '0x00000001'
-                  epoch: 1
-                genesisValidatorsRoot: '0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673'
-              aggregationSlot:
-                slot: 119
-          AGGREGATE_AND_PROOF:
+                  epoch: "1"
+                genesis_validators_root: '0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673'
+              aggregation_slot:
+                slot: "119"
+          AGGREGATE_AND_PROOF_V2 (FULU):
+            value:
+              type: "AGGREGATE_AND_PROOF_V2"
+              signingRoot: "0x247535806f76143fe4798427b2a79b85340c1a029a9e08581995b60e4e45c9e0"
+              fork_info:
+                fork:
+                  previous_version: "0x00000001"
+                  current_version: "0x00000001"
+                  epoch: "1"
+                genesis_validators_root: "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"
+              aggregate_and_proof:
+                version: "FULU"
+                data:
+                  aggregator_index: "1"
+                  aggregate:
+                    aggregation_bits: "0x0000000000000000000000000000000000000000000101"
+                    data:
+                      slot: "0"
+                      index: "0"
+                      beacon_block_root: "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"
+                      source:
+                        epoch: "0"
+                        root: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                      target:
+                        epoch: "0"
+                        root: "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"
+                    signature: "0xa627242e4a5853708f4ebf923960fb8192f93f2233cd347e05239d86dd9fb66b721ceec1baeae6647f498c9126074f1101a87854d674b6eebc220fd8c3d8405bdfd8e286b707975d9e00a56ec6cbbf762f23607d490f0bbb16c3e0e483d51875"
+                    committee_bits: "0x0000000000000001"
+                  selection_proof: "0xa63f73a03f1f42b1fd0a988b614d511eb346d0a91c809694ef76df5ae021f0f144d64e612d735bc8820950cf6f7f84cd0ae194bfe3d4242fe79688f83462e3f69d9d33de71aab0721b7dab9d6960875e5fdfd26b171a75fb51af822043820c47"
+          AGGREGATE_AND_PROOF_V2 (ELECTRA):
+            value:
+              type: "AGGREGATE_AND_PROOF_V2"
+              signingRoot: "0x247535806f76143fe4798427b2a79b85340c1a029a9e08581995b60e4e45c9e0"
+              fork_info:
+                fork:
+                  previous_version: "0x00000001"
+                  current_version: "0x00000001"
+                  epoch: "1"
+                genesis_validators_root: "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"
+              aggregate_and_proof:
+                version: "ELECTRA"
+                data:
+                  aggregator_index: "1"
+                  aggregate:
+                    aggregation_bits: "0x0000000000000000000000000000000000000000000101"
+                    data:
+                      slot: "0"
+                      index: "0"
+                      beacon_block_root: "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"
+                      source:
+                        epoch: "0"
+                        root: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                      target:
+                        epoch: "0"
+                        root: "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"
+                    signature: "0xa627242e4a5853708f4ebf923960fb8192f93f2233cd347e05239d86dd9fb66b721ceec1baeae6647f498c9126074f1101a87854d674b6eebc220fd8c3d8405bdfd8e286b707975d9e00a56ec6cbbf762f23607d490f0bbb16c3e0e483d51875"
+                    committee_bits: "0x0000000000000001"
+                  selection_proof: "0xa63f73a03f1f42b1fd0a988b614d511eb346d0a91c809694ef76df5ae021f0f144d64e612d735bc8820950cf6f7f84cd0ae194bfe3d4242fe79688f83462e3f69d9d33de71aab0721b7dab9d6960875e5fdfd26b171a75fb51af822043820c47"
+          AGGREGATE_AND_PROOF_V2 (DENEB):
+            value:
+              type: "AGGREGATE_AND_PROOF_V2"
+              signingRoot: "0x8d777156899cb02e0e66217afd832886239752a59a393218f6c603bcf615b4f8"
+              fork_info:
+                fork:
+                  previous_version: "0x00000001"
+                  current_version: "0x00000001"
+                  epoch: "1"
+                genesis_validators_root: "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"
+              aggregate_and_proof:
+                version: "DENEB"
+                data:
+                  aggregator_index: "1"
+                  aggregate:
+                    aggregation_bits: "0x00000101"
+                    data:
+                      slot: "0"
+                      index: "0"
+                      beacon_block_root: "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"
+                      source:
+                        epoch: "0"
+                        root: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                      target:
+                        epoch: "0"
+                        root: "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"
+                    signature: "0xa627242e4a5853708f4ebf923960fb8192f93f2233cd347e05239d86dd9fb66b721ceec1baeae6647f498c9126074f1101a87854d674b6eebc220fd8c3d8405bdfd8e286b707975d9e00a56ec6cbbf762f23607d490f0bbb16c3e0e483d51875"
+                  selection_proof: "0xa63f73a03f1f42b1fd0a988b614d511eb346d0a91c809694ef76df5ae021f0f144d64e612d735bc8820950cf6f7f84cd0ae194bfe3d4242fe79688f83462e3f69d9d33de71aab0721b7dab9d6960875e5fdfd26b171a75fb51af822043820c47"
+          AGGREGATE_AND_PROOF_V2 (CAPELLA):
+            value:
+              type: "AGGREGATE_AND_PROOF_V2"
+              signingRoot: "0x8d777156899cb02e0e66217afd832886239752a59a393218f6c603bcf615b4f8"
+              fork_info:
+                fork:
+                  previous_version: "0x00000001"
+                  current_version: "0x00000001"
+                  epoch: "1"
+                genesis_validators_root: "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"
+              aggregate_and_proof:
+                version: "CAPELLA"
+                data:
+                  aggregator_index: "1"
+                  aggregate:
+                    aggregation_bits: "0x00000101"
+                    data:
+                      slot: "0"
+                      index: "0"
+                      beacon_block_root: "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"
+                      source:
+                        epoch: "0"
+                        root: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                      target:
+                        epoch: "0"
+                        root: "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"
+                    signature: "0xa627242e4a5853708f4ebf923960fb8192f93f2233cd347e05239d86dd9fb66b721ceec1baeae6647f498c9126074f1101a87854d674b6eebc220fd8c3d8405bdfd8e286b707975d9e00a56ec6cbbf762f23607d490f0bbb16c3e0e483d51875"
+                  selection_proof: "0xa63f73a03f1f42b1fd0a988b614d511eb346d0a91c809694ef76df5ae021f0f144d64e612d735bc8820950cf6f7f84cd0ae194bfe3d4242fe79688f83462e3f69d9d33de71aab0721b7dab9d6960875e5fdfd26b171a75fb51af822043820c47"
+          AGGREGATE_AND_PROOF_V2 (BELLATRIX):
+            value:
+              type: "AGGREGATE_AND_PROOF_V2"
+              signingRoot: "0x8d777156899cb02e0e66217afd832886239752a59a393218f6c603bcf615b4f8"
+              fork_info:
+                fork:
+                  previous_version: "0x00000001"
+                  current_version: "0x00000001"
+                  epoch: "1"
+                genesis_validators_root: "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"
+              aggregate_and_proof:
+                version: "BELLATRIX"
+                data:
+                  aggregator_index: "1"
+                  aggregate:
+                    aggregation_bits: "0x00000101"
+                    data:
+                      slot: "0"
+                      index: "0"
+                      beacon_block_root: "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"
+                      source:
+                        epoch: "0"
+                        root: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                      target:
+                        epoch: "0"
+                        root: "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"
+                    signature: "0xa627242e4a5853708f4ebf923960fb8192f93f2233cd347e05239d86dd9fb66b721ceec1baeae6647f498c9126074f1101a87854d674b6eebc220fd8c3d8405bdfd8e286b707975d9e00a56ec6cbbf762f23607d490f0bbb16c3e0e483d51875"
+                  selection_proof: "0xa63f73a03f1f42b1fd0a988b614d511eb346d0a91c809694ef76df5ae021f0f144d64e612d735bc8820950cf6f7f84cd0ae194bfe3d4242fe79688f83462e3f69d9d33de71aab0721b7dab9d6960875e5fdfd26b171a75fb51af822043820c47"
+          AGGREGATE_AND_PROOF_V2 (ALTAIR):
+            value:
+              type: "AGGREGATE_AND_PROOF_V2"
+              signingRoot: "0x8d777156899cb02e0e66217afd832886239752a59a393218f6c603bcf615b4f8"
+              fork_info:
+                fork:
+                  previous_version: "0x00000001"
+                  current_version: "0x00000001"
+                  epoch: "1"
+                genesis_validators_root: "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"
+              aggregate_and_proof:
+                version: "ALTAIR"
+                data:
+                  aggregator_index: "1"
+                  aggregate:
+                    aggregation_bits: "0x00000101"
+                    data:
+                      slot: "0"
+                      index: "0"
+                      beacon_block_root: "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"
+                      source:
+                        epoch: "0"
+                        root: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                      target:
+                        epoch: "0"
+                        root: "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"
+                    signature: "0xa627242e4a5853708f4ebf923960fb8192f93f2233cd347e05239d86dd9fb66b721ceec1baeae6647f498c9126074f1101a87854d674b6eebc220fd8c3d8405bdfd8e286b707975d9e00a56ec6cbbf762f23607d490f0bbb16c3e0e483d51875"
+                  selection_proof: "0xa63f73a03f1f42b1fd0a988b614d511eb346d0a91c809694ef76df5ae021f0f144d64e612d735bc8820950cf6f7f84cd0ae194bfe3d4242fe79688f83462e3f69d9d33de71aab0721b7dab9d6960875e5fdfd26b171a75fb51af822043820c47"
+          AGGREGATE_AND_PROOF_V2 (PHASE 0):
+            value:
+              type: "AGGREGATE_AND_PROOF_V2"
+              signingRoot: "0x8d777156899cb02e0e66217afd832886239752a59a393218f6c603bcf615b4f8"
+              fork_info:
+                fork:
+                  previous_version: "0x00000001"
+                  current_version: "0x00000001"
+                  epoch: "1"
+                genesis_validators_root: "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"
+              aggregate_and_proof:
+                version: "PHASE0"
+                data:
+                  aggregator_index: "1"
+                  aggregate:
+                    aggregation_bits: "0x00000101"
+                    data:
+                      slot: "0"
+                      index: "0"
+                      beacon_block_root: "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"
+                      source:
+                        epoch: "0"
+                        root: "0x0000000000000000000000000000000000000000000000000000000000000000"
+                      target:
+                        epoch: "0"
+                        root: "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"
+                    signature: "0xa627242e4a5853708f4ebf923960fb8192f93f2233cd347e05239d86dd9fb66b721ceec1baeae6647f498c9126074f1101a87854d674b6eebc220fd8c3d8405bdfd8e286b707975d9e00a56ec6cbbf762f23607d490f0bbb16c3e0e483d51875"
+                  selection_proof: "0xa63f73a03f1f42b1fd0a988b614d511eb346d0a91c809694ef76df5ae021f0f144d64e612d735bc8820950cf6f7f84cd0ae194bfe3d4242fe79688f83462e3f69d9d33de71aab0721b7dab9d6960875e5fdfd26b171a75fb51af822043820c47"
+          AGGREGATE_AND_PROOF (DEPRECATED):
             value:
               type: "AGGREGATE_AND_PROOF"
               signingRoot: "0x8d777156899cb02e0e66217afd832886239752a59a393218f6c603bcf615b4f8"
@@ -597,4 +851,4 @@ post:
     '400':
       description: 'Bad request format'
     '500':
-      description: 'Internal Web3Signer server error'
+      description: 'Internal server error'

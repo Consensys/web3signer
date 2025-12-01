@@ -61,7 +61,6 @@ public class SignerConfiguration {
   private final Optional<Path> slashingImportPath;
   private final boolean enableSlashingPruning;
   private final boolean enableSlashingPruningAtBoot;
-  private final boolean swaggerUIEnabled;
   private final boolean useConfigFile;
   private final long slashingPruningEpochsToKeep;
   private final long slashingPruningSlotsPerEpoch;
@@ -116,7 +115,6 @@ public class SignerConfiguration {
       final long slashingPruningEpochsToKeep,
       final long slashingPruningSlotsPerEpoch,
       final long slashingPruningSchedule,
-      final boolean swaggerUIEnabled,
       final boolean useConfigFile,
       final Optional<Path> slashingDbPoolConfigurationFile,
       final Optional<Long> altairForkEpoch,
@@ -164,7 +162,6 @@ public class SignerConfiguration {
     this.slashingPruningEpochsToKeep = slashingPruningEpochsToKeep;
     this.slashingPruningSlotsPerEpoch = slashingPruningSlotsPerEpoch;
     this.slashingPruningInterval = slashingPruningSchedule;
-    this.swaggerUIEnabled = swaggerUIEnabled;
     this.useConfigFile = useConfigFile;
     this.slashingProtectionDbPoolConfigurationFile = slashingDbPoolConfigurationFile;
     this.altairForkEpoch = altairForkEpoch;
@@ -302,10 +299,6 @@ public class SignerConfiguration {
 
   public long getSlashingProtectionPruningInterval() {
     return slashingPruningInterval;
-  }
-
-  public boolean isSwaggerUIEnabled() {
-    return swaggerUIEnabled;
   }
 
   public boolean useConfigFile() {

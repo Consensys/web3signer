@@ -68,7 +68,6 @@ public class BlsSigningRootPropertyAcceptanceTest extends SigningAcceptanceTestB
     final ContentType acceptMediaType = JSON;
     setupMinimalWeb3Signer(artifactType);
 
-    // openapi
     final Eth2SigningRequestBody request = Eth2RequestUtils.createCannedRequest(artifactType);
     final String jsonBody = Signer.ETH_2_INTERFACE_OBJECT_MAPPER.writeValueAsString(request);
 

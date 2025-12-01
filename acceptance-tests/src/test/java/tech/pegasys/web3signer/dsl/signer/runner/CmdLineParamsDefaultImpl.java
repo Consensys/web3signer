@@ -92,10 +92,6 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       }
     }
 
-    if (signerConfig.isSwaggerUIEnabled()) {
-      params.add("--swagger-ui-enabled=true");
-    }
-
     params.add("--access-logs-enabled=true");
 
     if (signerConfig.isHttpDynamicPortAllocation()) {

@@ -100,9 +100,6 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       }
     }
 
-    if (signerConfig.isSwaggerUIEnabled()) {
-      yamlConfigMap.put("swagger-ui-enabled", true);
-    }
     yamlConfigMap.put("access-logs-enabled", true);
 
     if (signerConfig.isHttpDynamicPortAllocation()) {
