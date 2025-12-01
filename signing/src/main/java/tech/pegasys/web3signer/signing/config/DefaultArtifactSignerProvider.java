@@ -95,7 +95,8 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                           Function.identity(),
                           (signer1, signer2) -> {
                             LOG.warn(
-                                "Duplicate keys were found while loading. {}", Function.identity());
+                                "Duplicate keys were found while loading. {}",
+                                signer1.getIdentifier());
                             return signer1;
                           }));
 
