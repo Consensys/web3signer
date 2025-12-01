@@ -22,19 +22,18 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -49,29 +48,26 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * The SignerLoader loads the metadata files and converts them to ArtifactSigners. This class keeps
- * track of the metadata files and ArtifactSigners that have been read and only reads them again if
- * they have been modified. It also removes the cached ArtifactSigners if the metadata file has been
- * removed.
+ * track of the metadata files and ArtifactSigners that have been read. It removes the cached
+ * ArtifactSigners if the metadata file has been removed from the filesystem.
  */
 public class SignerLoader {
-
   private static final Logger LOG = LogManager.getLogger();
   private static final long FILES_PROCESSED_TO_REPORT = 10;
   private static final Set<String> CONFIG_FILE_EXTENSIONS = Set.of("yaml", "yml");
 
-  record CachedArtifactSigners(
-      Path metadataFile, FileTime lastModifiedTime, Set<ArtifactSigner> artifactSigners) {}
-
-  private static final Map<Path, CachedArtifactSigners> cachedArtifactSigners =
-      new ConcurrentHashMap<>();
+  // Use volatile reference to immutable map for thread-safe reads without locking
+  private static volatile Map<String, Set<ArtifactSigner>> cachedArtifactSigners =
+      Collections.emptyMap();
 
   /**
-   * Load ArtifactSigners for new or modified metadata files. Return cached ArtifactSigners if
-   * metadata files have not been modified. Remove cached ArtifactSigner if metadata file has been
-   * removed.
+   * Load ArtifactSigners for metadata files. Add new files to cache and remove cached entries for
+   * files that no longer exist on the filesystem. Since the configsDirectory is fixed for the
+   * lifetime of Web3Signer, we don't need to handle multiple directories.
    *
-   * @param configsDirectory Location of the metadata files
+   * @param configsDirectory Location of the metadata files (fixed for Web3Signer lifetime)
    * @param signerParser An implementation of SignerParser to parse the metadata files
+   * @param useParallelStreams Whether to use parallel streams for processing
    * @return A MappedResults of ArtifactSigners and error count
    */
   public static MappedResults<ArtifactSigner> load(
@@ -80,64 +76,89 @@ public class SignerLoader {
       final boolean useParallelStreams) {
     LOG.info("Loading signer configuration metadata files from {}", configsDirectory);
     final Instant loadStartTime = Instant.now();
-    // get all metadata file paths from the config directory.
-    final Map<Path, CachedArtifactSigners> filteredPaths;
+
+    // Normalize the config directory path to ensure consistent comparisons
+    final Path normalizedConfigDir = configsDirectory.toAbsolutePath().normalize();
+
+    // Get all metadata file paths from the config directory
+    final Set<String> currentFiles;
     try {
-      filteredPaths = getMetadataConfigFiles(configsDirectory);
+      currentFiles = getMetadataConfigFiles(normalizedConfigDir);
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied key directory", e);
       return MappedResults.errorResult();
     }
 
-    // remove cached metadata file mappings that have been deleted or not loaded
-    var cachedArtifactSignerSize = cachedArtifactSigners.size();
-    cachedArtifactSigners.keySet().removeIf(path -> !filteredPaths.containsKey(path));
-    if (cachedArtifactSignerSize != cachedArtifactSigners.size()) {
-      LOG.info(
-          "Removed {} cached metadata files that has not been loaded.",
-          cachedArtifactSignerSize - cachedArtifactSigners.size());
+    // Get a snapshot of current cache for reading
+    final Map<String, Set<ArtifactSigner>> currentCacheSnapshot = cachedArtifactSigners;
+
+    // Create new cache map (copy-on-write pattern)
+    final Map<String, Set<ArtifactSigner>> newCache = new HashMap<>();
+
+    // Keep only the files that still exist, remove deleted ones
+    int removedCount = 0;
+    for (Map.Entry<String, Set<ArtifactSigner>> entry : currentCacheSnapshot.entrySet()) {
+      if (currentFiles.contains(entry.getKey())) {
+        newCache.put(entry.getKey(), entry.getValue());
+      } else {
+        removedCount++;
+        LOG.debug("Removing cached entry for deleted file: {}", entry.getKey());
+      }
     }
 
-    // reload the metadata files that are either new or modified
-    LOG.info(
-        "Loading and converting SigningMetadata to ArtifactSigner using {} streams ...",
-        useParallelStreams ? "parallel" : "sequential");
-    final Stream<Map.Entry<Path, CachedArtifactSigners>> pathStream =
-        useParallelStreams
-            ? filteredPaths.entrySet().parallelStream()
-            : filteredPaths.entrySet().stream();
+    if (removedCount > 0) {
+      LOG.info("Removed {} cached metadata files that have been deleted.", removedCount);
+    }
+
+    // Find files that are not in cache (new files to process)
+    final Set<String> filesToProcess = new HashSet<>(currentFiles);
+    filesToProcess.removeAll(newCache.keySet());
+
+    if (filesToProcess.isEmpty()) {
+      LOG.info("No new metadata files to process. Using {} cached files.", newCache.size());
+    } else {
+      LOG.info(
+          "Processing {} new metadata files using {} streams...",
+          filesToProcess.size(),
+          useParallelStreams ? "parallel" : "sequential");
+    }
+
+    // Process new files only
+    final Stream<String> pathStream =
+        useParallelStreams ? filesToProcess.parallelStream() : filesToProcess.stream();
 
     final AtomicLong configFilesHandled = new AtomicLong(0);
     final AtomicInteger errorCount = new AtomicInteger(0);
-    final Map<Path, Set<ArtifactSigner>> loadedArtSigners =
+
+    final Map<String, Set<ArtifactSigner>> loadedArtSigners =
         pathStream
-            .filter(SignerLoader::isModifiedOrNew)
             .flatMap(
-                entry -> {
+                pathStr -> {
                   if (configFilesHandled.incrementAndGet() % FILES_PROCESSED_TO_REPORT == 0) {
                     LOG.info("{} signing metadata processed", configFilesHandled.get());
                   }
                   try {
-                    return Stream.of(
-                        new SimpleEntry<>(
-                            entry.getKey(),
-                            Files.readString(entry.getKey(), StandardCharsets.UTF_8)));
-                  } catch (IOException e) {
-                    LOG.error("Error reading metadata config file: {}", entry.getKey(), e);
+                    final Path filePath = Path.of(pathStr);
+                    final String content = Files.readString(filePath, StandardCharsets.UTF_8);
+                    return Stream.of(new SimpleEntry<>(pathStr, content));
+                  } catch (final IOException e) {
+                    LOG.error("Error reading metadata config file: {}", pathStr, e);
                     errorCount.incrementAndGet();
                     return Stream.empty();
                   }
                 })
             .flatMap(
                 entry -> {
+                  final String pathStr = entry.getKey();
+                  final String content = entry.getValue();
                   try {
                     final List<SigningMetadata> signingMetadata =
-                        signerParser.readSigningMetadata(entry.getValue());
-                    return Stream.of(new SimpleEntry<>(entry.getKey(), signingMetadata));
+                        signerParser.readSigningMetadata(content);
+                    return Stream.of(new SimpleEntry<>(pathStr, signingMetadata));
                   } catch (final SigningMetadataException e) {
                     LOG.error(
                         "Error parsing metadata file {} to signing metadata: {}",
-                        entry.getKey(),
+                        pathStr,
                         ExceptionUtils.getRootCauseMessage(e));
                     errorCount.incrementAndGet();
                     return Stream.empty();
@@ -145,10 +166,12 @@ public class SignerLoader {
                 })
             .flatMap(
                 entry -> {
+                  final String pathStr = entry.getKey();
+                  final List<SigningMetadata> signingMetadataList = entry.getValue();
                   try {
                     final Set<ArtifactSigner> artifactSigners =
-                        new HashSet<>(signerParser.parse(entry.getValue()));
-                    return Stream.of(new SimpleEntry<>(entry.getKey(), artifactSigners));
+                        Set.copyOf(signerParser.parse(signingMetadataList));
+                    return Stream.of(new SimpleEntry<>(pathStr, artifactSigners));
                   } catch (final SigningMetadataException e) {
                     LOG.error(
                         "Error converting signing metadata to Artifact Signer: {}",
@@ -159,21 +182,20 @@ public class SignerLoader {
                 })
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-    // merge the new loaded ArtifactSigners with the cached ones
-    loadedArtSigners.forEach(
-        (path, artifactSigners) -> {
-          cachedArtifactSigners.put(
-              path,
-              new CachedArtifactSigners(
-                  path, filteredPaths.get(path).lastModifiedTime, artifactSigners));
-        });
+    // Merge newly loaded signers into the new cache
+    newCache.putAll(loadedArtSigners);
+    if (LOG.isDebugEnabled()) {
+      loadedArtSigners.forEach(
+          (pathStr, signers) -> LOG.debug("Added {} signers from {}", signers.size(), pathStr));
+    }
 
-    // return all ArtifactSigners from the cache. If same ArtifactSigner is loaded from multiple
-    // paths, only one will
-    // be returned.
+    // Update the volatile reference with the new immutable map
+    cachedArtifactSigners = Map.copyOf(newCache);
+
+    // Return all ArtifactSigners from the cache
     final Collection<ArtifactSigner> allArtifactSigners =
         cachedArtifactSigners.values().stream()
-            .flatMap(cachedArtifactSigners -> cachedArtifactSigners.artifactSigners.stream())
+            .flatMap(Collection::stream)
             .collect(Collectors.toSet());
 
     LOG.info(
@@ -188,47 +210,24 @@ public class SignerLoader {
 
   @VisibleForTesting
   static void clearCache() {
-    cachedArtifactSigners.clear();
+    cachedArtifactSigners = Collections.emptyMap();
   }
 
   /**
-   * Load Metadata config file paths and their timestamps.
+   * Get all metadata config file paths from the directory.
    *
    * @param configsDirectory Path to the directory containing the metadata files
-   * @return A map of metadata file paths and their last modified timestamps
+   * @return A set of normalized path strings for valid metadata files
    * @throws IOException If there is an error reading the config directory.
    */
-  private static Map<Path, CachedArtifactSigners> getMetadataConfigFiles(
-      final Path configsDirectory) throws IOException {
+  private static Set<String> getMetadataConfigFiles(final Path configsDirectory)
+      throws IOException {
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
       return fileStream
           .filter(SignerLoader::validFileExtension)
-          .map(
-              path -> {
-                try {
-                  return new SimpleEntry<>(
-                      path,
-                      new CachedArtifactSigners(path, Files.getLastModifiedTime(path), Set.of()));
-                } catch (final IOException e) {
-                  // very unlikely to happen as Files.list is already successful.
-                  LOG.error("Error getting last modified time for config file: {}", path, e);
-                  return null;
-                }
-              })
-          .filter(Objects::nonNull)
-          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+          .map(path -> path.toAbsolutePath().normalize().toString())
+          .collect(Collectors.toSet());
     }
-  }
-
-  private static boolean isModifiedOrNew(final Map.Entry<Path, CachedArtifactSigners> entry) {
-    var metadataFilePath = entry.getKey();
-    var metadataFile = entry.getValue();
-    return !cachedArtifactSigners.containsKey(metadataFilePath)
-        || cachedArtifactSigners
-                .get(metadataFilePath)
-                .lastModifiedTime
-                .compareTo(metadataFile.lastModifiedTime)
-            != 0;
   }
 
   @VisibleForTesting
