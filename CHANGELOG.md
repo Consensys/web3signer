@@ -1,5 +1,18 @@
 # Changelog
 
+## Upcoming Releases
+### Breaking Changes
+
+### Features Added
+
+
+### Bugs Fixed
+- Fix potential memory leak during reload API endpoint. Issue [#1073][issue_1073] via PR [#1135][PR_1135].
+
+[issue_1073]: https://github.com/Consensys/web3signer/issues/1073
+[PR_1135]: https://github.com/Consensys/web3signer/pull/1135
+
+---
 ## 25.11.0
 ### Features Added
 - Updated Teku libraries to add scheduling for Fulu upgrade for mainnet
