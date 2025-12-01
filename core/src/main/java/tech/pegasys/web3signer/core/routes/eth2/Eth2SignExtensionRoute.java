@@ -33,7 +33,7 @@ public class Eth2SignExtensionRoute implements Web3SignerRoute {
     // there should be only one ArtifactSignerProvider in eth2 mode at the moment which is of BLS
     // types.
     final ArtifactSignerProvider artifactSignerProvider =
-        context.getArtifactSignerProviders().stream()
+        context.artifactSignerProviders().stream()
             .findFirst()
             .orElseThrow(
                 () ->
@@ -46,10 +46,10 @@ public class Eth2SignExtensionRoute implements Web3SignerRoute {
   @Override
   public void register() {
     context
-        .getRouter()
+        .router()
         .route(HttpMethod.POST, SIGN_EXT_PATH)
         .blockingHandler(new SigningExtensionHandler(blsSigner), false)
-        .failureHandler(context.getErrorHandler())
+        .failureHandler(context.errorHandler())
         .failureHandler(
             ctx -> {
               final int statusCode = ctx.statusCode();

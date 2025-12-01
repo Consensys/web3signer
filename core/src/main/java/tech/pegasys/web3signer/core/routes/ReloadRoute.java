@@ -28,10 +28,11 @@ public class ReloadRoute implements Web3SignerRoute {
   @Override
   public void register() {
     context
-        .getRouter()
+        .router()
         .route(HttpMethod.POST, RELOAD_PATH)
         .produces(JSON_HEADER)
-        .handler(new ReloadHandler(context.getArtifactSignerProviders()))
-        .failureHandler(context.getErrorHandler());
+        .handler(
+            new ReloadHandler(context.artifactSignerProviders(), context.reloadWorkerExecutor()))
+        .failureHandler(context.errorHandler());
   }
 }

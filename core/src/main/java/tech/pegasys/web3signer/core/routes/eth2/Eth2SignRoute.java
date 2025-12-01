@@ -51,7 +51,7 @@ public class Eth2SignRoute implements Web3SignerRoute {
     // there should be only one ArtifactSignerProvider in eth2 mode at the moment which is of BLS
     // types.
     final ArtifactSignerProvider artifactSignerProvider =
-        context.getArtifactSignerProviders().stream()
+        context.artifactSignerProviders().stream()
             .findFirst()
             .orElseThrow(
                 () ->
@@ -66,21 +66,21 @@ public class Eth2SignRoute implements Web3SignerRoute {
     // there should be only one ArtifactSignerProvider in eth2 mode at the moment which is of BLS
     // types.
     final ArtifactSignerProvider artifactSignerProvider =
-        context.getArtifactSignerProviders().stream().findFirst().orElseThrow();
+        context.artifactSignerProviders().stream().findFirst().orElseThrow();
 
     context
-        .getRouter()
+        .router()
         .route(HttpMethod.POST, SIGN_PATH)
         .handler(
             new BlockingHandlerDecorator(
                 new Eth2SignForIdentifierHandler(
                     blsSigner,
-                    new HttpApiMetrics(context.getMetricsSystem(), BLS, artifactSignerProvider),
-                    new SlashingProtectionMetrics(context.getMetricsSystem()),
+                    new HttpApiMetrics(context.metricsSystem(), BLS, artifactSignerProvider),
+                    new SlashingProtectionMetrics(context.metricsSystem()),
                     slashingProtection,
                     objectMapper,
                     eth2Spec),
                 false))
-        .failureHandler(context.getErrorHandler());
+        .failureHandler(context.errorHandler());
   }
 }

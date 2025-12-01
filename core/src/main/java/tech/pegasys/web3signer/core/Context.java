@@ -18,46 +18,14 @@ import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import java.util.List;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.WorkerExecutor;
 import io.vertx.ext.web.Router;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-public class Context {
-  private final Router router;
-  private final MetricsSystem metricsSystem;
-  private final LogErrorHandler errorHandler;
-  private final Vertx vertx;
-  private final List<ArtifactSignerProvider> artifactSignerProviders;
-
-  public Context(
-      final Router router,
-      final MetricsSystem metricsSystem,
-      final LogErrorHandler errorHandler,
-      final Vertx vertx,
-      final List<ArtifactSignerProvider> artifactSignerProviders) {
-    this.router = router;
-    this.metricsSystem = metricsSystem;
-    this.errorHandler = errorHandler;
-    this.vertx = vertx;
-    this.artifactSignerProviders = artifactSignerProviders;
-  }
-
-  public Router getRouter() {
-    return router;
-  }
-
-  public MetricsSystem getMetricsSystem() {
-    return metricsSystem;
-  }
-
-  public LogErrorHandler getErrorHandler() {
-    return errorHandler;
-  }
-
-  public Vertx getVertx() {
-    return vertx;
-  }
-
-  public List<ArtifactSignerProvider> getArtifactSignerProviders() {
-    return artifactSignerProviders;
-  }
-}
+public record Context(
+    Router router,
+    MetricsSystem metricsSystem,
+    LogErrorHandler errorHandler,
+    Vertx vertx,
+    List<ArtifactSignerProvider> artifactSignerProviders,
+    WorkerExecutor reloadWorkerExecutor) {}

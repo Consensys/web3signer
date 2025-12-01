@@ -16,32 +16,45 @@ import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 
 import io.vertx.core.Handler;
+import io.vertx.core.WorkerExecutor;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ReloadHandler implements Handler<RoutingContext> {
-  private final List<ArtifactSignerProvider> orderedArtifactSignerProviders;
+  private static final Logger LOG = LogManager.getLogger();
 
-  public ReloadHandler(final List<ArtifactSignerProvider> orderedArtifactSignerProviders) {
+  private final List<ArtifactSignerProvider> orderedArtifactSignerProviders;
+  private final WorkerExecutor workerExecutor;
+
+  public ReloadHandler(
+      final List<ArtifactSignerProvider> orderedArtifactSignerProviders,
+      final WorkerExecutor workerExecutor) {
     this.orderedArtifactSignerProviders = orderedArtifactSignerProviders;
+    this.workerExecutor = workerExecutor;
   }
 
   @Override
   public void handle(final RoutingContext routingContext) {
+    workerExecutor
+        .executeBlocking(
+            () -> {
+              orderedArtifactSignerProviders.forEach(
+                  signer -> {
+                    try {
+                      signer.load().get();
+                    } catch (InterruptedException | ExecutionException e) {
+                      LOG.error("Error reloading signers", e);
+                    }
+                  });
+              return null;
+            },
+            false)
+        .onFailure(err -> LOG.error("Reload operation failed", err));
 
-    Executors.newSingleThreadExecutor()
-        .submit(
-            () ->
-                orderedArtifactSignerProviders.forEach(
-                    signer -> {
-                      try {
-                        signer.load().get();
-                      } catch (InterruptedException | ExecutionException e) {
-                        throw new RuntimeException(e);
-                      }
-                    }));
+    // Respond immediately - don't wait for reload to complete
     routingContext.response().setStatusCode(200).end();
   }
 }
