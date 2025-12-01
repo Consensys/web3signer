@@ -111,12 +111,11 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
     final LogErrorHandler errorHandler = new LogErrorHandler();
     healthCheckHandler = HealthCheckHandler.create(vertx);
-
-    final List<ArtifactSignerProvider> artifactSignerProviders =
-        Optional.ofNullable(createArtifactSignerProvider(vertx, metricsSystem)).orElse(List.of());
-    artifactSignerProviders.forEach(this::registerClose);
-
     try {
+      final List<ArtifactSignerProvider> artifactSignerProviders =
+          Optional.ofNullable(createArtifactSignerProvider(vertx, metricsSystem)).orElse(List.of());
+      artifactSignerProviders.forEach(this::registerClose);
+
       createVersionMetric(metricsSystem);
       metricsService = MetricsService.create(metricsConfiguration, metricsSystem);
       metricsService.ifPresent(MetricsService::start);
