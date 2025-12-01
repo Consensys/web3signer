@@ -202,6 +202,11 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
       closeables.add(() -> shutdownVertx(vertx));
     } catch (final Throwable e) {
+      try {
+        close(); // Close all registered resources (signerProviders, workerExecutor, etc.)
+      } catch (Exception closeException) {
+        LOG.error("Error during cleanup", closeException);
+      }
       shutdownVertx(vertx);
       metricsService.ifPresent(MetricsService::stop);
       LOG.error("Failed to initialise application", e);
