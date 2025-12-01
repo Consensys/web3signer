@@ -39,7 +39,7 @@ public class Eth1SignRoute implements Web3SignerRoute {
 
     // we need signerProvider which is an instance of DefaultArtifactSignerProvider
     final Optional<ArtifactSignerProvider> first =
-        context.artifactSignerProviders().stream()
+        context.getArtifactSignerProviders().stream()
             .filter(provider -> provider instanceof DefaultArtifactSignerProvider)
             .findFirst();
 
@@ -55,14 +55,14 @@ public class Eth1SignRoute implements Web3SignerRoute {
   @Override
   public void register() {
     context
-        .router()
+        .getRouter()
         .route(HttpMethod.POST, SIGN_PATH)
         .handler(
             new BlockingHandlerDecorator(
                 new Eth1SignForIdentifierHandler(
                     secpSigner,
-                    new HttpApiMetrics(context.metricsSystem(), SECP256K1, signerProvider)),
+                    new HttpApiMetrics(context.getMetricsSystem(), SECP256K1, signerProvider)),
                 false))
-        .failureHandler(context.errorHandler());
+        .failureHandler(context.getErrorHandler());
   }
 }

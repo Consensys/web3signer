@@ -40,12 +40,12 @@ public class PublicKeysListRoute implements Web3SignerRoute {
   @Override
   public void register() {
     context
-        .router()
+        .getRouter()
         .route(HttpMethod.GET, path)
         .produces(JSON_HEADER)
         .handler(
             new BlockingHandlerDecorator(
-                new PublicKeysListHandler(context.artifactSignerProviders()), false))
-        .failureHandler(context.errorHandler());
+                new PublicKeysListHandler(context.getArtifactSignerProviders()), false))
+        .failureHandler(context.getErrorHandler());
   }
 }

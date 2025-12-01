@@ -37,9 +37,9 @@ public class HighWatermarkRoute implements Web3SignerRoute {
     slashingProtectionContext.ifPresent(
         protectionContext ->
             context
-                .router()
+                .getRouter()
                 .route(HttpMethod.GET, HIGH_WATERMARK_PATH)
                 .handler(new HighWatermarkHandler(protectionContext.getSlashingProtection()))
-                .failureHandler(context.errorHandler()));
+                .failureHandler(context.getErrorHandler()));
   }
 }

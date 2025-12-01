@@ -42,7 +42,7 @@ public class CommitBoostGenerateProxyKeyRoute implements Web3SignerRoute {
 
     // there should be only one DefaultArtifactSignerProvider in eth2 mode
     artifactSignerProvider =
-        context.artifactSignerProviders().stream()
+        context.getArtifactSignerProviders().stream()
             .filter(p -> p instanceof DefaultArtifactSignerProvider)
             .findFirst()
             .orElseThrow();
@@ -51,13 +51,13 @@ public class CommitBoostGenerateProxyKeyRoute implements Web3SignerRoute {
   @Override
   public void register() {
     context
-        .router()
+        .getRouter()
         .route(HttpMethod.POST, PATH)
         .blockingHandler(
             new CommitBoostGenerateProxyKeyHandler(
                 artifactSignerProvider, commitBoostParameters, eth2Spec),
             false)
-        .failureHandler(context.errorHandler())
+        .failureHandler(context.getErrorHandler())
         .failureHandler(
             ctx -> {
               final int statusCode = ctx.statusCode();

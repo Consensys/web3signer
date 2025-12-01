@@ -33,7 +33,7 @@ public class CommitBoostPublicKeysRoute implements Web3SignerRoute {
     this.context = context;
     // there should be only one DefaultArtifactSignerProvider in eth2 mode
     artifactSignerProvider =
-        context.artifactSignerProviders().stream()
+        context.getArtifactSignerProviders().stream()
             .filter(p -> p instanceof DefaultArtifactSignerProvider)
             .findFirst()
             .orElseThrow();
@@ -42,13 +42,13 @@ public class CommitBoostPublicKeysRoute implements Web3SignerRoute {
   @Override
   public void register() {
     context
-        .router()
+        .getRouter()
         .route(HttpMethod.GET, PATH)
         .produces(JSON_HEADER)
         .handler(
             new BlockingHandlerDecorator(
                 new CommitBoostPublicKeysHandler(artifactSignerProvider), false))
-        .failureHandler(context.errorHandler())
+        .failureHandler(context.getErrorHandler())
         .failureHandler(
             ctx -> {
               final int statusCode = ctx.statusCode();

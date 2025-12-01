@@ -61,7 +61,7 @@ public class KeyManagerApiRoute implements Web3SignerRoute {
         slashingProtectionContext.map(SlashingProtectionContext::getSlashingProtection);
     // there should be only one ArtifactSignerProvider in eth2 mode at the moment which is of BLS
     // types.
-    blsSignerProvider = context.artifactSignerProviders().stream().findFirst().orElseThrow();
+    blsSignerProvider = context.getArtifactSignerProviders().stream().findFirst().orElseThrow();
   }
 
   @Override
@@ -78,17 +78,17 @@ public class KeyManagerApiRoute implements Web3SignerRoute {
 
   private void registerGet() {
     context
-        .router()
+        .getRouter()
         .route(HttpMethod.GET, KEYSTORES_PATH)
         .handler(
             new BlockingHandlerDecorator(
                 new ListKeystoresHandler(blsSignerProvider, objectMapper), false))
-        .failureHandler(context.errorHandler());
+        .failureHandler(context.getErrorHandler());
   }
 
   private void registerPost(ValidatorManager validatorManager) {
     context
-        .router()
+        .getRouter()
         .route(HttpMethod.POST, KEYSTORES_PATH)
         .blockingHandler(
             new ImportKeystoresHandler(
@@ -98,19 +98,19 @@ public class KeyManagerApiRoute implements Web3SignerRoute {
                 blsSignerProvider,
                 validatorManager),
             false)
-        .failureHandler(context.errorHandler());
+        .failureHandler(context.getErrorHandler());
   }
 
   private void registerDelete(ValidatorManager validatorManager) {
     context
-        .router()
+        .getRouter()
         .route(HttpMethod.DELETE, KEYSTORES_PATH)
         .handler(
             new BlockingHandlerDecorator(
                 new DeleteKeystoresHandler(
                     objectMapper, slashingProtection, blsSignerProvider, validatorManager),
                 false))
-        .failureHandler(context.errorHandler());
+        .failureHandler(context.getErrorHandler());
   }
 
   private ValidatorManager createValidatorManager() {

@@ -60,7 +60,7 @@ public class JsonRpcRoute implements Web3SignerRoute {
     // we need signerProvider which is an instance of SecpArtifactSignerProviderAdapter which uses
     // eth1 address as identifier
     final ArtifactSignerProvider signerProvider =
-        context.artifactSignerProviders().stream()
+        context.getArtifactSignerProviders().stream()
             .filter(provider -> provider instanceof SecpArtifactSignerProviderAdapter)
             .findFirst()
             .orElseThrow(
@@ -69,14 +69,15 @@ public class JsonRpcRoute implements Web3SignerRoute {
                         "No SecpArtifactSignerProviderAdapter found in Context for eth1 mode"));
 
     // use same instance of downstreamHttpClient and path calculator for all requests
-    final HttpClient downstreamHttpClient = createDownstreamHttpClient(eth1Config, context.vertx());
+    final HttpClient downstreamHttpClient =
+        createDownstreamHttpClient(eth1Config, context.getVertx());
     final DownstreamPathCalculator downstreamPathCalculator =
         new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath());
 
     transmitterFactory =
         responseBodyHandler ->
             new VertxRequestTransmitter(
-                context.vertx(),
+                context.getVertx(),
                 downstreamHttpClient,
                 eth1Config.getDownstreamHttpRequestTimeout(),
                 downstreamPathCalculator,
@@ -89,7 +90,7 @@ public class JsonRpcRoute implements Web3SignerRoute {
   @Override
   public void register() {
     context
-        .router()
+        .getRouter()
         .route(HttpMethod.POST, ROOT_PATH)
         .produces(Runner.JSON)
         .handler(ResponseContentTypeHandler.create())
@@ -100,7 +101,7 @@ public class JsonRpcRoute implements Web3SignerRoute {
 
     // proxy everything else to Besu using passThrough handler
     context
-        .router()
+        .getRouter()
         .route()
         .handler(BodyHandler.create())
         .handler(new PassThroughHandler(transmitterFactory, JSON_DECODER));
