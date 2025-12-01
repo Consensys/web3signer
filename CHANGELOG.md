@@ -2,6 +2,7 @@
 
 ## Upcoming Releases
 ### Breaking Changes
+- `--swagger-ui-enabled` cli option has been removed. The Specs UI can be accessed at https://consensys.github.io/web3signer/.
 
 ### Features Added
 
@@ -11,6 +12,7 @@
 
 [issue_1073]: https://github.com/Consensys/web3signer/issues/1073
 [PR_1135]: https://github.com/Consensys/web3signer/pull/1135
+
 
 ---
 ## 25.11.0
@@ -23,6 +25,7 @@ imported via the keymanager API to disk. This is *not* safe for operators who do
 - Updated web3j library to 5.0.1
 - Reduced Web3Signer docker image size. Removed unnecessary tools `iputils-ping, net-tools` from the image.
 
+---
 ## 25.9.1
 ### Breaking changes
 - `eea*` RPC methods and other privacy supporting classes have been removed since Privacy feature has been removed from [Besu 25.6.0](https://github.com/hyperledger/besu/releases/tag/25.6.0)
