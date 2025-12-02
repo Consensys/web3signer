@@ -94,7 +94,7 @@ public class Eth1Runner extends Runner {
         new CachedAwsKmsClientFactory(eth1Config.getAwsKmsClientCacheSize());
 
     // Register ALL for cleanup ONCE
-    registerClose(azureKeyVaultFactory::close);
+    registerClose(azureKeyVaultFactory);
     registerClose(azureHttpClientFactory);
     registerClose(cachedAwsKmsClientFactory);
 
