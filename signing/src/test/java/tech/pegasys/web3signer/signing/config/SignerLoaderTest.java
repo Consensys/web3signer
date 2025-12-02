@@ -309,6 +309,36 @@ class SignerLoaderTest {
     assertThat(timeTaken).isNotEmpty();
   }
 
+  @Test
+  void loadLargeNumberOfSigners() throws Exception {
+    for (int i = 0; i < 15000; i++) {
+      BLSKeyPair blsKey = BLSTestUtil.randomKeyPair(i);
+      createFileInConfigsDirectory(
+          configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
+    }
+
+    MappedResults<ArtifactSigner> result = SignerLoader.load(configsDirectory, signerParser, true);
+
+    assertThat(result.getValues()).hasSize(15000);
+    assertThat(result.getErrorCount()).isZero();
+
+    // loading again will return cached results
+    result = SignerLoader.load(configsDirectory, signerParser, true);
+    assertThat(result.getValues()).hasSize(15000);
+    assertThat(result.getErrorCount()).isZero();
+
+    // add 6000
+    for (int i = 15000; i < 21000; i++) {
+      BLSKeyPair blsKey = BLSTestUtil.randomKeyPair(i);
+      createFileInConfigsDirectory(
+          configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
+    }
+    // load again. Total should assert to 21000. Logs should show 15K loaded from cache.
+    result = SignerLoader.load(configsDirectory, signerParser, true);
+    assertThat(result.getValues()).hasSize(21000);
+    assertThat(result.getErrorCount()).isZero();
+  }
+
   private Path createFileInConfigsDirectory(final String fileName, final String privateKeyHex)
       throws IOException {
     final Path file = configsDirectory.resolve(fileName);

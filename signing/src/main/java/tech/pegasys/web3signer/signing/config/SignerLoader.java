@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,10 +33,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,22 +52,70 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * The SignerLoader loads the metadata files and converts them to ArtifactSigners. This class keeps
- * track of the metadata files and ArtifactSigners that have been read. It removes the cached
- * ArtifactSigners if the metadata file has been removed from the filesystem.
+ * The SignerLoader loads metadata files and converts them to ArtifactSigners using a smart caching
+ * mechanism. This class maintains a cache of loaded signers and automatically handles file
+ * additions and deletions. It leverages Java virtual threads for efficient parallel processing of
+ * large file sets.
+ *
+ * <p>Processing strategies:
+ *
+ * <ul>
+ *   <li>Sequential: For small batches (&lt; 100 files by default)
+ *   <li>Parallel with virtual threads: For medium batches (100-10,000 files)
+ *   <li>Batched parallel: For large sets (&gt; 10,000 files)
+ * </ul>
+ *
+ * <p>This class is thread-safe and uses volatile references with immutable maps for lock-free
+ * reads. All write operations are atomic through copy-on-write semantics.
  */
 public class SignerLoader {
   private static final Logger LOG = LogManager.getLogger();
-  private static final long FILES_PROCESSED_TO_REPORT = 10;
   private static final Set<String> CONFIG_FILE_EXTENSIONS = Set.of("yaml", "yml");
+
+  private static final int DEFAULT_SEQUENTIAL_THRESHOLD = 100;
+  private static int sequentialThreshold = DEFAULT_SEQUENTIAL_THRESHOLD;
+
+  private static final int DEFAULT_BATCH_SIZE = 5000;
+  private static int batchSize = DEFAULT_BATCH_SIZE;
+  private static int batchingThreshold = batchSize * 2;
 
   // Use volatile reference to immutable map for thread-safe reads without locking
   private static volatile Map<String, Set<ArtifactSigner>> cachedArtifactSigners =
       Collections.emptyMap();
+
+  // Virtual thread executor - created lazily and reused
+  private static volatile ExecutorService virtualThreadExecutor;
+
+  private static final ReentrantLock executorLock = new ReentrantLock();
+
+  /**
+   * Lazily initializes and returns the virtual thread executor. Uses double-checked locking with
+   * ReentrantLock to avoid synchronized blocks which could pin carrier threads in virtual thread
+   * contexts.
+   *
+   * @return ExecutorService configured with virtual threads per task
+   */
+  private static ExecutorService getVirtualThreadExecutor() {
+    if (virtualThreadExecutor == null) {
+      executorLock.lock();
+      try {
+        if (virtualThreadExecutor == null) {
+          virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
+          Runtime.getRuntime()
+              .addShutdownHook(
+                  new Thread(SignerLoader::shutdownExecutor, "signer-loader-shutdown"));
+        }
+      } finally {
+        executorLock.unlock();
+      }
+    }
+    return virtualThreadExecutor;
+  }
 
   /**
    * Load ArtifactSigners for metadata files. Add new files to cache and remove cached entries for
@@ -67,126 +124,44 @@ public class SignerLoader {
    *
    * @param configsDirectory Location of the metadata files (fixed for Web3Signer lifetime)
    * @param signerParser An implementation of SignerParser to parse the metadata files
-   * @param useParallelStreams Whether to use parallel streams for processing
+   * @param parallelProcess Whether to process config files in parallel to load the signers
    * @return A MappedResults of ArtifactSigners and error count
    */
   public static MappedResults<ArtifactSigner> load(
-      final Path configsDirectory,
-      final SignerParser signerParser,
-      final boolean useParallelStreams) {
+      final Path configsDirectory, final SignerParser signerParser, final boolean parallelProcess) {
     LOG.info("Loading signer configuration metadata files from {}", configsDirectory);
     final Instant loadStartTime = Instant.now();
 
-    // Normalize the config directory path to ensure consistent comparisons
-    final Path normalizedConfigDir = configsDirectory.toAbsolutePath().normalize();
-
     // Get all metadata file paths from the config directory
-    final Set<String> currentFiles;
+    final Set<String> availableFiles;
     try {
-      currentFiles = getMetadataConfigFiles(normalizedConfigDir);
+      availableFiles = getMetadataConfigFiles(configsDirectory.toAbsolutePath().normalize());
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied key directory", e);
       return MappedResults.errorResult();
     }
 
-    // Get a snapshot of current cache for reading
-    final Map<String, Set<ArtifactSigner>> currentCacheSnapshot = cachedArtifactSigners;
-
-    // Create new cache map (copy-on-write pattern)
-    final Map<String, Set<ArtifactSigner>> newCache = new HashMap<>();
-
-    // Keep only the files that still exist, remove deleted ones
-    int removedCount = 0;
-    for (Map.Entry<String, Set<ArtifactSigner>> entry : currentCacheSnapshot.entrySet()) {
-      if (currentFiles.contains(entry.getKey())) {
-        newCache.put(entry.getKey(), entry.getValue());
-      } else {
-        removedCount++;
-        LOG.debug("Removing cached entry for deleted file: {}", entry.getKey());
-      }
-    }
-
-    if (removedCount > 0) {
-      LOG.info("Removed {} cached metadata files that have been deleted.", removedCount);
-    }
+    // Get new cache by removing entries that doesn't exist
+    final Map<String, Set<ArtifactSigner>> newCache = getNewCacheMap(availableFiles);
 
     // Find files that are not in cache (new files to process)
-    final Set<String> filesToProcess = new HashSet<>(currentFiles);
-    filesToProcess.removeAll(newCache.keySet());
+    final Set<String> newFilesToProcess = getNewFilesToProcess(availableFiles, newCache.keySet());
+    LOG.info(
+        "Processing {} metadata files. Cached paths: {}",
+        newFilesToProcess.size(),
+        newCache.size());
 
-    if (filesToProcess.isEmpty()) {
-      LOG.info("No new metadata files to process. Using {} cached files.", newCache.size());
-    } else {
-      LOG.info(
-          "Processing {} new metadata files using {} streams...",
-          filesToProcess.size(),
-          useParallelStreams ? "parallel" : "sequential");
-    }
+    // load new signers
+    final Pair<Map<String, Set<ArtifactSigner>>, Integer> newArtifactsWithErrorCount =
+        loadNewSigners(newFilesToProcess, signerParser, parallelProcess);
+    final Map<String, Set<ArtifactSigner>> loadedSigners = newArtifactsWithErrorCount.getLeft();
+    final int loadedSignersErrorCount = newArtifactsWithErrorCount.getRight();
 
-    // Process new files only
-    final Stream<String> pathStream =
-        useParallelStreams ? filesToProcess.parallelStream() : filesToProcess.stream();
-
-    final AtomicLong configFilesHandled = new AtomicLong(0);
-    final AtomicInteger errorCount = new AtomicInteger(0);
-
-    final Map<String, Set<ArtifactSigner>> loadedArtSigners =
-        pathStream
-            .flatMap(
-                pathStr -> {
-                  if (configFilesHandled.incrementAndGet() % FILES_PROCESSED_TO_REPORT == 0) {
-                    LOG.info("{} signing metadata processed", configFilesHandled.get());
-                  }
-                  try {
-                    final Path filePath = Path.of(pathStr);
-                    final String content = Files.readString(filePath, StandardCharsets.UTF_8);
-                    return Stream.of(new SimpleEntry<>(pathStr, content));
-                  } catch (final IOException e) {
-                    LOG.error("Error reading metadata config file: {}", pathStr, e);
-                    errorCount.incrementAndGet();
-                    return Stream.empty();
-                  }
-                })
-            .flatMap(
-                entry -> {
-                  final String pathStr = entry.getKey();
-                  final String content = entry.getValue();
-                  try {
-                    final List<SigningMetadata> signingMetadata =
-                        signerParser.readSigningMetadata(content);
-                    return Stream.of(new SimpleEntry<>(pathStr, signingMetadata));
-                  } catch (final SigningMetadataException e) {
-                    LOG.error(
-                        "Error parsing metadata file {} to signing metadata: {}",
-                        pathStr,
-                        ExceptionUtils.getRootCauseMessage(e));
-                    errorCount.incrementAndGet();
-                    return Stream.empty();
-                  }
-                })
-            .flatMap(
-                entry -> {
-                  final String pathStr = entry.getKey();
-                  final List<SigningMetadata> signingMetadataList = entry.getValue();
-                  try {
-                    final Set<ArtifactSigner> artifactSigners =
-                        Set.copyOf(signerParser.parse(signingMetadataList));
-                    return Stream.of(new SimpleEntry<>(pathStr, artifactSigners));
-                  } catch (final SigningMetadataException e) {
-                    LOG.error(
-                        "Error converting signing metadata to Artifact Signer: {}",
-                        ExceptionUtils.getRootCauseMessage(e));
-                    errorCount.incrementAndGet();
-                    return Stream.empty();
-                  }
-                })
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-    // Merge newly loaded signers into the new cache
-    newCache.putAll(loadedArtSigners);
-    if (LOG.isDebugEnabled()) {
-      loadedArtSigners.forEach(
-          (pathStr, signers) -> LOG.debug("Added {} signers from {}", signers.size(), pathStr));
+    // Put newly loaded signers into the new cache
+    newCache.putAll(loadedSigners);
+    if (LOG.isTraceEnabled()) {
+      loadedSigners.forEach(
+          (pathStr, signers) -> LOG.trace("Added {} signers from {}", signers.size(), pathStr));
     }
 
     // Update the volatile reference with the new immutable map
@@ -202,15 +177,424 @@ public class SignerLoader {
         "Total Artifact Signers loaded via configuration files: {}\nTotal Paths cached: {}, Error count: {}\nTime Taken: {}.",
         allArtifactSigners.size(),
         cachedArtifactSigners.size(),
-        errorCount.get(),
+        loadedSignersErrorCount,
         calculateTimeTaken(loadStartTime).orElse("unknown duration"));
 
-    return MappedResults.newInstance(allArtifactSigners, errorCount.get());
+    return MappedResults.newInstance(allArtifactSigners, loadedSignersErrorCount);
   }
 
+  /**
+   * Identifies new files to process by computing the set difference between available files and
+   * already cached files.
+   *
+   * @param currentFiles all files currently present in the directory
+   * @param pathsToProcess files already in cache
+   * @return set of file paths that need to be processed
+   */
+  private static Set<String> getNewFilesToProcess(
+      final Set<String> currentFiles, final Set<String> pathsToProcess) {
+    final Set<String> filesToProcess = new HashSet<>(currentFiles);
+    filesToProcess.removeAll(pathsToProcess);
+    return filesToProcess;
+  }
+
+  /**
+   * Creates a new cache map containing only files that still exist on the filesystem. Removes
+   * cached entries for deleted files and logs the removal count. Uses defensive copying to ensure
+   * thread safety.
+   *
+   * @param currentFiles set of file paths currently present in the directory
+   * @return new cache map with stale entries removed
+   */
+  private static Map<String, Set<ArtifactSigner>> getNewCacheMap(final Set<String> currentFiles) {
+    // Get a snapshot of current cache for reading
+    final Map<String, Set<ArtifactSigner>> currentCacheSnapshot = Map.copyOf(cachedArtifactSigners);
+
+    // Create new cache map (copy-on-write pattern)
+    final Map<String, Set<ArtifactSigner>> newCache = new HashMap<>();
+
+    // Keep only the files that still exist, remove deleted ones
+    int removedCount = 0;
+    for (Map.Entry<String, Set<ArtifactSigner>> entry : currentCacheSnapshot.entrySet()) {
+      if (currentFiles.contains(entry.getKey())) {
+        newCache.put(entry.getKey(), entry.getValue());
+      } else {
+        removedCount++;
+        LOG.trace("Removing cached entry for deleted file: {}", entry.getKey());
+      }
+    }
+
+    if (removedCount > 0) {
+      LOG.info("Removed {} cached metadata files that have been reported deleted.", removedCount);
+    }
+    return newCache;
+  }
+
+  /**
+   * Loads new signers from the specified files using the appropriate processing strategy based on
+   * file count and configuration.
+   *
+   * @param newFilesToProcess files that need to be loaded
+   * @param signerParser parser to convert file content to signers
+   * @param parallelProcess whether parallel processing is enabled
+   * @return pair of loaded signers map and error count
+   */
+  private static Pair<Map<String, Set<ArtifactSigner>>, Integer> loadNewSigners(
+      final Set<String> newFilesToProcess,
+      final SignerParser signerParser,
+      final boolean parallelProcess) {
+
+    final AtomicLong configFilesHandled = new AtomicLong(0);
+    final AtomicInteger errorCount = new AtomicInteger(0);
+    final int totalFiles = newFilesToProcess.size();
+
+    // Sequential processing for small batches
+    if (!parallelProcess || totalFiles < sequentialThreshold) {
+      LOG.info("Process {} files sequentially", totalFiles);
+      return processSequentially(
+          newFilesToProcess, signerParser, configFilesHandled, errorCount, totalFiles);
+    }
+
+    // Determine batch size: use all files for medium sets, configured batch size for large sets
+    final int effectiveBatchSize = (totalFiles > batchingThreshold) ? batchSize : totalFiles;
+
+    LOG.info("Processing {} files with effective batch size {}", totalFiles, effectiveBatchSize);
+    return processInConfigurableBatches(
+        newFilesToProcess,
+        signerParser,
+        configFilesHandled,
+        errorCount,
+        totalFiles,
+        effectiveBatchSize);
+  }
+
+  /**
+   * Processes files in configurable batch sizes using virtual threads. This unified method handles
+   * both medium-sized sets (single batch) and large sets (multiple batches).
+   *
+   * @param filesToProcess complete set of files to process
+   * @param signerParser parser for converting metadata to signers
+   * @param configFilesHandled atomic counter for processed files
+   * @param errorCount atomic counter for errors
+   * @param totalFiles total number of files for progress reporting
+   * @param effectiveBatchSize size of each batch to process
+   * @return pair of all processed signers and final error count
+   */
+  private static Pair<Map<String, Set<ArtifactSigner>>, Integer> processInConfigurableBatches(
+      final Set<String> filesToProcess,
+      final SignerParser signerParser,
+      final AtomicLong configFilesHandled,
+      final AtomicInteger errorCount,
+      final int totalFiles,
+      final int effectiveBatchSize) {
+
+    final Map<String, Set<ArtifactSigner>> allLoadedSigners = new HashMap<>();
+    final List<String> fileList = new ArrayList<>(filesToProcess);
+    final ExecutorService executor = getVirtualThreadExecutor();
+
+    for (int i = 0; i < fileList.size(); i += effectiveBatchSize) {
+      final int batchStart = i + 1;
+      final int batchEnd = Math.min(i + effectiveBatchSize, fileList.size());
+      final List<String> batch = fileList.subList(i, batchEnd);
+
+      // Only log batch info if processing multiple batches
+      if (effectiveBatchSize < totalFiles) {
+        LOG.info("Processing batch {}-{} of {} files", batchStart, batchEnd, totalFiles);
+      }
+
+      // Process current batch with virtual threads
+      List<CompletableFuture<Map.Entry<String, Set<ArtifactSigner>>>> futures =
+          batch.stream()
+              .map(
+                  pathStr ->
+                      CompletableFuture.supplyAsync(
+                          () ->
+                              processFile(
+                                  pathStr,
+                                  signerParser,
+                                  configFilesHandled,
+                                  errorCount,
+                                  totalFiles),
+                          executor))
+              .toList();
+
+      final int timeoutPerBatch = 10;
+      try {
+        CompletableFuture<Void> allFutures =
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        allFutures.get(timeoutPerBatch, TimeUnit.MINUTES);
+
+      } catch (final TimeoutException e) {
+        final String batchDescription =
+            (effectiveBatchSize < totalFiles)
+                ? String.format("batch %d-%d", batchStart, batchEnd)
+                : "file processing";
+        LOG.error("Timeout processing {} after {} minutes", batchDescription, timeoutPerBatch);
+        long incomplete = futures.stream().filter(f -> !f.isDone()).count();
+        LOG.error("Cancelling {} incomplete file processing tasks", incomplete);
+        futures.forEach(f -> f.cancel(true));
+        errorCount.addAndGet((int) incomplete);
+      } catch (final InterruptedException e) {
+        Thread.currentThread().interrupt();
+        LOG.error("Interrupted while processing files", e);
+      } catch (final ExecutionException e) {
+        LOG.error("Error during parallel file processing", e);
+      }
+
+      // Collect successfully processed results from this batch
+      futures.stream()
+          .filter(CompletableFuture::isDone)
+          .filter(f -> !f.isCancelled())
+          .map(
+              f -> {
+                try {
+                  return f.getNow(null);
+                } catch (Exception e) {
+                  LOG.error("Error retrieving future result", e);
+                  return null;
+                }
+              })
+          .filter(Objects::nonNull)
+          .forEach(entry -> allLoadedSigners.put(entry.getKey(), entry.getValue()));
+    }
+
+    return Pair.of(allLoadedSigners, errorCount.get());
+  }
+
+  /**
+   * Processes files sequentially without parallelization. Used for small batches or when parallel
+   * processing is disabled.
+   *
+   * @param newFilesToProcess files to process
+   * @param signerParser parser for converting metadata to signers
+   * @param configFilesHandled counter for processed files
+   * @param errorCount counter for errors encountered
+   * @param totalFiles total number of files for progress reporting
+   * @return pair of processed signers and final error count
+   */
+  private static Pair<Map<String, Set<ArtifactSigner>>, Integer> processSequentially(
+      final Set<String> newFilesToProcess,
+      final SignerParser signerParser,
+      final AtomicLong configFilesHandled,
+      final AtomicInteger errorCount,
+      final int totalFiles) {
+
+    final Map<String, Set<ArtifactSigner>> loadedArtSigners = new HashMap<>();
+
+    for (String pathStr : newFilesToProcess) {
+      Map.Entry<String, Set<ArtifactSigner>> result =
+          processFile(pathStr, signerParser, configFilesHandled, errorCount, totalFiles);
+      if (result != null) {
+        loadedArtSigners.put(result.getKey(), result.getValue());
+      }
+    }
+
+    return Pair.of(loadedArtSigners, errorCount.get());
+  }
+
+  /**
+   * Processes a single metadata file and converts it to ArtifactSigners.
+   *
+   * <p>This method handles the complete lifecycle of processing a signer configuration file:
+   *
+   * <ol>
+   *   <li><b>File Reading (IO-bound):</b> Reads the file content from disk using NIO operations
+   *   <li><b>Metadata Parsing (Mixed IO/CPU):</b> Parses the YAML/YML content into SigningMetadata
+   *       objects
+   *   <li><b>Signer Creation (CPU-bound):</b> Performs decryption and creates ArtifactSigner
+   *       instances
+   * </ol>
+   *
+   * <p>The method includes comprehensive error handling and thread interruption checks at strategic
+   * points to ensure responsive cancellation when running in virtual threads. Interruption checks
+   * are placed:
+   *
+   * <ul>
+   *   <li>Before starting any work (early exit optimization)
+   *   <li>After IO operations (NIO channels may be affected by interruption)
+   *   <li>Before CPU-intensive decryption operations (which can take up to a minute)
+   * </ul>
+   *
+   * <p><b>Thread Safety:</b> This method is thread-safe and can be called concurrently from
+   * multiple virtual threads. The shared counters use atomic operations for thread-safe updates.
+   *
+   * <p><b>Error Handling:</b> All errors are logged with appropriate detail levels and increment
+   * the error counter. The method returns {@code null} for any processing failure rather than
+   * propagating exceptions, allowing batch processing to continue with other files.
+   *
+   * @param pathStr absolute normalized path to the metadata file to process
+   * @param signerParser parser implementation for converting metadata to ArtifactSigners
+   * @param configFilesHandled atomic counter tracking total files processed (for progress
+   *     reporting)
+   * @param errorCount atomic counter tracking processing errors across all threads
+   * @param totalFiles total number of files being processed in this batch (for progress
+   *     calculation)
+   * @return a Map.Entry with the file path as key and immutable Set of ArtifactSigners as value, or
+   *     {@code null} if processing failed or was interrupted
+   * @implNote The returned Set of ArtifactSigners is made immutable using {@code Set.copyOf()} to
+   *     ensure thread safety when cached. The decryption step (Step 3) is the most time-consuming
+   *     operation and may involve HSM operations, encrypted key material decryption, or remote key
+   *     vault access.
+   */
+  private static Map.Entry<String, Set<ArtifactSigner>> processFile(
+      final String pathStr,
+      final SignerParser signerParser,
+      final AtomicLong configFilesHandled,
+      final AtomicInteger errorCount,
+      final int totalFiles) {
+
+    // Check interruption at the beginning
+    if (Thread.currentThread().isInterrupted()) {
+      LOG.debug("File processing interrupted before start: {}", pathStr);
+      errorCount.incrementAndGet();
+      return null;
+    }
+
+    reportProgress(configFilesHandled, totalFiles);
+
+    try {
+      // Step 1: File reading (IO-bound)
+      final Path filePath = Path.of(pathStr);
+      final String content = Files.readString(filePath, StandardCharsets.UTF_8);
+
+      // Check interruption after IO operation
+      if (Thread.currentThread().isInterrupted()) {
+        LOG.debug("File processing interrupted after reading: {}", pathStr);
+        errorCount.incrementAndGet();
+        return null;
+      }
+
+      // Step 2: Parse metadata (mixed IO/CPU)
+      final List<SigningMetadata> signingMetadata;
+      try {
+        signingMetadata = signerParser.readSigningMetadata(content);
+      } catch (final SigningMetadataException e) {
+        LOG.error(
+            "Error parsing metadata file {} to signing metadata: {}",
+            pathStr,
+            ExceptionUtils.getRootCauseMessage(e));
+        errorCount.incrementAndGet();
+        return null;
+      }
+
+      // Check interruption before expensive decryption operation
+      if (Thread.currentThread().isInterrupted()) {
+        LOG.debug("File processing interrupted before decryption: {}", pathStr);
+        errorCount.incrementAndGet();
+        return null;
+      }
+
+      // Step 3: Decryption and conversion (CPU-bound, can take up to a minute)
+      final Set<ArtifactSigner> artifactSigners;
+      try {
+        artifactSigners = Set.copyOf(signerParser.parse(signingMetadata));
+      } catch (final SigningMetadataException e) {
+        LOG.error(
+            "Error converting signing metadata to Artifact Signer for file {}: {}",
+            pathStr,
+            ExceptionUtils.getRootCauseMessage(e));
+        errorCount.incrementAndGet();
+        return null;
+      }
+
+      LOG.trace("Successfully processed file {} with {} signers", pathStr, artifactSigners.size());
+      return new SimpleEntry<>(pathStr, artifactSigners);
+
+    } catch (final IOException e) {
+      // Check if IOException was caused by interruption
+      if (Thread.currentThread().isInterrupted()) {
+        LOG.debug("File processing interrupted during IO: {}", pathStr);
+      } else {
+        LOG.error("Error reading metadata config file: {}", pathStr, e);
+      }
+      errorCount.incrementAndGet();
+      return null;
+    } catch (final Exception e) {
+      LOG.error("Unexpected error processing file: {}", pathStr, e);
+      errorCount.incrementAndGet();
+      return null;
+    }
+  }
+
+  /**
+   * Reports processing progress at dynamic intervals based on total file count. Ensures
+   * approximately 100 progress reports regardless of file count, with a minimum interval of 10
+   * files.
+   *
+   * @param processed atomic counter of processed files
+   * @param total total number of files being processed
+   */
+  private static void reportProgress(final AtomicLong processed, final int total) {
+    long count = processed.incrementAndGet();
+    // Report ~100 times max, or every 10 files minimum
+    int interval = Math.max(10, total / 100);
+    if (count % interval == 0 || count == total) {
+      int percentage = (int) ((count * 100) / total);
+      LOG.info("Processed {}/{} files ({}%)", count, total, percentage);
+    }
+  }
+
+  /**
+   * Gracefully shuts down the virtual thread executor with a 5-minute timeout. Called automatically
+   * on JVM shutdown via shutdown hook, or manually for testing. Ensures all running tasks have a
+   * chance to complete before forcing termination.
+   */
+  public static void shutdownExecutor() {
+    final ExecutorService executor = virtualThreadExecutor;
+    if (executor != null) {
+      executor.shutdown();
+      try {
+        if (!executor.awaitTermination(5, TimeUnit.MINUTES)) {
+          LOG.warn("Executor did not terminate in 5 minutes, forcing shutdown");
+          executor.shutdownNow();
+        }
+      } catch (InterruptedException e) {
+        LOG.error("Interrupted while waiting for executor shutdown", e);
+        executor.shutdownNow();
+        Thread.currentThread().interrupt();
+      } finally {
+        virtualThreadExecutor = null;
+      }
+    }
+  }
+
+  /**
+   * Sets the batch size for processing large file sets. Minimum value is enforced at 100 to prevent
+   * inefficient small batches.
+   *
+   * @param size desired batch size (will be clamped to minimum 100)
+   */
+  public static void setBatchSize(int size) {
+    batchSize = Math.max(100, size);
+    // Check for potential overflow before multiplication
+    if (batchSize > Integer.MAX_VALUE / 2) {
+      batchingThreshold = Integer.MAX_VALUE;
+      LOG.warn(
+          "Batch size {} is too large, capping batching threshold at Integer.MAX_VALUE", batchSize);
+    } else {
+      batchingThreshold = batchSize * 2;
+    }
+  }
+
+  /**
+   * Sets the threshold below which files are processed sequentially. Files counts below this
+   * threshold will not use virtual threads.
+   *
+   * @param threshold minimum file count for parallel processing (minimum 1)
+   */
+  public static void setSequentialProcessingThreshold(int threshold) {
+    sequentialThreshold = Math.max(1, threshold);
+  }
+
+  /**
+   * Clears all cached signers and shuts down the virtual thread executor. Primarily intended for
+   * testing to ensure clean state between tests.
+   */
   @VisibleForTesting
   static void clearCache() {
     cachedArtifactSigners = Collections.emptyMap();
+    // Also clean up executor in tests
+    shutdownExecutor();
   }
 
   /**
@@ -241,6 +625,13 @@ public class SignerLoader {
     return Optional.of(DurationFormatUtils.formatDurationHMS(timeTaken));
   }
 
+  /**
+   * Validates if a file has an acceptable extension for processing. Filters out hidden files and
+   * only accepts .yaml and .yml extensions.
+   *
+   * @param filename path to validate
+   * @return true if file should be processed, false otherwise
+   */
   private static boolean validFileExtension(final Path filename) {
     final boolean isHidden = filename.toFile().isHidden();
     final String extension = FilenameUtils.getExtension(filename.toString());
