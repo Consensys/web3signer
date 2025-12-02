@@ -48,6 +48,7 @@ dependencies {
   runtimeOnly 'tech.pegasys:jblst'
 
   // Test dependencies
+  testImplementation 'de.neuland-bfi:assertj-logging-log4j'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation(testFixtures(project(":keystorage")))

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
@@ -84,8 +85,12 @@ public class SignerLoader {
   private static int batchSize = DEFAULT_BATCH_SIZE;
   private static int batchingThreshold = batchSize * 2;
 
+  /** Holds cached signer data along with file metadata for cache invalidation. */
+  private record CachedSignerData(
+      String filePath, FileTime lastModifiedTime, Set<ArtifactSigner> signers) {}
+
   // Use volatile reference to immutable map for thread-safe reads without locking
-  private static volatile Map<String, Set<ArtifactSigner>> cachedArtifactSigners =
+  private static volatile Map<String, CachedSignerData> cachedArtifactSigners =
       Collections.emptyMap();
 
   // Virtual thread executor - created lazily and reused
@@ -118,9 +123,18 @@ public class SignerLoader {
   }
 
   /**
-   * Load ArtifactSigners for metadata files. Add new files to cache and remove cached entries for
-   * files that no longer exist on the filesystem. Since the configsDirectory is fixed for the
-   * lifetime of Web3Signer, we don't need to handle multiple directories.
+   * Load ArtifactSigners for metadata files. This method maintains a cache of loaded signers and
+   * intelligently handles file changes:
+   *
+   * <ul>
+   *   <li>New files are processed and added to cache
+   *   <li>Modified files (based on last modified time) are reprocessed
+   *   <li>Deleted files are removed from cache
+   *   <li>Unchanged files remain in cache without reprocessing
+   * </ul>
+   *
+   * Since the configsDirectory is fixed for the lifetime of Web3Signer, we don't need to handle
+   * multiple directories.
    *
    * @param configsDirectory Location of the metadata files (fixed for Web3Signer lifetime)
    * @param signerParser An implementation of SignerParser to parse the metadata files
@@ -133,19 +147,21 @@ public class SignerLoader {
     final Instant loadStartTime = Instant.now();
 
     // Get all metadata file paths from the config directory
-    final Set<String> availableFiles;
+    final Map<String, FileTime> availableFilesWithTime;
     try {
-      availableFiles = getMetadataConfigFiles(configsDirectory.toAbsolutePath().normalize());
+      availableFilesWithTime =
+          getMetadataConfigFilesWithTime(configsDirectory.toAbsolutePath().normalize());
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied key directory", e);
       return MappedResults.errorResult();
     }
 
-    // Get new cache by removing entries that doesn't exist
-    final Map<String, Set<ArtifactSigner>> newCache = getNewCacheMap(availableFiles);
+    // Get new cache by removing entries that doesn't exist or has modified time
+    final Map<String, CachedSignerData> newCache = getNewCacheMap(availableFilesWithTime);
 
-    // Find files that are not in cache (new files to process)
-    final Set<String> newFilesToProcess = getNewFilesToProcess(availableFiles, newCache.keySet());
+    // Find files to process (new + modified)
+    final Set<String> newFilesToProcess =
+        getNewFilesToProcess(availableFilesWithTime.keySet(), newCache.keySet());
     LOG.info(
         "Processing {} metadata files. Cached paths: {}",
         newFilesToProcess.size(),
@@ -154,15 +170,17 @@ public class SignerLoader {
     // load new signers
     final Pair<Map<String, Set<ArtifactSigner>>, Integer> newArtifactsWithErrorCount =
         loadNewSigners(newFilesToProcess, signerParser, parallelProcess);
+
     final Map<String, Set<ArtifactSigner>> loadedSigners = newArtifactsWithErrorCount.getLeft();
     final int loadedSignersErrorCount = newArtifactsWithErrorCount.getRight();
 
-    // Put newly loaded signers into the new cache
-    newCache.putAll(loadedSigners);
-    if (LOG.isTraceEnabled()) {
-      loadedSigners.forEach(
-          (pathStr, signers) -> LOG.trace("Added {} signers from {}", signers.size(), pathStr));
-    }
+    // Add newly loaded signers to cache with their modification times
+    loadedSigners.forEach(
+        (pathStr, signers) -> {
+          FileTime modTime = availableFilesWithTime.get(pathStr);
+          newCache.put(pathStr, new CachedSignerData(pathStr, modTime, signers));
+          LOG.trace("Added {} signers from {}", signers.size(), pathStr);
+        });
 
     // Update the volatile reference with the new immutable map
     cachedArtifactSigners = Map.copyOf(newCache);
@@ -170,6 +188,7 @@ public class SignerLoader {
     // Return all ArtifactSigners from the cache
     final Collection<ArtifactSigner> allArtifactSigners =
         cachedArtifactSigners.values().stream()
+            .map(CachedSignerData::signers)
             .flatMap(Collection::stream)
             .collect(Collectors.toSet());
 
@@ -184,50 +203,67 @@ public class SignerLoader {
   }
 
   /**
-   * Identifies new files to process by computing the set difference between available files and
-   * already cached files.
+   * Identifies files that need to be processed by computing the set difference between available
+   * files and unchanged cached files. The result includes both new files (never cached) and
+   * modified files (cached but with different timestamps).
    *
-   * @param currentFiles all files currently present in the directory
-   * @param pathsToProcess files already in cache
-   * @return set of file paths that need to be processed
+   * @param availableFiles all files currently present in the directory
+   * @param unchangedCachedFiles files in cache that haven't been modified
+   * @return set of file paths that need to be processed (new + modified files)
    */
   private static Set<String> getNewFilesToProcess(
-      final Set<String> currentFiles, final Set<String> pathsToProcess) {
-    final Set<String> filesToProcess = new HashSet<>(currentFiles);
-    filesToProcess.removeAll(pathsToProcess);
+      final Set<String> availableFiles, final Set<String> unchangedCachedFiles) {
+    final Set<String> filesToProcess = new HashSet<>(availableFiles);
+    filesToProcess.removeAll(unchangedCachedFiles);
+
+    // filesToProcess now contains:
+    // 1. New files (were never in cache)
+    // 2. Modified files (were in cache but have different timestamp)
     return filesToProcess;
   }
 
   /**
-   * Creates a new cache map containing only files that still exist on the filesystem. Removes
-   * cached entries for deleted files and logs the removal count. Uses defensive copying to ensure
-   * thread safety.
+   * Creates a new cache map containing only files that still exist on the filesystem and haven't
+   * been modified since last cached. Files are retained in cache only if:
    *
-   * @param currentFiles set of file paths currently present in the directory
-   * @return new cache map with stale entries removed
+   * <ol>
+   *   <li>They still exist in the filesystem
+   *   <li>Their last modified time hasn't changed
+   * </ol>
+   *
+   * Modified or deleted files are excluded from the returned cache and will be reprocessed or
+   * removed respectively.
+   *
+   * @param currentFilesWithTime map of current file paths to their last modified times
+   * @return new cache map containing only unchanged files
    */
-  private static Map<String, Set<ArtifactSigner>> getNewCacheMap(final Set<String> currentFiles) {
-    // Get a snapshot of current cache for reading
-    final Map<String, Set<ArtifactSigner>> currentCacheSnapshot = Map.copyOf(cachedArtifactSigners);
+  private static Map<String, CachedSignerData> getNewCacheMap(
+      final Map<String, FileTime> currentFilesWithTime) {
 
-    // Create new cache map (copy-on-write pattern)
-    final Map<String, Set<ArtifactSigner>> newCache = new HashMap<>();
+    final Map<String, CachedSignerData> currentCacheSnapshot = Map.copyOf(cachedArtifactSigners);
+    final Map<String, CachedSignerData> newCache = new HashMap<>();
 
-    // Keep only the files that still exist, remove deleted ones
-    int removedCount = 0;
-    for (Map.Entry<String, Set<ArtifactSigner>> entry : currentCacheSnapshot.entrySet()) {
-      if (currentFiles.contains(entry.getKey())) {
-        newCache.put(entry.getKey(), entry.getValue());
+    // Iterate cached files
+    for (Map.Entry<String, CachedSignerData> entry : currentCacheSnapshot.entrySet()) {
+      final String filePath = entry.getKey();
+      final CachedSignerData cachedData = entry.getValue();
+
+      // only add the files which are there on file system and modified time not changed
+      if (currentFilesWithTime.containsKey(filePath)) {
+        final FileTime currentModTime = currentFilesWithTime.get(filePath);
+
+        // Keep in cache only if unchanged
+        if (currentModTime.compareTo(cachedData.lastModifiedTime()) == 0) {
+          newCache.put(filePath, cachedData);
+        } else {
+          LOG.trace("File modified, will reprocess: {}", filePath);
+        }
       } else {
-        removedCount++;
-        LOG.trace("Removing cached entry for deleted file: {}", entry.getKey());
+        LOG.trace("File deleted: {}", filePath);
       }
     }
 
-    if (removedCount > 0) {
-      LOG.info("Removed {} cached metadata files that have been reported deleted.", removedCount);
-    }
-    return newCache;
+    return newCache; // Contains ONLY unchanged cached files
   }
 
   /**
@@ -598,19 +634,28 @@ public class SignerLoader {
   }
 
   /**
-   * Get all metadata config file paths from the directory.
+   * Get all metadata config file paths with their last modified times from the directory.
    *
    * @param configsDirectory Path to the directory containing the metadata files
-   * @return A set of normalized path strings for valid metadata files
-   * @throws IOException If there is an error reading the config directory.
+   * @return A map of normalized path strings to their last modified times
+   * @throws IOException If there is an error reading the config directory
    */
-  private static Set<String> getMetadataConfigFiles(final Path configsDirectory)
+  private static Map<String, FileTime> getMetadataConfigFilesWithTime(final Path configsDirectory)
       throws IOException {
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
       return fileStream
           .filter(SignerLoader::validFileExtension)
-          .map(path -> path.toAbsolutePath().normalize().toString())
-          .collect(Collectors.toSet());
+          .collect(
+              Collectors.toMap(
+                  path -> path.toAbsolutePath().normalize().toString(),
+                  path -> {
+                    try {
+                      return Files.getLastModifiedTime(path);
+                    } catch (IOException e) {
+                      LOG.warn("Could not get last modified time for {}, using current time", path);
+                      return FileTime.from(Instant.now());
+                    }
+                  }));
     }
   }
 

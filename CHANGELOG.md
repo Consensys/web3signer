@@ -3,11 +3,9 @@
 ## Upcoming Releases
 ### Breaking Changes
 - `--swagger-ui-enabled` cli option has been removed. The Specs UI can be accessed at https://consensys.github.io/web3signer/.
-- `\reload` endpoint will not reload successfully loaded and cached metadata config files which are later 
-modified. It will only attempt to process new and deleted metadata config files.
 
 ### Features Added
-
+- Updated load logic to utilize virtual threads for parsing metadata config files.
 
 ### Bugs Fixed
 - Fix potential memory leak during reload API endpoint. Issue [#1073][issue_1073] via PR [#1135][PR_1135].
