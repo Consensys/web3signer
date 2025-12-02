@@ -300,14 +300,8 @@ public class Eth2Runner extends Runner {
     final DbHealthCheck dbHealthCheck =
         new DbHealthCheck(
             protectionContext, slashingProtectionParameters.getDbHealthCheckTimeoutMilliseconds());
-
     final ScheduledExecutorService dbHealthCheckExecutor =
-        Executors.newSingleThreadScheduledExecutor(
-            r -> {
-              final Thread thread = new Thread(r, "db-health-check");
-              thread.setDaemon(true);
-              return thread;
-            });
+        createSingleThreadScheduledExecutor("db-health-check");
 
     dbHealthCheckExecutor.scheduleAtFixedRate(
         dbHealthCheck,
@@ -315,13 +309,24 @@ public class Eth2Runner extends Runner {
         slashingProtectionParameters.getDbHealthCheckIntervalMilliseconds(),
         TimeUnit.MILLISECONDS);
 
-    // Register for cleanup on shutdown
-    super.registerClose(
-        () -> ExecutorShutdownUtil.shutdownGracefully(dbHealthCheckExecutor, 5, TimeUnit.SECONDS));
-
     super.registerHealthCheckProcedure(
         SLASHING_PROTECTION_DB,
         promise -> promise.complete(dbHealthCheck.isDbUp() ? Status.OK() : Status.KO()));
+  }
+
+  private ScheduledExecutorService createSingleThreadScheduledExecutor(final String threadName) {
+    final ScheduledExecutorService executorService =
+        Executors.newSingleThreadScheduledExecutor(
+            r -> {
+              final Thread thread = new Thread(r, threadName);
+              thread.setDaemon(true);
+              return thread;
+            });
+
+    // Register for cleanup on shutdown
+    super.registerClose(
+        () -> ExecutorShutdownUtil.shutdownGracefully(executorService, 5, TimeUnit.SECONDS));
+    return executorService;
   }
 
   private void scheduleAndExecuteInitialDbPruning() {
@@ -330,15 +335,7 @@ public class Eth2Runner extends Runner {
     }
 
     final ScheduledExecutorService prunerExecutor =
-        Executors.newSingleThreadScheduledExecutor(
-            r -> {
-              final Thread thread = new Thread(r, "db-pruner");
-              thread.setDaemon(true);
-              return thread;
-            });
-
-    super.registerClose(
-        () -> ExecutorShutdownUtil.shutdownGracefully(prunerExecutor, 5, TimeUnit.SECONDS));
+        createSingleThreadScheduledExecutor("db-pruner");
 
     final DbPrunerRunner dbPrunerRunner =
         new DbPrunerRunner(
