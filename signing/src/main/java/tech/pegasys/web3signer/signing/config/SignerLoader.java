@@ -95,7 +95,7 @@ public class SignerLoader {
 
   // Virtual thread executor - created lazily and reused
   private static volatile ExecutorService virtualThreadExecutor;
-
+  private static Thread shutdownHookThread; // Track the hook
   private static final ReentrantLock executorLock = new ReentrantLock();
 
   /**
@@ -111,9 +111,13 @@ public class SignerLoader {
       try {
         if (virtualThreadExecutor == null) {
           virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
-          Runtime.getRuntime()
-              .addShutdownHook(
-                  new Thread(SignerLoader::shutdownExecutor, "signer-loader-shutdown"));
+
+          // Only add shutdown hook if not already added
+          if (shutdownHookThread == null) {
+            shutdownHookThread =
+                new Thread(SignerLoader::shutdownExecutor, "signer-loader-shutdown");
+            Runtime.getRuntime().addShutdownHook(shutdownHookThread);
+          }
         }
       } finally {
         executorLock.unlock();
