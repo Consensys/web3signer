@@ -370,15 +370,25 @@ public class SignerLoader {
                 ? String.format("batch %d-%d", batchStart, batchEnd)
                 : "file processing";
         LOG.error("Timeout processing {} after {} minutes", batchDescription, timeoutPerBatch);
+
         long incomplete = futures.stream().filter(f -> !f.isDone()).count();
         LOG.error("Cancelling {} incomplete file processing tasks", incomplete);
         futures.forEach(f -> f.cancel(true));
-        errorCount.addAndGet((int) incomplete);
+        // Don't add to errorCount - processFile will handle it when interrupted
+
       } catch (final InterruptedException e) {
         Thread.currentThread().interrupt();
-        LOG.error("Interrupted while processing files", e);
+        LOG.error("Interrupted while processing batch, cancelling and stopping", e);
+
+        // Cancel running futures
+        futures.stream().filter(f -> !f.isDone()).forEach(f -> f.cancel(true));
+
+        // Stop processing further batches
+        break;
+
       } catch (final ExecutionException e) {
         LOG.error("Error during parallel file processing", e);
+        // Note: Individual task failures are already counted in processFile
       }
 
       // Collect successfully processed results from this batch
@@ -396,7 +406,7 @@ public class SignerLoader {
               })
           .filter(Objects::nonNull)
           .forEach(entry -> allLoadedSigners.put(entry.getKey(), entry.getValue()));
-    }
+    } // batches - for loop
 
     return Pair.of(allLoadedSigners, errorCount.get());
   }
