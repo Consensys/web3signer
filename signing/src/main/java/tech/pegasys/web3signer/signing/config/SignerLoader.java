@@ -81,9 +81,14 @@ public class SignerLoader {
   private static final int DEFAULT_SEQUENTIAL_THRESHOLD = 100;
   private static int sequentialThreshold = DEFAULT_SEQUENTIAL_THRESHOLD;
 
-  private static final int DEFAULT_BATCH_SIZE = 5000;
+  private static final int DEFAULT_BATCH_SIZE = 2500;
   private static int batchSize = DEFAULT_BATCH_SIZE;
   private static int batchingThreshold = batchSize * 2;
+
+  // default to a high timeout. The higher the complexity of the keystore files, the higher the
+  // batch timeout should be set.
+  private static final int DEFAULT_BATCH_TIMEOUT_MINUTES = 30;
+  private static int batchTimeoutMinutes = DEFAULT_BATCH_TIMEOUT_MINUTES;
 
   /** Holds cached signer data along with file metadata for cache invalidation. */
   private record CachedSignerData(
@@ -358,18 +363,17 @@ public class SignerLoader {
                           executor))
               .toList();
 
-      final int timeoutPerBatch = 10;
       try {
         CompletableFuture<Void> allFutures =
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-        allFutures.get(timeoutPerBatch, TimeUnit.MINUTES);
+        allFutures.get(batchTimeoutMinutes, TimeUnit.MINUTES);
 
       } catch (final TimeoutException e) {
         final String batchDescription =
             (effectiveBatchSize < totalFiles)
                 ? String.format("batch %d-%d", batchStart, batchEnd)
                 : "file processing";
-        LOG.error("Timeout processing {} after {} minutes", batchDescription, timeoutPerBatch);
+        LOG.error("Timeout processing {} after {} minutes", batchDescription, batchTimeoutMinutes);
 
         long incomplete = futures.stream().filter(f -> !f.isDone()).count();
         LOG.error("Cancelling {} incomplete file processing tasks", incomplete);
@@ -634,6 +638,15 @@ public class SignerLoader {
    */
   public static void setSequentialProcessingThreshold(int threshold) {
     sequentialThreshold = Math.max(1, threshold);
+  }
+
+  /**
+   * Sets the batch timeout in minutes.
+   *
+   * @param minutes timeout for each batch virtual threads.
+   */
+  public static void setBatchTimeoutMinutes(final int minutes) {
+    batchTimeoutMinutes = minutes;
   }
 
   /**
