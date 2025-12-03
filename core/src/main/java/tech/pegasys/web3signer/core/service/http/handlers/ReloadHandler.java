@@ -41,14 +41,16 @@ public class ReloadHandler implements Handler<RoutingContext> {
     workerExecutor
         .executeBlocking(
             () -> {
-              orderedArtifactSignerProviders.forEach(
-                  signer -> {
-                    try {
-                      signer.load().get();
-                    } catch (InterruptedException | ExecutionException e) {
-                      LOG.error("Error reloading signers", e);
-                    }
-                  });
+              for (ArtifactSignerProvider signerProvider : orderedArtifactSignerProviders) {
+                try {
+                  signerProvider.load().get();
+                } catch (final InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  LOG.error("Interrupted while reloading signer", e);
+                } catch (final ExecutionException e) {
+                  LOG.error("Error reloading signer", e);
+                }
+              }
               return null;
             },
             false)
