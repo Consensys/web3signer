@@ -34,13 +34,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -81,14 +81,11 @@ public class SignerLoader {
   private static final int DEFAULT_SEQUENTIAL_THRESHOLD = 100;
   private static int sequentialThreshold = DEFAULT_SEQUENTIAL_THRESHOLD;
 
-  private static final int DEFAULT_BATCH_SIZE = 2500;
+  private static final int DEFAULT_BATCH_SIZE = 500;
   private static int batchSize = DEFAULT_BATCH_SIZE;
-  private static int batchingThreshold = batchSize * 2;
 
-  // default to a high timeout. The higher the complexity of the keystore files, the higher the
-  // batch timeout should be set.
-  private static final int DEFAULT_BATCH_TIMEOUT_MINUTES = 30;
-  private static int batchTimeoutMinutes = DEFAULT_BATCH_TIMEOUT_MINUTES;
+  private static final int DEFAULT_TASK_TIMEOUT_SECONDS = 60;
+  private static int taskTimeoutSeconds = DEFAULT_TASK_TIMEOUT_SECONDS;
 
   /** Holds cached signer data along with file metadata for cache invalidation. */
   private record CachedSignerData(
@@ -293,126 +290,119 @@ public class SignerLoader {
     final AtomicInteger errorCount = new AtomicInteger(0);
     final int totalFiles = newFilesToProcess.size();
 
-    // Sequential processing for small batches
+    // Sequential processing for small batches or when parallel is disabled
     if (!parallelProcess || totalFiles < sequentialThreshold) {
-      LOG.info("Process {} files sequentially", totalFiles);
+      LOG.info("Processing {} files sequentially", totalFiles);
       return processSequentially(
           newFilesToProcess, signerParser, configFilesHandled, errorCount, totalFiles);
     }
 
-    // Determine batch size: use all files for medium sets, configured batch size for large sets
-    final int effectiveBatchSize = (totalFiles > batchingThreshold) ? batchSize : totalFiles;
-
-    LOG.info("Processing {} files with effective batch size {}", totalFiles, effectiveBatchSize);
-    return processInConfigurableBatches(
-        newFilesToProcess,
-        signerParser,
-        configFilesHandled,
-        errorCount,
-        totalFiles,
-        effectiveBatchSize);
+    // Parallel processing with batches
+    LOG.info("Processing {} files in parallel with batch size {}", totalFiles, batchSize);
+    return processInBatches(
+        newFilesToProcess, signerParser, configFilesHandled, errorCount, totalFiles);
   }
 
   /**
-   * Processes files in configurable batch sizes using virtual threads. This unified method handles
-   * both medium-sized sets (single batch) and large sets (multiple batches).
+   * Processes files in batches using virtual threads with individual task timeouts. Batching
+   * controls memory usage while individual timeouts ensure fair processing time per file.
    *
    * @param filesToProcess complete set of files to process
    * @param signerParser parser for converting metadata to signers
    * @param configFilesHandled atomic counter for processed files
    * @param errorCount atomic counter for errors
    * @param totalFiles total number of files for progress reporting
-   * @param effectiveBatchSize size of each batch to process
    * @return pair of all processed signers and final error count
    */
-  private static Pair<Map<String, Set<ArtifactSigner>>, Integer> processInConfigurableBatches(
+  private static Pair<Map<String, Set<ArtifactSigner>>, Integer> processInBatches(
       final Set<String> filesToProcess,
       final SignerParser signerParser,
       final AtomicLong configFilesHandled,
       final AtomicInteger errorCount,
-      final int totalFiles,
-      final int effectiveBatchSize) {
+      final int totalFiles) {
 
     final Map<String, Set<ArtifactSigner>> allLoadedSigners = new HashMap<>();
     final List<String> fileList = new ArrayList<>(filesToProcess);
     final ExecutorService executor = getVirtualThreadExecutor();
 
-    for (int i = 0; i < fileList.size(); i += effectiveBatchSize) {
-      final int batchStart = i + 1;
-      final int batchEnd = Math.min(i + effectiveBatchSize, fileList.size());
-      final List<String> batch = fileList.subList(i, batchEnd);
+    for (int batchStart = 0; batchStart < fileList.size(); batchStart += batchSize) {
+      final int batchEnd = Math.min(batchStart + batchSize, fileList.size());
+      final List<String> batch = fileList.subList(batchStart, batchEnd);
 
-      // Only log batch info if processing multiple batches
-      if (effectiveBatchSize < totalFiles) {
-        LOG.info("Processing batch {}-{} of {} files", batchStart, batchEnd, totalFiles);
+      if (totalFiles > batchSize) {
+        LOG.info("Processing batch {}-{} of {} files", batchStart + 1, batchEnd, totalFiles);
       }
 
-      // Process current batch with virtual threads
-      List<CompletableFuture<Map.Entry<String, Set<ArtifactSigner>>>> futures =
-          batch.stream()
-              .map(
-                  pathStr ->
-                      CompletableFuture.supplyAsync(
-                          () ->
-                              processFile(
-                                  pathStr,
-                                  signerParser,
-                                  configFilesHandled,
-                                  errorCount,
-                                  totalFiles),
-                          executor))
-              .toList();
+      // Submit this batch
+      final List<Future<Map.Entry<String, Set<ArtifactSigner>>>> futures = new ArrayList<>();
+      for (String pathStr : batch) {
+        futures.add(
+            executor.submit(
+                () ->
+                    processFile(
+                        pathStr, signerParser, configFilesHandled, errorCount, totalFiles)));
+      }
 
-      try {
-        CompletableFuture<Void> allFutures =
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-        allFutures.get(batchTimeoutMinutes, TimeUnit.MINUTES);
-
-      } catch (final TimeoutException e) {
-        final String batchDescription =
-            (effectiveBatchSize < totalFiles)
-                ? String.format("batch %d-%d", batchStart, batchEnd)
-                : "file processing";
-        LOG.error("Timeout processing {} after {} minutes", batchDescription, batchTimeoutMinutes);
-
-        long incomplete = futures.stream().filter(f -> !f.isDone()).count();
-        LOG.error("Cancelling {} incomplete file processing tasks", incomplete);
-        futures.forEach(f -> f.cancel(true));
-        // Don't add to errorCount - processFile will handle it when interrupted
-
-      } catch (final InterruptedException e) {
-        Thread.currentThread().interrupt();
-        LOG.error("Interrupted while processing batch, cancelling and stopping", e);
-
-        // Cancel running futures
-        futures.stream().filter(f -> !f.isDone()).forEach(f -> f.cancel(true));
-
-        // Stop processing further batches
+      // Collect results with individual timeouts
+      if (!collectBatchResults(futures, batch, allLoadedSigners, errorCount)) {
+        // Interrupted - stop processing further batches
         break;
-
-      } catch (final ExecutionException e) {
-        LOG.error("Error during parallel file processing", e);
-        // Note: Individual task failures are already counted in processFile
       }
-
-      // Collect successfully processed results from this batch
-      futures.stream()
-          .filter(CompletableFuture::isDone)
-          .filter(f -> !f.isCancelled())
-          .map(
-              f -> {
-                try {
-                  return f.getNow(null);
-                } catch (Exception e) {
-                  LOG.error("Error retrieving future result", e);
-                  return null;
-                }
-              })
-          .filter(Objects::nonNull)
-          .forEach(entry -> allLoadedSigners.put(entry.getKey(), entry.getValue()));
-    } // batches - for loop
+    }
 
     return Pair.of(allLoadedSigners, errorCount.get());
+  }
+
+  /**
+   * Collects results from a batch of futures, applying individual timeout to each task.
+   *
+   * @param futures list of submitted futures
+   * @param batch corresponding file paths for logging
+   * @param allLoadedSigners map to store successful results
+   * @param errorCount counter for errors
+   * @return true if processing should continue, false if interrupted
+   */
+  private static boolean collectBatchResults(
+      final List<Future<Map.Entry<String, Set<ArtifactSigner>>>> futures,
+      final List<String> batch,
+      final Map<String, Set<ArtifactSigner>> allLoadedSigners,
+      final AtomicInteger errorCount) {
+
+    for (int i = 0; i < futures.size(); i++) {
+      final Future<Map.Entry<String, Set<ArtifactSigner>>> future = futures.get(i);
+      final String filePath = batch.get(i);
+
+      try {
+        final Map.Entry<String, Set<ArtifactSigner>> result =
+            future.get(taskTimeoutSeconds, TimeUnit.SECONDS);
+        if (result != null) {
+          allLoadedSigners.put(result.getKey(), result.getValue());
+        }
+      } catch (TimeoutException e) {
+        LOG.error("Task timed out after {} seconds: {}", taskTimeoutSeconds, filePath);
+        future.cancel(true);
+        errorCount.incrementAndGet();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        LOG.error("Interrupted while collecting batch results");
+        cancelAllFutures(futures);
+        return false;
+      } catch (ExecutionException e) {
+        LOG.warn("Task execution failed: {}", filePath, e);
+      } catch (CancellationException e) {
+        LOG.debug("Task was cancelled: {}", filePath);
+      }
+    }
+    return true;
+  }
+
+  private static void cancelAllFutures(
+      final List<Future<Map.Entry<String, Set<ArtifactSigner>>>> futures) {
+    for (Future<?> f : futures) {
+      if (!f.isDone()) {
+        f.cancel(true);
+      }
+    }
   }
 
   /**
@@ -620,14 +610,6 @@ public class SignerLoader {
    */
   public static void setBatchSize(int size) {
     batchSize = Math.max(100, size);
-    // Check for potential overflow before multiplication
-    if (batchSize > Integer.MAX_VALUE / 2) {
-      batchingThreshold = Integer.MAX_VALUE;
-      LOG.warn(
-          "Batch size {} is too large, capping batching threshold at Integer.MAX_VALUE", batchSize);
-    } else {
-      batchingThreshold = batchSize * 2;
-    }
   }
 
   /**
@@ -641,12 +623,12 @@ public class SignerLoader {
   }
 
   /**
-   * Sets the batch timeout in minutes.
+   * Sets the task timeout in seconds.
    *
-   * @param minutes timeout for each batch virtual threads.
+   * @param seconds timeout for each batch virtual threads.
    */
-  public static void setBatchTimeoutMinutes(final int minutes) {
-    batchTimeoutMinutes = minutes;
+  public static void setTaskTimeoutSeconds(final int seconds) {
+    taskTimeoutSeconds = Math.max(1, seconds);
   }
 
   /**

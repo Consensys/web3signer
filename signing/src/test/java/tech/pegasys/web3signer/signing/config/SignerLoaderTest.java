@@ -48,6 +48,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import de.neuland.assertj.logging.ExpectedLogging;
 import de.neuland.assertj.logging.ExpectedLoggingAssertions;
+import de.neuland.assertj.logging.LogEvent;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -323,33 +324,37 @@ class SignerLoaderTest {
       createFileInConfigsDirectory(
           configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
     }
+    try {
+      MappedResults<ArtifactSigner> result =
+          SignerLoader.load(configsDirectory, signerParser, true);
 
-    MappedResults<ArtifactSigner> result = SignerLoader.load(configsDirectory, signerParser, true);
+      assertThat(result.getValues()).hasSize(15000);
+      assertThat(result.getErrorCount()).isZero();
+      ExpectedLoggingAssertions.assertThat(logging)
+          .hasInfoMessage("Processing 15000 metadata files. Cached paths: 0");
 
-    assertThat(result.getValues()).hasSize(15000);
-    assertThat(result.getErrorCount()).isZero();
-    ExpectedLoggingAssertions.assertThat(logging)
-        .hasInfoMessage("Processing 15000 metadata files. Cached paths: 0");
+      // loading again will return cached results
+      result = SignerLoader.load(configsDirectory, signerParser, true);
+      assertThat(result.getValues()).hasSize(15000);
+      assertThat(result.getErrorCount()).isZero();
+      ExpectedLoggingAssertions.assertThat(logging)
+          .hasInfoMessage("Processing 0 metadata files. Cached paths: 15000");
 
-    // loading again will return cached results
-    result = SignerLoader.load(configsDirectory, signerParser, true);
-    assertThat(result.getValues()).hasSize(15000);
-    assertThat(result.getErrorCount()).isZero();
-    ExpectedLoggingAssertions.assertThat(logging)
-        .hasInfoMessage("Processing 0 metadata files. Cached paths: 15000");
-
-    // add 6000
-    for (int i = 15000; i < 21000; i++) {
-      BLSKeyPair blsKey = BLSTestUtil.randomKeyPair(i);
-      createFileInConfigsDirectory(
-          configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
+      // add 6005
+      for (int i = 15000; i < 21005; i++) {
+        BLSKeyPair blsKey = BLSTestUtil.randomKeyPair(i);
+        createFileInConfigsDirectory(
+            configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
+      }
+      // load again. Total should assert to 21005. Logs should show 15K loaded from cache.
+      result = SignerLoader.load(configsDirectory, signerParser, true);
+      assertThat(result.getValues()).hasSize(21005);
+      assertThat(result.getErrorCount()).isZero();
+      ExpectedLoggingAssertions.assertThat(logging)
+          .hasInfoMessage("Processing 6005 metadata files. Cached paths: 15000");
+    } finally {
+      logging.getLogEvents().stream().map(LogEvent::getMessage).forEach(System.out::println);
     }
-    // load again. Total should assert to 21000. Logs should show 15K loaded from cache.
-    result = SignerLoader.load(configsDirectory, signerParser, true);
-    assertThat(result.getValues()).hasSize(21000);
-    assertThat(result.getErrorCount()).isZero();
-    ExpectedLoggingAssertions.assertThat(logging)
-        .hasInfoMessage("Processing 6000 metadata files. Cached paths: 15000");
   }
 
   @Test
