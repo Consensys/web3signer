@@ -54,6 +54,7 @@ import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
+import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.slashingprotection.DbHealthCheck;
@@ -157,21 +158,31 @@ public class Eth2Runner extends Runner {
   @Override
   protected List<ArtifactSignerProvider> createArtifactSignerProvider(
       final Vertx vertx, final MetricsSystem metricsSystem) {
+    // create factory instance ONCE at startup
+    final SignerLoader signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(baseConfig.getKeyConfigPath())
+            .parallelProcess(baseConfig.keystoreParallelProcessingEnabled())
+            .build();
+
+    // Register for cleanup ONCE
+    registerClose(signerLoader);
     return List.of(
         new DefaultArtifactSignerProvider(
-            createArtifactSignerSupplier(metricsSystem),
+            createArtifactSignerSupplier(signerLoader, metricsSystem),
             slashingProtectionContext.map(PostLoadingValidatorsProcessor::new),
             Optional.of(commitBoostApiParameters)));
   }
 
   private Supplier<Collection<ArtifactSigner>> createArtifactSignerSupplier(
-      final MetricsSystem metricsSystem) {
+      final SignerLoader signerLoader, final MetricsSystem metricsSystem) {
     return () -> {
       try (final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory()) {
         final List<ArtifactSigner> signers = new ArrayList<>();
         // load keys from key config files
         signers.addAll(
-            loadSignersFromKeyConfigFiles(azureKeyVaultFactory, metricsSystem).getValues());
+            loadSignersFromKeyConfigFiles(signerLoader, azureKeyVaultFactory, metricsSystem)
+                .getValues());
         // bulk load keys
         signers.addAll(bulkLoadSigners(azureKeyVaultFactory).getValues());
 
@@ -181,7 +192,9 @@ public class Eth2Runner extends Runner {
   }
 
   private MappedResults<ArtifactSigner> loadSignersFromKeyConfigFiles(
-      final AzureKeyVaultFactory azureKeyVaultFactory, final MetricsSystem metricsSystem) {
+      final SignerLoader signerLoader,
+      final AzureKeyVaultFactory azureKeyVaultFactory,
+      final MetricsSystem metricsSystem) {
     try (final HashicorpConnectionFactory hashicorpConnectionFactory =
             new HashicorpConnectionFactory();
         final AwsSecretsManagerProvider awsSecretsManagerProvider =
@@ -195,13 +208,12 @@ public class Eth2Runner extends Runner {
               (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()),
               azureKeyVaultFactory);
 
-      final MappedResults<ArtifactSigner> results =
-          SignerLoader.load(
-              baseConfig.getKeyConfigPath(),
-              new YamlSignerParser(
-                  List.of(artifactSignerFactory),
-                  YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())),
-              baseConfig.keystoreParallelProcessingEnabled());
+      final SignerParser signerParser =
+          new YamlSignerParser(
+              List.of(artifactSignerFactory),
+              YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize()));
+      final MappedResults<ArtifactSigner> results = signerLoader.load(signerParser);
+
       registerSignerLoadingHealthCheck(KEYS_CHECK_CONFIG_FILE_LOADING, results);
 
       return results;

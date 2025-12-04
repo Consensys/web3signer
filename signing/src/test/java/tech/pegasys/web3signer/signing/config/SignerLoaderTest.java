@@ -52,6 +52,7 @@ import de.neuland.assertj.logging.LogEvent;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -82,6 +83,8 @@ class SignerLoaderTest {
   @RegisterExtension
   private final ExpectedLogging logging = ExpectedLogging.forSource(SignerLoader.class);
 
+  private SignerLoader signerLoader;
+
   @BeforeEach
   public void setup() {
     // setup metrics system stubbing
@@ -109,7 +112,15 @@ class SignerLoaderTest {
         new YamlSignerParser(
             List.of(blsArtifactSignerFactory), YamlMapperFactory.createYamlMapper());
 
-    SignerLoader.clearCache();
+    signerLoader =
+        SignerLoader.builder().configsDirectory(configsDirectory).parallelProcess(true).build();
+  }
+
+  @AfterEach
+  void cleanup() throws Exception {
+    if (signerLoader != null) {
+      signerLoader.close();
+    }
   }
 
   @ParameterizedTest(name = "{index} - Signer created for file name {0}")
@@ -118,9 +129,8 @@ class SignerLoaderTest {
     final String privateKeyHex = blsKeyPair1.getSecretKey().toBytes().toHexString();
     createFileInConfigsDirectory(fileName, privateKeyHex);
 
-    SignerLoader.load(configsDirectory, signerParser, true);
-    final Collection<ArtifactSigner> signerList =
-        SignerLoader.load(configsDirectory, signerParser, true).getValues();
+    signerLoader.load(signerParser);
+    final Collection<ArtifactSigner> signerList = signerLoader.load(signerParser).getValues();
 
     assertThat(signerList.size()).isOne();
     assertThat(signerList.stream().findFirst().orElseThrow().getIdentifier())
@@ -143,8 +153,7 @@ class SignerLoaderTest {
     final String privateKeyHex = blsKeyPair1.getSecretKey().toBytes().toHexString();
     createFileInConfigsDirectory(filename, privateKeyHex);
 
-    final MappedResults<ArtifactSigner> result =
-        SignerLoader.load(configsDirectory, signerParser, true);
+    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
     assertThat(result.getValues()).isEmpty();
     assertThat(result.getErrorCount()).isZero();
@@ -154,8 +163,7 @@ class SignerLoaderTest {
   void failedParserReturnsEmptySigner() throws IOException {
     createFileInConfigsDirectory(configFileName(blsKeyPair1), "NOT_A_VALID_KEY");
 
-    final MappedResults<ArtifactSigner> result =
-        SignerLoader.load(configsDirectory, signerParser, true);
+    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
     assertThat(result.getValues()).isEmpty();
     assertThat(result.getErrorCount()).isOne();
@@ -163,12 +171,16 @@ class SignerLoaderTest {
 
   @Test
   void failedWithDirectoryErrorReturnEmptySigner() throws IOException {
-    final Path missingConfigDir = configsDirectory.resolve("idontexist");
-    final MappedResults<ArtifactSigner> result =
-        SignerLoader.load(missingConfigDir, signerParser, true);
 
-    assertThat(result.getValues()).isEmpty();
-    assertThat(result.getErrorCount()).isOne();
+    final Path missingConfigDir = configsDirectory.resolve("idontexist");
+    try (SignerLoader signerLoaderWithInvalidConfigDir =
+        SignerLoader.builder().configsDirectory(missingConfigDir).build()) {
+      final MappedResults<ArtifactSigner> result =
+          signerLoaderWithInvalidConfigDir.load(signerParser);
+
+      assertThat(result.getValues()).isEmpty();
+      assertThat(result.getErrorCount()).isOne();
+    }
   }
 
   @Test
@@ -179,8 +191,7 @@ class SignerLoaderTest {
     createFileInConfigsDirectory(filename1, privateKeyHex);
     createFileInConfigsDirectory(filename2, privateKeyHex);
 
-    final MappedResults<ArtifactSigner> result =
-        SignerLoader.load(configsDirectory, signerParser, true);
+    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
     assertThat(result.getValues()).hasSize(1);
     assertThat(result.getErrorCount()).isZero();
@@ -190,8 +201,7 @@ class SignerLoaderTest {
   void signerIdentifiersNotReturnedInvalidMetadataFile() throws IOException {
     createEmptyFileInConfigsDirectory(configFileName(blsKeyPair1));
     createEmptyFileInConfigsDirectory(configFileName(blsKeyPair2));
-    final MappedResults<ArtifactSigner> result =
-        SignerLoader.load(configsDirectory, signerParser, true);
+    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
     assertThat(result.getValues()).isEmpty();
     assertThat(result.getErrorCount()).isEqualTo(2);
@@ -206,8 +216,7 @@ class SignerLoaderTest {
     FileHiddenUtil.makeFileHidden(hiddenFile);
     createFileInConfigsDirectory(configFileName(blsKeyPair2), privateKeyHex2);
 
-    final MappedResults<ArtifactSigner> result =
-        SignerLoader.load(configsDirectory, signerParser, true);
+    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
     assertThat(result.getValues()).hasSize(1);
     assertThat(result.getValues().stream().findFirst().orElseThrow().getIdentifier())
@@ -225,7 +234,7 @@ class SignerLoaderTest {
     createFileInConfigsDirectory(configFileName(blsKeyPair2), privateKeyHex2);
     createFileInConfigsDirectory(configFileName(blsKeyPair3), privateKeyHex3);
 
-    MappedResults<ArtifactSigner> result = SignerLoader.load(configsDirectory, signerParser, true);
+    MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
     assertThat(result.getValues()).hasSize(3);
     assertThat(
@@ -248,8 +257,7 @@ class SignerLoaderTest {
     createFileInConfigsDirectory(configFileName(blsKeyPair2), privateKeyHex2);
     createFileInConfigsDirectory(configFileName(blsKeyPair3), privateKeyHex3);
 
-    final MappedResults<ArtifactSigner> result =
-        SignerLoader.load(configsDirectory, signerParser, true);
+    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
     assertThat(result.getValues()).hasSize(3);
     assertThat(
@@ -261,8 +269,7 @@ class SignerLoaderTest {
             blsKeyPair2.getPublicKey().toHexString(),
             blsKeyPair3.getPublicKey().toHexString());
 
-    final MappedResults<ArtifactSigner> reloadedResult =
-        SignerLoader.load(configsDirectory, signerParser, true);
+    final MappedResults<ArtifactSigner> reloadedResult = signerLoader.load(signerParser);
     assertThat(reloadedResult.getValues()).hasSize(3);
   }
 
@@ -276,8 +283,7 @@ class SignerLoaderTest {
     createFileInConfigsDirectory(configFileName(blsKeyPair2), privateKeyHex2);
     createFileInConfigsDirectory(configFileName(blsKeyPair3), privateKeyHex3);
 
-    final MappedResults<ArtifactSigner> result =
-        SignerLoader.load(configsDirectory, signerParser, true);
+    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
     assertThat(result.getValues()).hasSize(3);
     assertThat(
@@ -293,7 +299,7 @@ class SignerLoaderTest {
     Files.delete(configsDirectory.resolve(configFileName(blsKeyPair3)));
 
     final Collection<ArtifactSigner> reloadedArtifactSigner =
-        SignerLoader.load(configsDirectory, signerParser, true).getValues();
+        signerLoader.load(signerParser).getValues();
     assertThat(reloadedArtifactSigner).hasSize(2);
     assertThat(
             reloadedArtifactSigner.stream()
@@ -325,8 +331,7 @@ class SignerLoaderTest {
           configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
     }
     try {
-      MappedResults<ArtifactSigner> result =
-          SignerLoader.load(configsDirectory, signerParser, true);
+      MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
       assertThat(result.getValues()).hasSize(15000);
       assertThat(result.getErrorCount()).isZero();
@@ -334,7 +339,7 @@ class SignerLoaderTest {
           .hasInfoMessage("Processing 15000 metadata files. Cached paths: 0");
 
       // loading again will return cached results
-      result = SignerLoader.load(configsDirectory, signerParser, true);
+      result = signerLoader.load(signerParser);
       assertThat(result.getValues()).hasSize(15000);
       assertThat(result.getErrorCount()).isZero();
       ExpectedLoggingAssertions.assertThat(logging)
@@ -347,7 +352,7 @@ class SignerLoaderTest {
             configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
       }
       // load again. Total should assert to 21005. Logs should show 15K loaded from cache.
-      result = SignerLoader.load(configsDirectory, signerParser, true);
+      result = signerLoader.load(signerParser);
       assertThat(result.getValues()).hasSize(21005);
       assertThat(result.getErrorCount()).isZero();
       ExpectedLoggingAssertions.assertThat(logging)
@@ -367,7 +372,7 @@ class SignerLoaderTest {
       blsKeys.add(blsKey);
     }
 
-    MappedResults<ArtifactSigner> result = SignerLoader.load(configsDirectory, signerParser, true);
+    MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
     assertThat(result.getValues()).hasSize(5);
     assertThat(result.getErrorCount()).isZero();
@@ -379,7 +384,7 @@ class SignerLoaderTest {
           configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
     }
 
-    result = SignerLoader.load(configsDirectory, signerParser, true);
+    result = signerLoader.load(signerParser);
 
     assertThat(result.getValues()).hasSize(5);
     assertThat(result.getErrorCount()).isZero();

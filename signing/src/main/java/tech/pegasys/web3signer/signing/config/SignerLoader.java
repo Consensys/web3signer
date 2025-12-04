@@ -18,6 +18,7 @@ import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -34,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -43,9 +45,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -66,66 +68,165 @@ import org.apache.logging.log4j.Logger;
  * <p>Processing strategies:
  *
  * <ul>
- *   <li>Sequential: For small batches (&lt; 100 files by default)
- *   <li>Parallel with virtual threads: For medium batches (100-10,000 files)
- *   <li>Batched parallel: For large sets (&gt; 10,000 files)
+ *   <li>Sequential: For small batches (below sequential threshold, default 100 files)
+ *   <li>Parallel with virtual threads: For larger batches, processed in configurable batch sizes
  * </ul>
+ *
+ * <p>This class implements {@link Closeable} for proper resource management. The {@link #close()}
+ * method is idempotent as required by the Closeable contract.
  *
  * <p>This class is thread-safe and uses volatile references with immutable maps for lock-free
  * reads. All write operations are atomic through copy-on-write semantics.
  */
-public class SignerLoader {
+public class SignerLoader implements Closeable {
   private static final Logger LOG = LogManager.getLogger();
   private static final Set<String> CONFIG_FILE_EXTENSIONS = Set.of("yaml", "yml");
 
   private static final int DEFAULT_SEQUENTIAL_THRESHOLD = 100;
-  private static int sequentialThreshold = DEFAULT_SEQUENTIAL_THRESHOLD;
-
   private static final int DEFAULT_BATCH_SIZE = 500;
-  private static int batchSize = DEFAULT_BATCH_SIZE;
-
   private static final int DEFAULT_TASK_TIMEOUT_SECONDS = 60;
-  private static int taskTimeoutSeconds = DEFAULT_TASK_TIMEOUT_SECONDS;
+
+  // Required parameters (set via builder)
+  private final Path configsDirectory;
+
+  // Optional parameters with defaults
+  private final boolean parallelProcess;
+  private final int batchSize;
+  private final int taskTimeoutSeconds;
+  private final int sequentialThreshold;
+
+  private final ExecutorService virtualThreadExecutor;
+
+  private volatile Map<String, CachedSignerData> cachedArtifactSigners = Collections.emptyMap();
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
   /** Holds cached signer data along with file metadata for cache invalidation. */
   private record CachedSignerData(
       String filePath, FileTime lastModifiedTime, Set<ArtifactSigner> signers) {}
 
-  // Use volatile reference to immutable map for thread-safe reads without locking
-  private static volatile Map<String, CachedSignerData> cachedArtifactSigners =
-      Collections.emptyMap();
-
-  // Virtual thread executor - created lazily and reused
-  private static volatile ExecutorService virtualThreadExecutor;
-  private static Thread shutdownHookThread; // Track the hook
-  private static final ReentrantLock executorLock = new ReentrantLock();
+  /** Private constructor - use {@link Builder} to create instances. */
+  private SignerLoader(final Builder builder) {
+    this.configsDirectory = builder.configsDirectory.toAbsolutePath().normalize();
+    this.parallelProcess = builder.parallelProcess;
+    this.batchSize = Math.max(100, builder.batchSize);
+    this.taskTimeoutSeconds = Math.max(1, builder.taskTimeoutSeconds);
+    this.sequentialThreshold = Math.max(1, builder.sequentialThreshold);
+    this.virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
+  }
 
   /**
-   * Lazily initializes and returns the virtual thread executor. Uses double-checked locking with
-   * ReentrantLock to avoid synchronized blocks which could pin carrier threads in virtual thread
-   * contexts.
+   * Creates a new builder for SignerLoader.
    *
-   * @return ExecutorService configured with virtual threads per task
+   * @return a new Builder instance
    */
-  private static ExecutorService getVirtualThreadExecutor() {
-    if (virtualThreadExecutor == null) {
-      executorLock.lock();
-      try {
-        if (virtualThreadExecutor == null) {
-          virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
+  public static Builder builder() {
+    return new Builder();
+  }
 
-          // Only add shutdown hook if not already added
-          if (shutdownHookThread == null) {
-            shutdownHookThread =
-                new Thread(SignerLoader::shutdownExecutor, "signer-loader-shutdown");
-            Runtime.getRuntime().addShutdownHook(shutdownHookThread);
-          }
-        }
-      } finally {
-        executorLock.unlock();
-      }
+  /**
+   * Builder for creating {@link SignerLoader} instances.
+   *
+   * <p>Required parameters must be set before calling {@link #build()}:
+   *
+   * <ul>
+   *   <li>{@link #configsDirectory(Path)} - location of metadata files
+   *   <li>{@link #parallelProcess(boolean)} - whether to enable parallel processing
+   * </ul>
+   *
+   * <p>Optional parameters have sensible defaults:
+   *
+   * <ul>
+   *   <li>batchSize: 500
+   *   <li>taskTimeoutSeconds: 60
+   *   <li>sequentialThreshold: 100
+   * </ul>
+   */
+  public static class Builder {
+    // Required parameters - no defaults
+    private Path configsDirectory;
+
+    // Optional parameters - initialized to defaults
+    private boolean parallelProcess = true;
+    private int batchSize = DEFAULT_BATCH_SIZE;
+    private int taskTimeoutSeconds = DEFAULT_TASK_TIMEOUT_SECONDS;
+    private int sequentialThreshold = DEFAULT_SEQUENTIAL_THRESHOLD;
+
+    private Builder() {}
+
+    /**
+     * Sets the directory containing signer configuration metadata files. This is a required
+     * parameter.
+     *
+     * @param configsDirectory path to the configuration directory
+     * @return this builder for chaining
+     * @throws NullPointerException if configsDirectory is null
+     */
+    public Builder configsDirectory(Path configsDirectory) {
+      this.configsDirectory =
+          Objects.requireNonNull(configsDirectory, "configsDirectory must not be null");
+      return this;
     }
-    return virtualThreadExecutor;
+
+    /**
+     * Sets whether to process configuration files in parallel. Optional - defaults to true.
+     *
+     * @param parallelProcess true to enable parallel processing, false for sequential
+     * @return this builder for chaining
+     */
+    public Builder parallelProcess(boolean parallelProcess) {
+      this.parallelProcess = parallelProcess;
+      return this;
+    }
+
+    /**
+     * Sets the number of files to process per batch. Optional - defaults to 500. Minimum value is
+     * 100.
+     *
+     * @param batchSize number of files per batch
+     * @return this builder for chaining
+     */
+    public Builder batchSize(int batchSize) {
+      this.batchSize = batchSize;
+      return this;
+    }
+
+    /**
+     * Sets the timeout in seconds for each individual file processing task. Optional - defaults to
+     * 60 seconds. Minimum value is 1.
+     *
+     * @param taskTimeoutSeconds timeout per task in seconds
+     * @return this builder for chaining
+     */
+    public Builder taskTimeoutSeconds(int taskTimeoutSeconds) {
+      this.taskTimeoutSeconds = taskTimeoutSeconds;
+      return this;
+    }
+
+    /**
+     * Sets the file count threshold below which sequential processing is used. Optional - defaults
+     * to 100. Minimum value is 1.
+     *
+     * @param sequentialThreshold minimum files for parallel processing
+     * @return this builder for chaining
+     */
+    public Builder sequentialThreshold(int sequentialThreshold) {
+      this.sequentialThreshold = sequentialThreshold;
+      return this;
+    }
+
+    /**
+     * Builds a new {@link SignerLoader} instance.
+     *
+     * @return a new SignerLoader configured with this builder's parameters
+     * @throws IllegalStateException if required parameters are not set
+     */
+    public SignerLoader build() {
+      if (configsDirectory == null) {
+        throw new IllegalStateException("configsDirectory is required");
+      }
+
+      return new SignerLoader(this);
+    }
   }
 
   /**
@@ -139,24 +240,21 @@ public class SignerLoader {
    *   <li>Unchanged files remain in cache without reprocessing
    * </ul>
    *
-   * Since the configsDirectory is fixed for the lifetime of Web3Signer, we don't need to handle
-   * multiple directories.
-   *
-   * @param configsDirectory Location of the metadata files (fixed for Web3Signer lifetime)
    * @param signerParser An implementation of SignerParser to parse the metadata files
-   * @param parallelProcess Whether to process config files in parallel to load the signers
    * @return A MappedResults of ArtifactSigners and error count
+   * @throws IllegalStateException if this SignerLoader has been closed
    */
-  public static MappedResults<ArtifactSigner> load(
-      final Path configsDirectory, final SignerParser signerParser, final boolean parallelProcess) {
+  public MappedResults<ArtifactSigner> load(final SignerParser signerParser) {
+    if (closed.get()) {
+      throw new IllegalStateException("SignerLoader instance has been closed");
+    }
     LOG.info("Loading signer configuration metadata files from {}", configsDirectory);
     final Instant loadStartTime = Instant.now();
 
     // Get all metadata file paths from the config directory
     final Map<String, FileTime> availableFilesWithTime;
     try {
-      availableFilesWithTime =
-          getMetadataConfigFilesWithTime(configsDirectory.toAbsolutePath().normalize());
+      availableFilesWithTime = getMetadataConfigFilesWithTime();
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied key directory", e);
       return MappedResults.errorResult();
@@ -175,7 +273,7 @@ public class SignerLoader {
 
     // load new signers
     final Pair<Map<String, Set<ArtifactSigner>>, Integer> newArtifactsWithErrorCount =
-        loadNewSigners(newFilesToProcess, signerParser, parallelProcess);
+        loadNewSigners(newFilesToProcess, signerParser);
 
     final Map<String, Set<ArtifactSigner>> loadedSigners = newArtifactsWithErrorCount.getLeft();
     final int loadedSignersErrorCount = newArtifactsWithErrorCount.getRight();
@@ -217,7 +315,7 @@ public class SignerLoader {
    * @param unchangedCachedFiles files in cache that haven't been modified
    * @return set of file paths that need to be processed (new + modified files)
    */
-  private static Set<String> getNewFilesToProcess(
+  private Set<String> getNewFilesToProcess(
       final Set<String> availableFiles, final Set<String> unchangedCachedFiles) {
     final Set<String> filesToProcess = new HashSet<>(availableFiles);
     filesToProcess.removeAll(unchangedCachedFiles);
@@ -243,7 +341,7 @@ public class SignerLoader {
    * @param currentFilesWithTime map of current file paths to their last modified times
    * @return new cache map containing only unchanged files
    */
-  private static Map<String, CachedSignerData> getNewCacheMap(
+  private Map<String, CachedSignerData> getNewCacheMap(
       final Map<String, FileTime> currentFilesWithTime) {
 
     final Map<String, CachedSignerData> currentCacheSnapshot = Map.copyOf(cachedArtifactSigners);
@@ -278,13 +376,10 @@ public class SignerLoader {
    *
    * @param newFilesToProcess files that need to be loaded
    * @param signerParser parser to convert file content to signers
-   * @param parallelProcess whether parallel processing is enabled
    * @return pair of loaded signers map and error count
    */
-  private static Pair<Map<String, Set<ArtifactSigner>>, Integer> loadNewSigners(
-      final Set<String> newFilesToProcess,
-      final SignerParser signerParser,
-      final boolean parallelProcess) {
+  private Pair<Map<String, Set<ArtifactSigner>>, Integer> loadNewSigners(
+      final Set<String> newFilesToProcess, final SignerParser signerParser) {
 
     final AtomicLong configFilesHandled = new AtomicLong(0);
     final AtomicInteger errorCount = new AtomicInteger(0);
@@ -314,7 +409,7 @@ public class SignerLoader {
    * @param totalFiles total number of files for progress reporting
    * @return pair of all processed signers and final error count
    */
-  private static Pair<Map<String, Set<ArtifactSigner>>, Integer> processInBatches(
+  private Pair<Map<String, Set<ArtifactSigner>>, Integer> processInBatches(
       final Set<String> filesToProcess,
       final SignerParser signerParser,
       final AtomicLong configFilesHandled,
@@ -323,9 +418,12 @@ public class SignerLoader {
 
     final Map<String, Set<ArtifactSigner>> allLoadedSigners = new HashMap<>();
     final List<String> fileList = new ArrayList<>(filesToProcess);
-    final ExecutorService executor = getVirtualThreadExecutor();
 
     for (int batchStart = 0; batchStart < fileList.size(); batchStart += batchSize) {
+      if (closed.get()) {
+        LOG.warn("SignerLoader closed during batch processing");
+        break;
+      }
       final int batchEnd = Math.min(batchStart + batchSize, fileList.size());
       final List<String> batch = fileList.subList(batchStart, batchEnd);
 
@@ -337,7 +435,7 @@ public class SignerLoader {
       final List<Future<Map.Entry<String, Set<ArtifactSigner>>>> futures = new ArrayList<>();
       for (String pathStr : batch) {
         futures.add(
-            executor.submit(
+            virtualThreadExecutor.submit(
                 () ->
                     processFile(
                         pathStr, signerParser, configFilesHandled, errorCount, totalFiles)));
@@ -362,7 +460,7 @@ public class SignerLoader {
    * @param errorCount counter for errors
    * @return true if processing should continue, false if interrupted
    */
-  private static boolean collectBatchResults(
+  private boolean collectBatchResults(
       final List<Future<Map.Entry<String, Set<ArtifactSigner>>>> futures,
       final List<String> batch,
       final Map<String, Set<ArtifactSigner>> allLoadedSigners,
@@ -579,78 +677,43 @@ public class SignerLoader {
   }
 
   /**
-   * Gracefully shuts down the virtual thread executor with a 5-minute timeout. Called automatically
-   * on JVM shutdown via shutdown hook, or manually for testing. Ensures all running tasks have a
-   * chance to complete before forcing termination.
+   * Closes this SignerLoader and releases resources. This method is idempotent - calling it
+   * multiple times has no additional effect.
+   *
+   * @throws IOException if an I/O error occurs during shutdown
    */
-  public static void shutdownExecutor() {
-    final ExecutorService executor = virtualThreadExecutor;
-    if (executor != null) {
-      executor.shutdown();
+  @Override
+  public void close() throws IOException {
+    if (!closed.compareAndSet(false, true)) {
+      return;
+    }
+
+    // Clear cache to release memory
+    cachedArtifactSigners = Collections.emptyMap();
+
+    if (virtualThreadExecutor != null) {
+      virtualThreadExecutor.shutdown();
       try {
-        if (!executor.awaitTermination(5, TimeUnit.MINUTES)) {
+        if (!virtualThreadExecutor.awaitTermination(5, TimeUnit.MINUTES)) {
           LOG.warn("Executor did not terminate in 5 minutes, forcing shutdown");
-          executor.shutdownNow();
+          virtualThreadExecutor.shutdownNow();
         }
       } catch (InterruptedException e) {
         LOG.error("Interrupted while waiting for executor shutdown", e);
-        executor.shutdownNow();
+        virtualThreadExecutor.shutdownNow();
         Thread.currentThread().interrupt();
-      } finally {
-        virtualThreadExecutor = null;
+        throw new IOException("Interrupted during close", e);
       }
     }
   }
 
   /**
-   * Sets the batch size for processing large file sets. Minimum value is enforced at 100 to prevent
-   * inefficient small batches.
-   *
-   * @param size desired batch size (will be clamped to minimum 100)
-   */
-  public static void setBatchSize(int size) {
-    batchSize = Math.max(100, size);
-  }
-
-  /**
-   * Sets the threshold below which files are processed sequentially. Files counts below this
-   * threshold will not use virtual threads.
-   *
-   * @param threshold minimum file count for parallel processing (minimum 1)
-   */
-  public static void setSequentialProcessingThreshold(int threshold) {
-    sequentialThreshold = Math.max(1, threshold);
-  }
-
-  /**
-   * Sets the task timeout in seconds.
-   *
-   * @param seconds timeout for each batch virtual threads.
-   */
-  public static void setTaskTimeoutSeconds(final int seconds) {
-    taskTimeoutSeconds = Math.max(1, seconds);
-  }
-
-  /**
-   * Clears all cached signers and shuts down the virtual thread executor. Primarily intended for
-   * testing to ensure clean state between tests.
-   */
-  @VisibleForTesting
-  static void clearCache() {
-    cachedArtifactSigners = Collections.emptyMap();
-    // Also clean up executor in tests
-    shutdownExecutor();
-  }
-
-  /**
    * Get all metadata config file paths with their last modified times from the directory.
    *
-   * @param configsDirectory Path to the directory containing the metadata files
    * @return A map of normalized path strings to their last modified times
    * @throws IOException If there is an error reading the config directory
    */
-  private static Map<String, FileTime> getMetadataConfigFilesWithTime(final Path configsDirectory)
-      throws IOException {
+  private Map<String, FileTime> getMetadataConfigFilesWithTime() throws IOException {
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
       return fileStream
           .filter(SignerLoader::validFileExtension)

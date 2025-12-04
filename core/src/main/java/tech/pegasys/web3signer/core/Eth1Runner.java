@@ -38,6 +38,7 @@ import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import tech.pegasys.web3signer.signing.config.SecpArtifactSignerProviderAdapter;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
+import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsSignerFactory;
@@ -92,11 +93,17 @@ public class Eth1Runner extends Runner {
     final AzureHttpClientFactory azureHttpClientFactory = new AzureHttpClientFactory();
     final CachedAwsKmsClientFactory cachedAwsKmsClientFactory =
         new CachedAwsKmsClientFactory(eth1Config.getAwsKmsClientCacheSize());
+    final SignerLoader signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(baseConfig.getKeyConfigPath())
+            .parallelProcess(baseConfig.keystoreParallelProcessingEnabled())
+            .build();
 
     // Register ALL for cleanup ONCE
     registerClose(azureKeyVaultFactory);
     registerClose(azureHttpClientFactory);
     registerClose(cachedAwsKmsClientFactory);
+    registerClose(signerLoader);
 
     // Create signer factories that use the shared instances
     final AzureKeyVaultSignerFactory azureSignerFactory =
@@ -111,7 +118,10 @@ public class Eth1Runner extends Runner {
               final List<ArtifactSigner> signers = new ArrayList<>();
               signers.addAll(
                   loadSignersFromKeyConfigFiles(
-                          azureKeyVaultFactory, azureSignerFactory, awsKmsSignerFactory)
+                          azureKeyVaultFactory,
+                          azureSignerFactory,
+                          awsKmsSignerFactory,
+                          signerLoader)
                       .getValues());
               signers.addAll(
                   bulkLoadSigners(
@@ -136,7 +146,8 @@ public class Eth1Runner extends Runner {
   private MappedResults<ArtifactSigner> loadSignersFromKeyConfigFiles(
       final AzureKeyVaultFactory azureKeyVaultFactory,
       final AzureKeyVaultSignerFactory azureSignerFactory,
-      final AwsKmsSignerFactory awsKmsSignerFactory) {
+      final AwsKmsSignerFactory awsKmsSignerFactory,
+      final SignerLoader signerLoader) {
     final HashicorpConnectionFactory hashicorpConnectionFactory = new HashicorpConnectionFactory();
     final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
         new Secp256k1ArtifactSignerFactory(
@@ -148,12 +159,12 @@ public class Eth1Runner extends Runner {
             awsKmsSignerFactory,
             true);
 
-    return SignerLoader.load(
-        baseConfig.getKeyConfigPath(),
+    final SignerParser signerParser =
         new YamlSignerParser(
             List.of(ethSecpArtifactSignerFactory),
-            YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())),
-        baseConfig.keystoreParallelProcessingEnabled());
+            YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize()));
+
+    return signerLoader.load(signerParser);
   }
 
   private MappedResults<ArtifactSigner> bulkLoadSigners(
