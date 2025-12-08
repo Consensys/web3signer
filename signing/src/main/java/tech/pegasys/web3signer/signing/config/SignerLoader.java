@@ -480,6 +480,7 @@ public class SignerLoader implements Closeable {
         if (result != null) {
           allLoadedSigners.put(result.getKey(), result.getValue());
         }
+        // result == null means processFile returned null (error already logged/counted)
       } catch (TimeoutException e) {
         LOG.error("Task timed out after {} seconds: {}", taskTimeoutSeconds, filePath);
         future.cancel(true);
@@ -592,7 +593,6 @@ public class SignerLoader implements Closeable {
     // Check interruption at the beginning
     if (Thread.currentThread().isInterrupted()) {
       LOG.debug("File processing interrupted before start: {}", pathStr);
-      errorCount.incrementAndGet();
       return null;
     }
 
@@ -606,7 +606,6 @@ public class SignerLoader implements Closeable {
       // Check interruption after IO operation
       if (Thread.currentThread().isInterrupted()) {
         LOG.debug("File processing interrupted after reading: {}", pathStr);
-        errorCount.incrementAndGet();
         return null;
       }
 
@@ -626,7 +625,6 @@ public class SignerLoader implements Closeable {
       // Check interruption before expensive decryption operation
       if (Thread.currentThread().isInterrupted()) {
         LOG.debug("File processing interrupted before decryption: {}", pathStr);
-        errorCount.incrementAndGet();
         return null;
       }
 
@@ -650,15 +648,24 @@ public class SignerLoader implements Closeable {
       // Check if IOException was caused by interruption
       if (Thread.currentThread().isInterrupted()) {
         LOG.debug("File processing interrupted during IO: {}", pathStr);
+        return null;
       } else {
         LOG.error("Error reading metadata config file: {}", pathStr, e);
+        errorCount.incrementAndGet();
+        return null;
       }
-      errorCount.incrementAndGet();
-      return null;
     } catch (final Exception e) {
-      LOG.error("Unexpected error processing file: {}", pathStr, e);
-      errorCount.incrementAndGet();
-      return null;
+      // Check if exception is due to thread interruption (timeout/cancellation)
+      if (Thread.currentThread().isInterrupted()
+          || e instanceof InterruptedException
+          || (e.getCause() != null && e.getCause() instanceof InterruptedException)) {
+        LOG.debug("File processing cancelled: {}", pathStr);
+        return null;
+      } else {
+        LOG.error("Unexpected error processing file: {}", pathStr, e);
+        errorCount.incrementAndGet();
+        return null;
+      }
     }
   }
 

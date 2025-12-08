@@ -53,6 +53,7 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
@@ -113,6 +114,39 @@ public class SignerLoaderEnhancedTest {
     if (signerLoader != null) {
       signerLoader.close();
     }
+  }
+
+  // ==================== TIMEOUT BEHAVIOR TESTS ====================
+  @Test
+  @Timeout(30)
+  void taskTimeoutCancelsLongRunningTask() throws Exception {
+    // Create a slow parser that takes longer than the timeout
+    SignerParser slowParser = createSlowParser(10000); // 10 second delay
+
+    createBLSRawConfigFiles(3);
+
+    // Create loader with 2 second timeout
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .sequentialThreshold(1) // Force parallel processing for testing timeout
+            .taskTimeoutSeconds(2)
+            .build();
+
+    MappedResults<ArtifactSigner> result = signerLoader.load(slowParser);
+
+    // All tasks should timeout and be cancelled
+    assertThat(result.getErrorCount()).isEqualTo(3);
+    assertThat(result.getValues()).isEmpty();
+
+    // Verify we got exactly 3 timeout messages
+    long timeoutCount =
+        logging.getLogEvents().stream()
+            .filter(
+                event -> event.getMessage().matches("Task timed out after 2 seconds: .*\\.yaml"))
+            .count();
+    assertThat(timeoutCount).isEqualTo(3);
   }
 
   // ==================== BATCH SIZE BEHAVIOR TESTS ====================
