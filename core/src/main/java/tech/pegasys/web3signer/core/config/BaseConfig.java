@@ -59,7 +59,15 @@ public interface BaseConfig {
 
   Boolean isAccessLogsEnabled();
 
-  boolean keystoreParallelProcessingEnabled();
-
   int getVertxWorkerPoolSize();
+
+  boolean isSignerLoadParallel();
+
+  long getReloadTimeoutMinutes();
+
+  int getSignerLoadTimeoutSeconds();
+
+  int getSignerLoadBatchSize();
+
+  int getSignerLoadSequentialThreshold();
 }

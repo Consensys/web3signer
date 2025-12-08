@@ -96,7 +96,10 @@ public class Eth1Runner extends Runner {
     final SignerLoader signerLoader =
         SignerLoader.builder()
             .configsDirectory(baseConfig.getKeyConfigPath())
-            .parallelProcess(baseConfig.keystoreParallelProcessingEnabled())
+            .parallelProcess(baseConfig.isSignerLoadParallel())
+            .batchSize(baseConfig.getSignerLoadBatchSize())
+            .sequentialThreshold(baseConfig.getSignerLoadSequentialThreshold())
+            .taskTimeoutSeconds(baseConfig.getSignerLoadTimeoutSeconds())
             .build();
 
     // Register ALL for cleanup ONCE

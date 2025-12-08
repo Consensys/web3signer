@@ -168,7 +168,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
           vertx.createSharedWorkerExecutor(
               "web3signer-reload-pool",
               1, // pool size
-              30, // max execute time
+              baseConfig.getReloadTimeoutMinutes(), // max execute time
               TimeUnit.MINUTES); // generous timeout for encrypted keystores and cloud provider
 
       // Register for cleanup

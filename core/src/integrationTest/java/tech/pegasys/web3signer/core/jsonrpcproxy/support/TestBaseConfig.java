@@ -128,12 +128,32 @@ public class TestBaseConfig implements BaseConfig {
   }
 
   @Override
-  public boolean keystoreParallelProcessingEnabled() {
-    return true;
+  public int getVertxWorkerPoolSize() {
+    return 20;
   }
 
   @Override
-  public int getVertxWorkerPoolSize() {
-    return 20;
+  public long getReloadTimeoutMinutes() {
+    return 30;
+  }
+
+  @Override
+  public int getSignerLoadTimeoutSeconds() {
+    return 60;
+  }
+
+  @Override
+  public int getSignerLoadBatchSize() {
+    return 500;
+  }
+
+  @Override
+  public int getSignerLoadSequentialThreshold() {
+    return 100;
+  }
+
+  @Override
+  public boolean isSignerLoadParallel() {
+    return true;
   }
 }
