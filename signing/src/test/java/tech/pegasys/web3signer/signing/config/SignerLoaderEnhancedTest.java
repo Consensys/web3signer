@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.signing.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
@@ -147,6 +146,81 @@ public class SignerLoaderEnhancedTest {
                 event -> event.getMessage().matches("Task timed out after 2 seconds: .*\\.yaml"))
             .count();
     assertThat(timeoutCount).isEqualTo(3);
+  }
+
+  @Test
+  @Timeout(15)
+  void customTimeoutIsRespected() throws Exception {
+    SignerParser slowParser = createSlowParser(500); // 500ms delay
+
+    createBLSRawConfigFiles(2);
+
+    // Create loader with 1 second timeout (should succeed with 500ms tasks)
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .sequentialThreshold(1) // Force parallel processing
+            .taskTimeoutSeconds(1)
+            .build();
+
+    MappedResults<ArtifactSigner> result = signerLoader.load(slowParser);
+
+    // Tasks should complete within timeout
+    assertThat(result.getErrorCount()).isZero();
+    assertThat(result.getValues()).hasSize(2);
+
+    // Verify parallel processing was used
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 2 files in parallel with batch size 500");
+  }
+
+  @Test
+  void minimumTimeoutIsEnforced() {
+    // taskTimeoutSeconds with value less than 1 should be clamped to 1
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .taskTimeoutSeconds(0)
+            .build();
+
+    // Verify by introspection that the minimum is applied
+    // The minimum is enforced in the constructor: Math.max(1, builder.taskTimeoutSeconds)
+    assertThat(signerLoader.getTaskTimeoutSeconds()).isOne();
+  }
+
+  @Test
+  @Timeout(20)
+  void partialTimeoutWithMixedTaskDurations() throws Exception {
+    // Create a parser with variable delays based on file index
+    SignerParser variableDelayParser = createVariableDelayParser();
+
+    // Create 5 files with different processing times
+    createBLSRawConfigFiles(5);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .sequentialThreshold(1) // Force parallel processing
+            .taskTimeoutSeconds(2)
+            .build();
+
+    MappedResults<ArtifactSigner> result = signerLoader.load(variableDelayParser);
+
+    // Some tasks complete, some timeout
+    // With variable delays (0, 500ms, 1s, 3s, 5s), expect 3 timeouts (files with 3s+ delays)
+    assertThat(result.getValues().size()).isGreaterThanOrEqualTo(2);
+    assertThat(result.getErrorCount()).isGreaterThanOrEqualTo(2);
+    assertThat(result.getValues().size() + result.getErrorCount()).isEqualTo(5);
+
+    // Verify at least one timeout occurred
+    long timeoutCount =
+        logging.getLogEvents().stream()
+            .filter(event -> event.getMessage().matches("Task timed out after 2 seconds: .*"))
+            .count();
+    assertThat(timeoutCount).isGreaterThan(0);
   }
 
   // ==================== BATCH SIZE BEHAVIOR TESTS ====================
@@ -376,7 +450,6 @@ public class SignerLoaderEnhancedTest {
             .build();
 
     // The minimum is enforced in constructor: Math.max(1, builder.sequentialThreshold)
-    assertThat(signerLoader).isNotNull();
     assertThat(signerLoader.getSequentialThreshold()).isOne();
   }
 
@@ -446,54 +519,34 @@ public class SignerLoaderEnhancedTest {
     return slowParser;
   }
 
-  /** Creates a parser that is slow only for files containing "slow" in the name */
-  private SignerParser createSelectivelySlowParser() throws SigningMetadataException {
-    SignerParser selectiveParser = spy(signerParser);
+  /**
+   * Creates a parser with variable delays based on file processing order Files complete at: 0ms,
+   * 500ms, 1000ms, 3000ms, 5000ms
+   */
+  private SignerParser createVariableDelayParser() throws SigningMetadataException {
+    final SignerParser variableParser = spy(signerParser);
+    final AtomicInteger callCount = new AtomicInteger(0);
 
     doAnswer(
             invocation -> {
-              // Check if we're in a slow file context by looking at the current thread
-              // This is a bit hacky but works for testing
-              String threadName = Thread.currentThread().getName();
-              if (threadName != null && threadName.contains("slow")) {
-                Thread.sleep(3000); // 3 seconds - longer than timeout
+              int count = callCount.getAndIncrement();
+              // Variable delays: 0, 500, 1000, 3000, 5000 ms
+              long delay =
+                  switch (count % 5) {
+                    case 1 -> 500;
+                    case 2 -> 1000;
+                    case 3 -> 3000;
+                    case 4 -> 5000;
+                    default -> 0;
+                  };
+              if (delay > 0) {
+                Thread.sleep(delay);
               }
               return invocation.callRealMethod();
             })
-        .when(selectiveParser)
-        .readSigningMetadata(anyString());
-
-    return selectiveParser;
-  }
-
-  /** Creates a parser that tracks concurrent execution */
-  private SignerParser createConcurrencyTrackingParser(
-      AtomicInteger maxConcurrent, AtomicInteger currentConcurrent)
-      throws SigningMetadataException {
-
-    SignerParser trackingParser = spy(signerParser);
-
-    doAnswer(
-            invocation -> {
-              int current = currentConcurrent.incrementAndGet();
-              int max = maxConcurrent.get();
-              while (current > max) {
-                if (maxConcurrent.compareAndSet(max, current)) {
-                  break;
-                }
-                max = maxConcurrent.get();
-              }
-
-              try {
-                Thread.sleep(50); // Small delay to ensure concurrency
-                return invocation.callRealMethod();
-              } finally {
-                currentConcurrent.decrementAndGet();
-              }
-            })
-        .when(trackingParser)
+        .when(variableParser)
         .parse(any());
 
-    return trackingParser;
+    return variableParser;
   }
 }
