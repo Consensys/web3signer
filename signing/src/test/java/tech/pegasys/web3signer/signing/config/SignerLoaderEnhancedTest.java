@@ -46,7 +46,6 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import de.neuland.assertj.logging.ExpectedLogging;
 import de.neuland.assertj.logging.ExpectedLoggingAssertions;
-import de.neuland.assertj.logging.LogEvent;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -116,6 +115,27 @@ public class SignerLoaderEnhancedTest {
   }
 
   @Test
+  void sequentialProcessingWhenParallelDisabled() throws Exception {
+    // Create many files
+    createBLSRawConfigFiles(200);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(false) // Explicitly disable parallel processing
+            .build();
+
+    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+
+    assertThat(result.getValues()).hasSize(200);
+    assertThat(result.getErrorCount()).isZero();
+
+    // Verify sequential processing was used despite file count
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 200 files sequentially");
+  }
+
+  @Test
   void customSequentialThresholdIsRespected() throws Exception {
     createBLSRawConfigFiles(75);
 
@@ -127,17 +147,13 @@ public class SignerLoaderEnhancedTest {
             .sequentialThreshold(50)
             .build();
 
-    MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
     assertThat(result.getValues()).hasSize(75);
 
     // With 75 files and threshold of 50, should use parallel processing
     ExpectedLoggingAssertions.assertThat(logging)
         .hasInfoMessage("Processing 75 files in parallel with batch size 500");
-  }
-
-  void printLoggingMessage() {
-    logging.getLogEvents().stream().map(LogEvent::getMessage).forEach(System.out::println);
   }
 
   @Test
