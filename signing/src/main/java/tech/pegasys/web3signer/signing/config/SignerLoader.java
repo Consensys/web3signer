@@ -688,9 +688,6 @@ public class SignerLoader implements Closeable {
       return;
     }
 
-    // Clear cache to release memory
-    cachedArtifactSigners = Collections.emptyMap();
-
     if (virtualThreadExecutor != null) {
       virtualThreadExecutor.shutdown();
       try {
@@ -705,6 +702,9 @@ public class SignerLoader implements Closeable {
         throw new IOException("Interrupted during close", e);
       }
     }
+
+    // Clear cache to release memory - AFTER executor is shut down
+    cachedArtifactSigners = Collections.emptyMap();
   }
 
   /**
