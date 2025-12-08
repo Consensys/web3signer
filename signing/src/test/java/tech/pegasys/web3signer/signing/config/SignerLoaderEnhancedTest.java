@@ -114,6 +114,52 @@ public class SignerLoaderEnhancedTest {
     }
   }
 
+  // ==================== SEQUENTIAL VS PARALLEL PROCESSING TESTS ====================
+
+  @Test
+  void sequentialProcessingWhenBelowThreshold() throws Exception {
+    // Create files below sequential threshold (default 100)
+    createBLSRawConfigFiles(50);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .sequentialThreshold(100)
+            .build();
+
+    MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+
+    assertThat(result.getValues()).hasSize(50);
+    assertThat(result.getErrorCount()).isZero();
+
+    // Verify sequential processing was used
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 50 files sequentially");
+  }
+
+  @Test
+  void parallelProcessingWhenAboveThreshold() throws Exception {
+    // Create files above sequential threshold
+    createBLSRawConfigFiles(150);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .sequentialThreshold(100)
+            .build();
+
+    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+
+    assertThat(result.getValues()).hasSize(150);
+    assertThat(result.getErrorCount()).isZero();
+
+    // Verify parallel processing was used
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 150 files in parallel with batch size 500");
+  }
+
   @Test
   void sequentialProcessingWhenParallelDisabled() throws Exception {
     // Create many files
