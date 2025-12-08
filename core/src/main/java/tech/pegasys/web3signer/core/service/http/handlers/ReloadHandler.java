@@ -15,10 +15,13 @@ package tech.pegasys.web3signer.core.service.http.handlers;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.vertx.core.Handler;
 import io.vertx.core.WorkerExecutor;
+import io.vertx.core.json.Json;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,6 +31,7 @@ public class ReloadHandler implements Handler<RoutingContext> {
 
   private final List<ArtifactSignerProvider> orderedArtifactSignerProviders;
   private final WorkerExecutor workerExecutor;
+  private final AtomicBoolean reloadInProgress = new AtomicBoolean(false);
 
   public ReloadHandler(
       final List<ArtifactSignerProvider> orderedArtifactSignerProviders,
@@ -38,6 +42,23 @@ public class ReloadHandler implements Handler<RoutingContext> {
 
   @Override
   public void handle(final RoutingContext routingContext) {
+    // Check if reload is already in progress
+    if (!reloadInProgress.compareAndSet(false, true)) {
+      routingContext
+          .response()
+          .setStatusCode(409) // Conflict
+          .putHeader("Content-Type", "application/json")
+          .end(
+              Json.encode(
+                  Map.of(
+                      "status", "error",
+                      "message",
+                          "A reload operation is already in progress. Please try again later.")));
+      return;
+    }
+
+    LOG.debug("Reload operation initiated");
+
     workerExecutor
         .executeBlocking(
             () -> {
@@ -47,16 +68,36 @@ public class ReloadHandler implements Handler<RoutingContext> {
                 } catch (final InterruptedException e) {
                   Thread.currentThread().interrupt();
                   LOG.error("Interrupted while reloading signer", e);
+                  throw new RuntimeException("Reload interrupted", e);
                 } catch (final ExecutionException e) {
                   LOG.error("Error reloading signer", e);
+                  throw new RuntimeException("Reload failed", e);
                 }
               }
               return null;
             },
-            false)
-        .onFailure(err -> LOG.error("Reload operation failed", err));
+            false) // unordered is fine since we have pool size 1
+        .onSuccess(
+            result -> {
+              reloadInProgress.set(false);
+              LOG.info("Reload operation completed successfully");
+            })
+        .onFailure(
+            err -> {
+              reloadInProgress.set(false);
+              LOG.error("Reload operation failed", err);
+            });
 
-    // Respond immediately - don't wait for reload to complete
-    routingContext.response().setStatusCode(200).end();
+    // Respond immediately - reload happens in background
+    routingContext
+        .response()
+        .setStatusCode(202) // Accepted (not using 200 - OK)
+        .putHeader("Content-Type", "application/json")
+        .end(
+            Json.encode(
+                Map.of(
+                    "status", "accepted",
+                    "message",
+                        "Reload operation accepted and is running in the background. Check /healthcheck for status.")));
   }
 }

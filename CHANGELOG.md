@@ -2,13 +2,29 @@
 
 ## Upcoming Releases
 ### Breaking Changes
-- `--swagger-ui-enabled` cli option has been removed. The Specs UI can be accessed at https://consensys.github.io/web3signer/.
+#### `/reload` Endpoint Response Format Changed
+- Now returns HTTP `202 Accepted` (previously `200 OK`) with JSON response body
+- Returns `409 Conflict` with error message if reload already in progress
+- **Migration:** Update automation to expect `202` status code instead of `200`
+
+#### Removed Swagger UI CLI Option
+- `--swagger-ui-enabled` option removed
+- Access OpenAPI specs at https://consensys.github.io/web3signer/
 
 ### Features Added
-- Updated load logic to utilize virtual threads for parsing metadata config files.
+- Virtual thread-based signer loading for improved performance
+- New file system signer loading configuration:
+    - `--signer-load-timeout` (default: 60 sec) - Timeout per file during parallel processing
+    - `--signer-load-batch-size` (default: 500) - Files processed per batch in parallel mode
+    - `--signer-load-sequential-threshold` (default: 100) - Minimum files to trigger parallel processing
+    - `--signer-load-parallel` (default: true) - Enable/disable parallel processing
+- New `/reload` endpoint configuration:
+  - `--reload-timeout` (default: 30 min) - Maximum time for entire reload operation
+- Improved reload concurrency control prevents multiple simultaneous reloads
+
 
 ### Bugs Fixed
-- Fix potential memory leak during reload API endpoint. Issue [#1073][issue_1073] via PR [#1135][PR_1135].
+- Fix memory leak during reload API endpoint. Issue [#1073][issue_1073] via PR [#1135][PR_1135].
 
 [issue_1073]: https://github.com/Consensys/web3signer/issues/1073
 [PR_1135]: https://github.com/Consensys/web3signer/pull/1135
