@@ -714,6 +714,15 @@ public class SignerLoader implements Closeable {
    * @throws IOException If there is an error reading the config directory
    */
   private Map<String, FileTime> getMetadataConfigFilesWithTime() throws IOException {
+    if (!Files.exists(configsDirectory)) {
+      LOG.warn("Config directory does not exist: {}", configsDirectory);
+      return Collections.emptyMap();
+    }
+
+    if (!Files.isDirectory(configsDirectory)) {
+      throw new IOException("Path is not a directory: " + configsDirectory);
+    }
+
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
       return fileStream
           .filter(SignerLoader::validFileExtension)
