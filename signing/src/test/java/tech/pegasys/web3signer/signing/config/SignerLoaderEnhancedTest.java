@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import de.neuland.assertj.logging.ExpectedLogging;
 import de.neuland.assertj.logging.ExpectedLoggingAssertions;
+import de.neuland.assertj.logging.LogEvent;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -112,6 +113,134 @@ public class SignerLoaderEnhancedTest {
     if (signerLoader != null) {
       signerLoader.close();
     }
+  }
+
+  // ==================== BATCH SIZE BEHAVIOR TESTS ====================
+
+  @Test
+  void batchSizeControlsProgressLogging() throws Exception {
+    int fileCount = 250;
+
+    createBLSRawConfigFiles(fileCount);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .batchSize(120)
+            .build();
+    assertThat(signerLoader.getBatchSize()).isEqualTo(120);
+
+    signerLoader.load(signerParser);
+
+    // With 250 files and batch size 120, should process in 3 batches
+    // Verify we see batch progress logs
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 250 files in parallel with batch size 120")
+        .hasInfoMessage("Processing batch 1-120 of 250 files")
+        .hasInfoMessage("Processing batch 121-240 of 250 files")
+        .hasInfoMessage("Processing batch 241-250 of 250 files");
+  }
+
+  @Test
+  void largeBatchSizeProcessesInSingleBatch() throws Exception {
+    int fileCount = 150;
+
+    createBLSRawConfigFiles(fileCount);
+
+    // Use batch size larger than file count
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .batchSize(200)
+            .build();
+    assertThat(signerLoader.getBatchSize()).isEqualTo(200);
+
+    MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+
+    assertThat(result.getValues()).hasSize(fileCount);
+    assertThat(result.getErrorCount()).isZero();
+
+    // Should see parallel processing but not batch-specific messages
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 150 files in parallel with batch size 200");
+
+    // Verify no batch subdivision occurred by checking all log messages
+    assertThat(
+            logging.getLogEvents().stream()
+                .map(LogEvent::getMessage)
+                .noneMatch(msg -> msg.contains("Processing batch")))
+        .isTrue();
+  }
+
+  @Test
+  void batchSizeLessThan100IsClampedTo100() throws Exception {
+    int fileCount = 150;
+    createBLSRawConfigFiles(fileCount);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .batchSize(50) // Should be clamped to 100
+            .build();
+    assertThat(signerLoader.getBatchSize()).isEqualTo(100);
+
+    signerLoader.load(signerParser);
+
+    // Verify it used 100, not 50
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 150 files in parallel with batch size 100");
+  }
+
+  @Test
+  void exactlyOneBatchWhenFilesEqualBatchSize() throws Exception {
+    int fileCount = 100;
+    createBLSRawConfigFiles(fileCount);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .batchSize(100)
+            .build();
+    assertThat(signerLoader.getBatchSize()).isEqualTo(100);
+
+    signerLoader.load(signerParser);
+
+    // Should see parallel processing but not batch-specific messages
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 100 files in parallel with batch size 100");
+
+    // Verify no batch subdivision occurred by checking all log messages
+    assertThat(
+            logging.getLogEvents().stream()
+                .map(LogEvent::getMessage)
+                .noneMatch(msg -> msg.contains("Processing batch")))
+        .isTrue();
+  }
+
+  @Test
+  void batchProgressOnlyLoggedWhenTotalExceedsBatchSize() throws Exception {
+    int fileCount = 150;
+    createBLSRawConfigFiles(fileCount);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .batchSize(100)
+            .build();
+    assertThat(signerLoader.getBatchSize()).isEqualTo(100);
+
+    signerLoader.load(signerParser);
+
+    // With 150 files and batch size 100, should see 2 batches
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 150 files in parallel with batch size 100")
+        .hasInfoMessage("Processing batch 1-100 of 150 files")
+        .hasInfoMessage("Processing batch 101-150 of 150 files");
   }
 
   // ==================== SEQUENTIAL VS PARALLEL PROCESSING TESTS ====================
