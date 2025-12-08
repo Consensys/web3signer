@@ -282,6 +282,10 @@ public class SignerLoader implements Closeable {
     loadedSigners.forEach(
         (pathStr, signers) -> {
           FileTime modTime = availableFilesWithTime.get(pathStr);
+          if (modTime == null) {
+            LOG.warn("No modification time found for {}, using current time", pathStr);
+            modTime = FileTime.from(Instant.now());
+          }
           newCache.put(pathStr, new CachedSignerData(pathStr, modTime, signers));
           LOG.trace("Added {} signers from {}", signers.size(), pathStr);
         });
