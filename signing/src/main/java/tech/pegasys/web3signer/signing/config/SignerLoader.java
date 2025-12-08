@@ -767,4 +767,19 @@ public class SignerLoader implements Closeable {
     final String extension = FilenameUtils.getExtension(filename.toString());
     return !isHidden && CONFIG_FILE_EXTENSIONS.contains(extension.toLowerCase(Locale.ROOT));
   }
+
+  @VisibleForTesting
+  public int getBatchSize() {
+    return batchSize;
+  }
+
+  @VisibleForTesting
+  public int getTaskTimeoutSeconds() {
+    return taskTimeoutSeconds;
+  }
+
+  @VisibleForTesting
+  public int getSequentialThreshold() {
+    return sequentialThreshold;
+  }
 }

@@ -114,6 +114,21 @@ public class SignerLoaderEnhancedTest {
   }
 
   @Test
+  void minimumSequentialThresholdIsEnforced() {
+    // sequentialThreshold less than 1 should be clamped to 1
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .sequentialThreshold(0)
+            .build();
+
+    // The minimum is enforced in constructor: Math.max(1, builder.sequentialThreshold)
+    assertThat(signerLoader).isNotNull();
+    assertThat(signerLoader.getSequentialThreshold()).isOne();
+  }
+
+  @Test
   void sequentialProcessingProducesCorrectResults() throws Exception {
     final List<BLSKeyPair> keyPairs = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
