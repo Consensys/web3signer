@@ -675,7 +675,7 @@ public class SignerLoader implements Closeable {
     // Report ~100 times max, or every 10 files minimum
     int interval = Math.max(10, total / 100);
     if (count % interval == 0 || count == total) {
-      int percentage = (int) ((count * 100) / total);
+      final int percentage = (int) Math.round((count * 100.0) / total);
       LOG.info("Processed {}/{} files ({}%)", count, total, percentage);
     }
   }
