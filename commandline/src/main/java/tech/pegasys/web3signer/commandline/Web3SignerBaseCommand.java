@@ -433,6 +433,17 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
           "--metrics-enabled option and --metrics-push-enabled option can't be used at the same "
               + "time.  Please refer to CLI reference for more details about this constraint.");
     }
+
+    // signer-load config options validations
+    if (signerLoadBatchSize < 100) {
+      throw new CommandLine.ParameterException(
+          spec.commandLine(), "--signer-load-batch-size must be at least 100");
+    }
+
+    if (signerLoadSequentialThreshold < 1) {
+      throw new CommandLine.ParameterException(
+          spec.commandLine(), "--signer-load-sequential-threshold must be at least 1");
+    }
   }
 
   public static class Web3signerMetricCategoryConverter extends MetricCategoryConverter {
