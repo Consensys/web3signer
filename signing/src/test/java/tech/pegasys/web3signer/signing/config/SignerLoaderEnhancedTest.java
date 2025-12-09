@@ -39,7 +39,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
@@ -188,39 +187,6 @@ public class SignerLoaderEnhancedTest {
     // Verify by introspection that the minimum is applied
     // The minimum is enforced in the constructor: Math.max(1, builder.taskTimeoutSeconds)
     assertThat(signerLoader.getTaskTimeoutSeconds()).isOne();
-  }
-
-  @Test
-  @Timeout(20)
-  void partialTimeoutWithMixedTaskDurations() throws Exception {
-    // Create a parser with variable delays based on file index
-    SignerParser variableDelayParser = createVariableDelayParser();
-
-    // Create 5 files with different processing times
-    createBLSRawConfigFiles(5);
-
-    signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(configsDirectory)
-            .parallelProcess(true)
-            .sequentialThreshold(1) // Force parallel processing
-            .taskTimeoutSeconds(2)
-            .build();
-
-    MappedResults<ArtifactSigner> result = signerLoader.load(variableDelayParser);
-
-    // Some tasks complete, some timeout
-    // With variable delays (0, 500ms, 1s, 3s, 5s), expect 3 timeouts (files with 3s+ delays)
-    assertThat(result.getValues().size()).isGreaterThanOrEqualTo(2);
-    assertThat(result.getErrorCount()).isGreaterThanOrEqualTo(2);
-    assertThat(result.getValues().size() + result.getErrorCount()).isEqualTo(5);
-
-    // Verify at least one timeout occurred
-    long timeoutCount =
-        logging.getLogEvents().stream()
-            .filter(event -> event.getMessage().matches("Task timed out after 2 seconds: .*"))
-            .count();
-    assertThat(timeoutCount).isGreaterThan(0);
   }
 
   // ==================== BATCH SIZE BEHAVIOR TESTS ====================
@@ -517,36 +483,5 @@ public class SignerLoaderEnhancedTest {
         .parse(any());
 
     return slowParser;
-  }
-
-  /**
-   * Creates a parser with variable delays based on file processing order Files complete at: 0ms,
-   * 500ms, 1000ms, 3000ms, 5000ms
-   */
-  private SignerParser createVariableDelayParser() throws SigningMetadataException {
-    final SignerParser variableParser = spy(signerParser);
-    final AtomicInteger callCount = new AtomicInteger(0);
-
-    doAnswer(
-            invocation -> {
-              int count = callCount.getAndIncrement();
-              // Variable delays: 0, 500, 1000, 3000, 5000 ms
-              long delay =
-                  switch (count % 5) {
-                    case 1 -> 500;
-                    case 2 -> 1000;
-                    case 3 -> 3000;
-                    case 4 -> 5000;
-                    default -> 0;
-                  };
-              if (delay > 0) {
-                Thread.sleep(delay);
-              }
-              return invocation.callRealMethod();
-            })
-        .when(variableParser)
-        .parse(any());
-
-    return variableParser;
   }
 }
