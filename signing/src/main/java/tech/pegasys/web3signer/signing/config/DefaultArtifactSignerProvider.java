@@ -238,7 +238,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
         .collect(
             Collectors.groupingBy(
                 ArtifactSigner::getKeyType,
-                Collectors.mapping(ArtifactSigner::getIdentifier, Collectors.toSet())));
+                Collectors.mapping(ArtifactSigner::getIdentifier, Collectors.toUnmodifiableSet())));
   }
 
   @Override
