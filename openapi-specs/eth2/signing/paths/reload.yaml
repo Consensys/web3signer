@@ -3,11 +3,37 @@ post:
     - 'Reload Signer Keys'
   summary: 'Reload signer keys asynchronously'
   description: |
-    Reloads signer keys asynchronously. This is used after adding new keys to a current set of validators.
-    The call reloads the keys and makes Web3signer aware of the change. Not used by validator clients.
+    Reloads signer keys asynchronously in the background. This is used after adding new keys to a current set of validators.
+    The call accepts the reload request and returns immediately while the actual reload happens asynchronously.
+    
+    Not used by validator clients - this is an administrative endpoint.
   operationId: 'RELOAD'
   responses:
-    '200':
-      description: 'Call is successful'
+    '202':
+      description: 'Reload request accepted and is running in the background'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: 'accepted'
+              message:
+                type: string
+                example: 'Reload operation accepted and is running in the background. Check /healthcheck for status.'
+    '409':
+      description: 'A reload operation is already in progress'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: 'error'
+              message:
+                type: string
+                example: 'A reload operation is already in progress. Please try again later.'
     '500':
-      description: 'Internal Web3Signer server error'
+      description: 'Internal Web3Signer server error - failed to initiate reload operation'
