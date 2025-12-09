@@ -66,10 +66,9 @@ public class CommitBoostPublicKeysHandler implements Handler<RoutingContext> {
       final ArtifactSignerProvider provider, final String consensusPubKey) {
     final Map<KeyType, Set<String>> proxyIdentifiers =
         provider.getProxyIdentifiers(consensusPubKey);
-    final Set<String> proxyBlsPublicKeys =
-        proxyIdentifiers.computeIfAbsent(KeyType.BLS, k -> Set.of());
+    final Set<String> proxyBlsPublicKeys = proxyIdentifiers.getOrDefault(KeyType.BLS, Set.of());
     final Set<String> proxyEcdsaPublicKeys =
-        proxyIdentifiers.computeIfAbsent(KeyType.SECP256K1, k -> Set.of());
+        proxyIdentifiers.getOrDefault(KeyType.SECP256K1, Set.of());
     return new PublicKeyMappings(consensusPubKey, proxyBlsPublicKeys, proxyEcdsaPublicKeys);
   }
 }
