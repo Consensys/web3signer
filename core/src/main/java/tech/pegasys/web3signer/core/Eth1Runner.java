@@ -151,23 +151,25 @@ public class Eth1Runner extends Runner {
       final AzureKeyVaultSignerFactory azureSignerFactory,
       final AwsKmsSignerFactory awsKmsSignerFactory,
       final SignerLoader signerLoader) {
-    final HashicorpConnectionFactory hashicorpConnectionFactory = new HashicorpConnectionFactory();
-    final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
-        new Secp256k1ArtifactSignerFactory(
-            hashicorpConnectionFactory,
-            baseConfig.getKeyConfigPath(),
-            azureSignerFactory,
-            EthSecpArtifactSigner::new,
-            azureKeyVaultFactory,
-            awsKmsSignerFactory,
-            true);
+    try (final HashicorpConnectionFactory hashicorpConnectionFactory =
+        new HashicorpConnectionFactory()) {
+      final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
+          new Secp256k1ArtifactSignerFactory(
+              hashicorpConnectionFactory,
+              baseConfig.getKeyConfigPath(),
+              azureSignerFactory,
+              EthSecpArtifactSigner::new,
+              azureKeyVaultFactory,
+              awsKmsSignerFactory,
+              true);
 
-    final SignerParser signerParser =
-        new YamlSignerParser(
-            List.of(ethSecpArtifactSignerFactory),
-            YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize()));
+      final SignerParser signerParser =
+          new YamlSignerParser(
+              List.of(ethSecpArtifactSignerFactory),
+              YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize()));
 
-    return signerLoader.load(signerParser);
+      return signerLoader.load(signerParser);
+    }
   }
 
   private MappedResults<ArtifactSigner> bulkLoadSigners(
