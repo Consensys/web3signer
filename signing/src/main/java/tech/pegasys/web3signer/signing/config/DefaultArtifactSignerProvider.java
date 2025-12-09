@@ -82,8 +82,10 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   private final Optional<KeystoresParameters> commitBoostKeystoresParameters;
 
   // Volatile references to immutable maps - readers see atomic snapshots
-  private volatile Map<String, ArtifactSigner> signers = Map.of();
-  private volatile Map<String, Set<ArtifactSigner>> proxySigners = Map.of();
+  private volatile SignerState state = new SignerState(Map.of(), Map.of());
+
+  private record SignerState(
+      Map<String, ArtifactSigner> signers, Map<String, Set<ArtifactSigner>> proxySigners) {}
 
   private final ExecutorService executorService =
       Executors.newSingleThreadExecutor(
@@ -141,9 +143,10 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   public Future<Void> load() {
     return executorService.submit(
         () -> {
-          LOG.debug("Signer keys pre-loaded in memory {}", signers.size());
+          final SignerState currentState = this.state;
+          LOG.debug("Signer keys pre-loaded in memory {}", currentState.signers.size());
 
-          // Build new signers map
+          // Build new signers map - this can be time-consuming
           final Map<String, ArtifactSigner> newSigners =
               artifactSignerCollectionSupplier.get().stream()
                   .collect(
@@ -191,23 +194,24 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                   });
 
           // Atomic swap - readers see either all old or all new, never mixed
-          this.signers = Map.copyOf(newSigners);
-          this.proxySigners = Map.copyOf(newProxySigners);
+          state = new SignerState(Map.copyOf(newSigners), Map.copyOf(newProxySigners));
 
           // Callback after swap
-          postLoadingCallback.ifPresent(callback -> callback.accept(signers.keySet()));
+          postLoadingCallback.ifPresent(callback -> callback.accept(state.signers.keySet()));
 
-          LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());
+          LOG.info("Total signers (keys) currently loaded in memory: {}", state.signers.size());
           return null;
         });
   }
 
   @Override
   public Optional<ArtifactSigner> getSigner(final String identifier) {
+    final SignerState currentState = this.state;
     // Single volatile read - no locking
-    final Optional<ArtifactSigner> result = Optional.ofNullable(signers.get(identifier));
+    final Optional<ArtifactSigner> result =
+        Optional.ofNullable(currentState.signers.get(identifier));
     if (result.isEmpty()) {
-      LOG.error("No signer was loaded matching identifier '{}'", identifier);
+      LOG.debug("No signer was loaded matching identifier '{}'", identifier);
     }
     return result;
   }
@@ -215,7 +219,8 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   @Override
   public Optional<ArtifactSigner> getProxySigner(final String proxyPubKey) {
     // Single volatile read, then stream over immutable collections
-    return proxySigners.values().stream()
+    final SignerState currentState = this.state;
+    return currentState.proxySigners.values().stream()
         .flatMap(Set::stream)
         .filter(signer -> signer.getIdentifier().equals(proxyPubKey))
         .findFirst();
@@ -224,16 +229,21 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   @Override
   public Set<String> availableIdentifiers() {
     // signers is already immutable, keySet() returns immutable view
-    return signers.keySet();
+    final SignerState currentState = this.state;
+    return currentState.signers.keySet();
   }
 
   @Override
   public Map<KeyType, Set<String>> getProxyIdentifiers(final String consensusPubKey) {
     // Pure read - no writes!
-    final Set<ArtifactSigner> proxies = proxySigners.get(consensusPubKey);
-    if (proxies == null || proxies.isEmpty()) {
+    final SignerState currentState = this.state;
+    final Set<ArtifactSigner> proxies =
+        currentState.proxySigners.getOrDefault(consensusPubKey, Set.of());
+
+    if (proxies.isEmpty()) {
       return Map.of();
     }
+
     return proxies.stream()
         .collect(
             Collectors.groupingBy(
@@ -245,10 +255,19 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   public Future<Void> addSigner(final ArtifactSigner signer) {
     return executorService.submit(
         () -> {
-          // Copy-on-write
-          final Map<String, ArtifactSigner> newSigners = new HashMap<>(signers);
-          newSigners.put(signer.getIdentifier(), signer);
-          this.signers = Map.copyOf(newSigners);
+          final SignerState currentState = this.state;
+
+          final Map<String, ArtifactSigner> newSigners = new HashMap<>(currentState.signers);
+          final ArtifactSigner existing = newSigners.put(signer.getIdentifier(), signer);
+          if (existing != null) {
+            LOG.warn("Replaced existing signer for identifier '{}'", signer.getIdentifier());
+          }
+
+          final Map<String, Set<ArtifactSigner>> newProxySigners =
+              new HashMap<>(currentState.proxySigners);
+          newProxySigners.putIfAbsent(signer.getIdentifier(), Set.of());
+
+          state = new SignerState(Map.copyOf(newSigners), Map.copyOf(newProxySigners));
           LOG.info("Loaded new signer for identifier '{}'", signer.getIdentifier());
           return null;
         });
@@ -258,14 +277,15 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   public Future<Void> removeSigner(final String identifier) {
     return executorService.submit(
         () -> {
-          // Copy-on-write for both maps
-          final Map<String, ArtifactSigner> newSigners = new HashMap<>(signers);
-          newSigners.remove(identifier);
-          this.signers = Map.copyOf(newSigners);
+          final SignerState currentState = this.state;
 
-          final Map<String, Set<ArtifactSigner>> newProxySigners = new HashMap<>(proxySigners);
+          final Map<String, ArtifactSigner> newSigners = new HashMap<>(currentState.signers);
+          newSigners.remove(identifier);
+          final Map<String, Set<ArtifactSigner>> newProxySigners =
+              new HashMap<>(currentState.proxySigners);
           newProxySigners.remove(identifier);
-          this.proxySigners = Map.copyOf(newProxySigners);
+
+          this.state = new SignerState(Map.copyOf(newSigners), Map.copyOf(newProxySigners));
 
           LOG.info("Removed signer with identifier '{}'", identifier);
           return null;
@@ -296,14 +316,17 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
       final ArtifactSigner signerToAdd, final String consensusPubKey) {
     return executorService.submit(
         () -> {
-          // Copy-on-write
-          final Map<String, Set<ArtifactSigner>> newProxySigners = new HashMap<>(proxySigners);
+          final SignerState currentState = this.state;
+
+          final Map<String, Set<ArtifactSigner>> newProxySigners =
+              new HashMap<>(currentState.proxySigners);
           final Set<ArtifactSigner> existingProxies =
               newProxySigners.getOrDefault(consensusPubKey, Set.of());
           final Set<ArtifactSigner> updatedProxies = new HashSet<>(existingProxies);
           updatedProxies.add(signerToAdd);
           newProxySigners.put(consensusPubKey, Set.copyOf(updatedProxies));
-          this.proxySigners = Map.copyOf(newProxySigners);
+
+          this.state = new SignerState(currentState.signers, Map.copyOf(newProxySigners));
 
           LOG.info(
               "Loaded new proxy signer {} for consensus public key '{}'",
