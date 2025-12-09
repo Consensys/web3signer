@@ -51,53 +51,62 @@ public class ReloadHandler implements Handler<RoutingContext> {
           .end(
               Json.encode(
                   Map.of(
-                      "status", "error",
+                      "status",
+                      "error",
                       "message",
-                          "A reload operation is already in progress. Please try again later.")));
+                      "A reload operation is already in progress. Please try again later.")));
       return;
     }
 
     LOG.debug("Reload operation initiated");
 
-    workerExecutor
-        .executeBlocking(
-            () -> {
-              for (ArtifactSignerProvider signerProvider : orderedArtifactSignerProviders) {
-                try {
-                  signerProvider.load().get();
-                } catch (final InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                  LOG.error("Interrupted while reloading signer", e);
-                  throw new RuntimeException("Reload interrupted", e);
-                } catch (final ExecutionException e) {
-                  LOG.error("Error reloading signer", e);
-                  throw new RuntimeException("Reload failed", e);
+    try {
+      workerExecutor
+          .executeBlocking(
+              () -> {
+                for (ArtifactSignerProvider signerProvider : orderedArtifactSignerProviders) {
+                  try {
+                    signerProvider.load().get();
+                  } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    LOG.error("Interrupted while reloading signer", e);
+                    throw new RuntimeException("Reload interrupted", e);
+                  } catch (final ExecutionException e) {
+                    LOG.error("Error reloading signer", e);
+                    throw new RuntimeException("Reload failed", e);
+                  }
                 }
-              }
-              return null;
-            },
-            false) // unordered is fine since we have pool size 1
-        .onSuccess(
-            result -> {
-              reloadInProgress.set(false);
-              LOG.info("Reload operation completed successfully");
-            })
-        .onFailure(
-            err -> {
-              reloadInProgress.set(false);
-              LOG.error("Reload operation failed", err);
-            });
+                return null;
+              },
+              false) // unordered is fine since we have pool size 1
+          .onSuccess(
+              result -> {
+                reloadInProgress.set(false);
+                LOG.info("Reload operation completed successfully");
+              })
+          .onFailure(
+              err -> {
+                reloadInProgress.set(false);
+                LOG.error("Reload operation failed", err);
+              });
 
-    // Respond immediately - reload happens in background
-    routingContext
-        .response()
-        .setStatusCode(202) // Accepted (not using 200 - OK)
-        .putHeader("Content-Type", "application/json")
-        .end(
-            Json.encode(
-                Map.of(
-                    "status", "accepted",
-                    "message",
-                        "Reload operation accepted and is running in the background. Check /healthcheck for status.")));
+      // Respond immediately - reload happens in background
+      routingContext
+          .response()
+          .setStatusCode(202) // Accepted (not using 200 - OK)
+          .putHeader("Content-Type", "application/json")
+          .end(
+              Json.encode(
+                  Map.of(
+                      "status",
+                      "accepted",
+                      "message",
+                      "Reload operation accepted and is running in the background. Check /healthcheck for status.")));
+    } catch (final RuntimeException e) {
+      // Reset flag and let error handlers deal with the response
+      reloadInProgress.set(false);
+      LOG.error("Failed to submit reload operation", e);
+      throw e;
+    }
   }
 }
