@@ -20,8 +20,11 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.net.ssl.SSLContext;
 
 import org.apache.logging.log4j.LogManager;
@@ -34,22 +37,27 @@ import org.apache.logging.log4j.Logger;
 public class HashicorpConnectionFactory implements AutoCloseable {
 
   private static final Logger LOG = LogManager.getLogger();
-
   private final Map<URI, HttpClient> httpClientMap = new ConcurrentHashMap<>();
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
   public HashicorpConnectionFactory() {}
 
   public HashicorpConnection create(final ConnectionParameters connectionParameters) {
+    ensureNotClosed();
     final HttpClient httpClient = getHttpClient(connectionParameters);
-
     return new HashicorpConnection(httpClient, connectionParameters);
   }
 
   private HttpClient getHttpClient(ConnectionParameters connectionParameters) {
-
+    ensureNotClosed();
     return httpClientMap.computeIfAbsent(
         connectionParameters.getVaultURI(),
         _key -> {
+          // Double-check after acquiring the lock for creation
+          if (closed.get()) {
+            throw new HashicorpException("ConnectionFactory is closed");
+          }
+
           final HttpClient.Builder httpClientBuilder =
               HttpClient.newBuilder()
                   .followRedirects(HttpClient.Redirect.NORMAL)
@@ -61,11 +69,18 @@ public class HashicorpConnectionFactory implements AutoCloseable {
               httpClientBuilder.sslContext(
                   getCustomSSLContext(connectionParameters.getTlsOptions().get()));
             }
+            LOG.debug("Creating new HttpClient for URI: {}", connectionParameters.getVaultURI());
             return httpClientBuilder.build();
           } catch (final Exception e) {
             throw new HashicorpException("Unable to initialise connection to hashicorp vault.", e);
           }
         });
+  }
+
+  private void ensureNotClosed() {
+    if (closed.get()) {
+      throw new HashicorpException("HashicorpConnectionFactory is closed");
+    }
   }
 
   private SSLContext getCustomSSLContext(final TlsOptions tlsOptions)
@@ -111,6 +126,33 @@ public class HashicorpConnectionFactory implements AutoCloseable {
 
   @Override
   public void close() {
-    httpClientMap.clear();
+    // Prevent multiple close attempts
+    if (!closed.compareAndSet(false, true)) {
+      LOG.debug("HashicorpConnectionFactory already closed");
+      return;
+    }
+
+    LOG.debug(
+        "Closing HashicorpConnectionFactory with {} active connections", httpClientMap.size());
+
+    // Drain all entries atomically to local collection
+    final List<Map.Entry<URI, HttpClient>> entries = new ArrayList<>();
+    httpClientMap
+        .entrySet()
+        .removeIf(
+            entry -> {
+              entries.add(entry);
+              return true;
+            });
+
+    // Close all clients outside the concurrent map
+    for (Map.Entry<URI, HttpClient> entry : entries) {
+      try {
+        LOG.trace("Closing HttpClient for URI: {}", entry.getKey());
+        entry.getValue().close();
+      } catch (Exception e) {
+        LOG.warn("Failed to close HttpClient for URI: {}", entry.getKey(), e);
+      }
+    }
   }
 }
