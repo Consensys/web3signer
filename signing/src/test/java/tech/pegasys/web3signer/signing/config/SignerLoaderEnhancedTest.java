@@ -452,7 +452,7 @@ public class SignerLoaderEnhancedTest {
     return keyPairs;
   }
 
-  private Path createFileInConfigsDirectory(final String fileName, final String privateKeyHex)
+  private void createFileInConfigsDirectory(final String fileName, final String privateKeyHex)
       throws IOException {
     final Path file = configsDirectory.resolve(fileName);
 
@@ -463,7 +463,6 @@ public class SignerLoaderEnhancedTest {
 
     Files.writeString(file, yamlContent);
     assertThat(file).exists();
-    return file;
   }
 
   private static String configFileName(final BLSKeyPair blsKeyPair) {
