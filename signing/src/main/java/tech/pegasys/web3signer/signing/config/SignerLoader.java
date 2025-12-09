@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
 
 import java.io.Closeable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -648,24 +649,22 @@ public class SignerLoader implements Closeable {
       // Check if IOException was caused by interruption
       if (Thread.currentThread().isInterrupted()) {
         LOG.debug("File processing interrupted during IO: {}", pathStr);
-        return null;
       } else {
         LOG.error("Error reading metadata config file: {}", pathStr, e);
         errorCount.incrementAndGet();
-        return null;
       }
+      return null;
     } catch (final Exception e) {
       // Check if exception is due to thread interruption (timeout/cancellation)
       if (Thread.currentThread().isInterrupted()
           || e instanceof InterruptedException
           || (e.getCause() != null && e.getCause() instanceof InterruptedException)) {
         LOG.debug("File processing cancelled: {}", pathStr);
-        return null;
       } else {
         LOG.error("Unexpected error processing file: {}", pathStr, e);
         errorCount.incrementAndGet();
-        return null;
       }
+      return null;
     }
   }
 
@@ -726,8 +725,7 @@ public class SignerLoader implements Closeable {
    */
   private Map<String, FileTime> getMetadataConfigFilesWithTime() throws IOException {
     if (!Files.exists(configsDirectory)) {
-      LOG.warn("Config directory does not exist: {}", configsDirectory);
-      return Collections.emptyMap();
+      throw new FileNotFoundException("Config directory does not exist");
     }
 
     if (!Files.isDirectory(configsDirectory)) {
