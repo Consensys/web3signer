@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +40,7 @@ import java.util.stream.Stream;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.commons.lang3.tuple.Pair;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -148,20 +150,21 @@ public class CommitBoostGetPubKeysAcceptanceTest extends AcceptanceTestBase {
     deleteDirectoryContents(commitBoostKeystoresPath);
     signer.callReload().then().statusCode(202);
 
-    Thread.sleep(1000); // Wait 1 second for reload
-
-    // call commit boost get pub keys, the proxy_bls and proxy_ecdsa should be empty for each
-    // consensus key
-    final Response response = signer.callCommitBoostGetPubKeys();
-    response
-        .then()
-        .log()
-        .body()
-        .statusCode(200)
-        .contentType(ContentType.JSON)
-        .body("keys", hasSize(2))
-        .body("keys.proxy_bls", everyItem(empty()))
-        .body("keys.proxy_ecdsa", everyItem(empty()));
+    // Wait until proxy keys are empty (reload completed)
+    Awaitility.await()
+        .atMost(Duration.ofSeconds(5))
+        .pollInterval(Duration.ofMillis(100)) // Check every 100ms
+        .untilAsserted(
+            () -> {
+              final Response response = signer.callCommitBoostGetPubKeys();
+              response
+                  .then()
+                  .statusCode(200)
+                  .contentType(ContentType.JSON)
+                  .body("keys", hasSize(2))
+                  .body("keys.proxy_bls", everyItem(empty()))
+                  .body("keys.proxy_ecdsa", everyItem(empty()));
+            });
   }
 
   private List<String> getProxyECPubKeys(final String consensusKeyHex) {
