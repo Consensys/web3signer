@@ -792,3 +792,23 @@ components:
         sync_committee_signature:
           type: string
           description: Bytes96 hexadecimal
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          description: 'health status'
+        checks:
+          type: array
+          description: 'list of status checks'
+          items:
+            properties:
+              id:
+                type: string
+                description: 'status id'
+              status:
+                type: string
+                description: 'health status'
+        outcome:
+          type: string
+          description: 'the overall outcome of health check'
