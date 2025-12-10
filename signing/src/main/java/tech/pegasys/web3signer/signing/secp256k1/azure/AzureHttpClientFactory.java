@@ -60,15 +60,15 @@ public class AzureHttpClientFactory implements Closeable {
   public void close() {
     httpClientMap
         .asMap()
-        .values()
-        .forEach(
-            client -> {
+        .entrySet()
+        .removeIf(
+            entry -> {
               try {
-                client.close();
+                entry.getValue().close();
               } catch (final Exception e) {
                 LOG.warn("Error closing Azure HTTP client", e);
               }
+              return true;
             });
-    httpClientMap.invalidateAll();
   }
 }
