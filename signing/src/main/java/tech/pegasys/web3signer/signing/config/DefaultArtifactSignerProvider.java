@@ -203,7 +203,9 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                             });
                   });
 
-          // Atomic swap - readers see either all old or all new, never mixed
+          // Atomically publish new immutable state - Map.copyOf() ensures readers never see
+          // intermediate modifications, volatile write guarantees immediate visibility across
+          // threads
           state = new SignerState(Map.copyOf(newSigners), Map.copyOf(newProxySigners));
 
           // Callback after swap
@@ -277,6 +279,9 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
               new HashMap<>(currentState.proxySigners);
           newProxySigners.putIfAbsent(signer.getIdentifier(), Set.of());
 
+          // Atomically publish new immutable state - Map.copyOf() ensures readers never see
+          // intermediate modifications, volatile write guarantees immediate visibility across
+          // threads
           state = new SignerState(Map.copyOf(newSigners), Map.copyOf(newProxySigners));
           LOG.info("Loaded new signer for identifier '{}'", signer.getIdentifier());
           return null;
@@ -295,6 +300,9 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
               new HashMap<>(currentState.proxySigners);
           newProxySigners.remove(identifier);
 
+          // Atomically publish new immutable state - Map.copyOf() ensures readers never see
+          // intermediate modifications, volatile write guarantees immediate visibility across
+          // threads
           this.state = new SignerState(Map.copyOf(newSigners), Map.copyOf(newProxySigners));
 
           LOG.info("Removed signer with identifier '{}'", identifier);
@@ -336,6 +344,9 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
           updatedProxies.add(signerToAdd);
           newProxySigners.put(consensusPubKey, Set.copyOf(updatedProxies));
 
+          // Atomically publish new immutable state - Map.copyOf() ensures readers never see
+          // intermediate modifications, volatile write guarantees immediate visibility across
+          // threads
           this.state = new SignerState(currentState.signers, Map.copyOf(newProxySigners));
 
           LOG.info(
