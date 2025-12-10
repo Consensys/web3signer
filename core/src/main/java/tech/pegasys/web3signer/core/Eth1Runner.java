@@ -92,14 +92,7 @@ public class Eth1Runner extends Runner {
     final AzureHttpClientFactory azureHttpClientFactory = new AzureHttpClientFactory();
     final CachedAwsKmsClientFactory cachedAwsKmsClientFactory =
         new CachedAwsKmsClientFactory(eth1Config.getAwsKmsClientCacheSize());
-    final SignerLoader signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(baseConfig.getKeyConfigPath())
-            .parallelProcess(baseConfig.isSignerLoadParallel())
-            .batchSize(baseConfig.getSignerLoadBatchSize())
-            .sequentialThreshold(baseConfig.getSignerLoadSequentialThreshold())
-            .taskTimeoutSeconds(baseConfig.getSignerLoadTimeoutSeconds())
-            .build();
+    final SignerLoader signerLoader = new SignerLoader(baseConfig.getSignerLoaderConfig());
 
     // Register ALL for cleanup ONCE
     registerClose(azureKeyVaultFactory);

@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
+import tech.pegasys.web3signer.common.config.SignerLoaderConfig;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
@@ -27,7 +28,6 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,7 +36,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -47,7 +46,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -56,7 +54,6 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -83,21 +80,6 @@ public class SignerLoader implements Closeable {
   private static final Logger LOG = LogManager.getLogger();
   private static final Set<String> CONFIG_FILE_EXTENSIONS = Set.of("yaml", "yml");
 
-  private static final int DEFAULT_SEQUENTIAL_THRESHOLD = 100;
-  private static final int DEFAULT_BATCH_SIZE = 500;
-  private static final int DEFAULT_TASK_TIMEOUT_SECONDS = 60;
-
-  // Required parameters (set via builder)
-  private final Path configsDirectory;
-
-  // Optional parameters with defaults
-  private final boolean parallelProcess;
-  private final int batchSize;
-  private final int taskTimeoutSeconds;
-  private final int sequentialThreshold;
-
-  private final ExecutorService virtualThreadExecutor;
-
   private volatile Map<String, CachedSignerData> cachedArtifactSigners = Collections.emptyMap();
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
@@ -105,129 +87,21 @@ public class SignerLoader implements Closeable {
   private record CachedSignerData(
       String filePath, FileTime lastModifiedTime, Set<ArtifactSigner> signers) {}
 
-  /** Private constructor - use {@link Builder} to create instances. */
-  private SignerLoader(final Builder builder) {
-    this.configsDirectory = builder.configsDirectory.toAbsolutePath().normalize();
-    this.parallelProcess = builder.parallelProcess;
-    this.batchSize = Math.max(100, builder.batchSize);
-    this.taskTimeoutSeconds = Math.max(1, builder.taskTimeoutSeconds);
-    this.sequentialThreshold = Math.max(1, builder.sequentialThreshold);
+  /**
+   * Result of loading signers from configuration files.
+   *
+   * @param loadedSigners map of file paths to their loaded artifact signers
+   * @param errorCount number of errors encountered during loading
+   */
+  @VisibleForTesting
+  record LoadResult(Map<String, Set<ArtifactSigner>> loadedSigners, int errorCount) {}
+
+  private final SignerLoaderConfig config;
+  private final ExecutorService virtualThreadExecutor;
+
+  public SignerLoader(final SignerLoaderConfig config) {
+    this.config = config;
     this.virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
-  }
-
-  /**
-   * Creates a new builder for SignerLoader.
-   *
-   * @return a new Builder instance
-   */
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  /**
-   * Builder for creating {@link SignerLoader} instances.
-   *
-   * <p>Required parameters must be set before calling {@link #build()}:
-   *
-   * <ul>
-   *   <li>{@link #configsDirectory(Path)} - location of metadata files
-   *   <li>{@link #parallelProcess(boolean)} - whether to enable parallel processing
-   * </ul>
-   *
-   * <p>Optional parameters have sensible defaults:
-   *
-   * <ul>
-   *   <li>batchSize: 500
-   *   <li>taskTimeoutSeconds: 60
-   *   <li>sequentialThreshold: 100
-   * </ul>
-   */
-  public static class Builder {
-    // Required parameters - no defaults
-    private Path configsDirectory;
-
-    // Optional parameters - initialized to defaults
-    private boolean parallelProcess = true;
-    private int batchSize = DEFAULT_BATCH_SIZE;
-    private int taskTimeoutSeconds = DEFAULT_TASK_TIMEOUT_SECONDS;
-    private int sequentialThreshold = DEFAULT_SEQUENTIAL_THRESHOLD;
-
-    private Builder() {}
-
-    /**
-     * Sets the directory containing signer configuration metadata files. This is a required
-     * parameter.
-     *
-     * @param configsDirectory path to the configuration directory
-     * @return this builder for chaining
-     * @throws NullPointerException if configsDirectory is null
-     */
-    public Builder configsDirectory(Path configsDirectory) {
-      this.configsDirectory =
-          Objects.requireNonNull(configsDirectory, "configsDirectory must not be null");
-      return this;
-    }
-
-    /**
-     * Sets whether to process configuration files in parallel. Optional - defaults to true.
-     *
-     * @param parallelProcess true to enable parallel processing, false for sequential
-     * @return this builder for chaining
-     */
-    public Builder parallelProcess(boolean parallelProcess) {
-      this.parallelProcess = parallelProcess;
-      return this;
-    }
-
-    /**
-     * Sets the number of files to process per batch. Optional - defaults to 500. Minimum value is
-     * 100.
-     *
-     * @param batchSize number of files per batch
-     * @return this builder for chaining
-     */
-    public Builder batchSize(int batchSize) {
-      this.batchSize = batchSize;
-      return this;
-    }
-
-    /**
-     * Sets the timeout in seconds for each individual file processing task. Optional - defaults to
-     * 60 seconds. Minimum value is 1.
-     *
-     * @param taskTimeoutSeconds timeout per task in seconds
-     * @return this builder for chaining
-     */
-    public Builder taskTimeoutSeconds(int taskTimeoutSeconds) {
-      this.taskTimeoutSeconds = taskTimeoutSeconds;
-      return this;
-    }
-
-    /**
-     * Sets the file count threshold below which sequential processing is used. Optional - defaults
-     * to 100. Minimum value is 1.
-     *
-     * @param sequentialThreshold minimum files for parallel processing
-     * @return this builder for chaining
-     */
-    public Builder sequentialThreshold(int sequentialThreshold) {
-      this.sequentialThreshold = sequentialThreshold;
-      return this;
-    }
-
-    /**
-     * Builds a new {@link SignerLoader} instance.
-     *
-     * @return a new SignerLoader configured with this builder's parameters
-     * @throws IllegalStateException if required parameters are not set
-     */
-    public SignerLoader build() {
-      if (configsDirectory == null) {
-        throw new IllegalStateException("configsDirectory is required");
-      }
-
-      return new SignerLoader(this);
-    }
   }
 
   /**
@@ -249,7 +123,7 @@ public class SignerLoader implements Closeable {
     if (closed.get()) {
       throw new IllegalStateException("SignerLoader instance has been closed");
     }
-    LOG.info("Loading signer configuration metadata files from {}", configsDirectory);
+    LOG.info("Loading signer configuration metadata files from {}", config.configsDirectory());
     final Instant loadStartTime = Instant.now();
 
     // Get all metadata file paths from the config directory
@@ -273,14 +147,10 @@ public class SignerLoader implements Closeable {
         newCache.size());
 
     // load new signers
-    final Pair<Map<String, Set<ArtifactSigner>>, Integer> newArtifactsWithErrorCount =
-        loadNewSigners(newFilesToProcess, signerParser);
-
-    final Map<String, Set<ArtifactSigner>> loadedSigners = newArtifactsWithErrorCount.getLeft();
-    final int loadedSignersErrorCount = newArtifactsWithErrorCount.getRight();
+    final LoadResult loadResult = loadNewSigners(newFilesToProcess, signerParser);
 
     // Add newly loaded signers to cache with their modification times
-    loadedSigners.forEach(
+    loadResult.loadedSigners.forEach(
         (pathStr, signers) -> {
           FileTime modTime = availableFilesWithTime.get(pathStr);
           if (modTime == null) {
@@ -305,10 +175,10 @@ public class SignerLoader implements Closeable {
         "Total Artifact Signers loaded via configuration files: {}\nTotal Paths cached: {}, Error count: {}\nTime Taken: {}.",
         allArtifactSigners.size(),
         cachedArtifactSigners.size(),
-        loadedSignersErrorCount,
+        loadResult.errorCount,
         calculateTimeTaken(loadStartTime).orElse("unknown duration"));
 
-    return MappedResults.newInstance(allArtifactSigners, loadedSignersErrorCount);
+    return MappedResults.newInstance(allArtifactSigners, loadResult.errorCount);
   }
 
   /**
@@ -383,130 +253,148 @@ public class SignerLoader implements Closeable {
    * @param signerParser parser to convert file content to signers
    * @return pair of loaded signers map and error count
    */
-  private Pair<Map<String, Set<ArtifactSigner>>, Integer> loadNewSigners(
-      final Set<String> newFilesToProcess, final SignerParser signerParser) {
+  @VisibleForTesting
+  LoadResult loadNewSigners(final Set<String> newFilesToProcess, final SignerParser signerParser) {
 
     final AtomicLong configFilesHandled = new AtomicLong(0);
-    final AtomicInteger errorCount = new AtomicInteger(0);
     final int totalFiles = newFilesToProcess.size();
 
+    if (totalFiles == 0) {
+      return new LoadResult(Map.of(), 0);
+    }
+
     // Sequential processing for small batches or when parallel is disabled
-    if (!parallelProcess || totalFiles < sequentialThreshold) {
+    if (!config.parallelProcess() || totalFiles < config.sequentialThreshold()) {
       LOG.info("Processing {} files sequentially", totalFiles);
-      return processSequentially(
-          newFilesToProcess, signerParser, configFilesHandled, errorCount, totalFiles);
+      return processSequentially(newFilesToProcess, signerParser, configFilesHandled, totalFiles);
     }
 
     // Parallel processing with batches
-    LOG.info("Processing {} files in parallel with batch size {}", totalFiles, batchSize);
-    return processInBatches(
-        newFilesToProcess, signerParser, configFilesHandled, errorCount, totalFiles);
+    LOG.info("Processing {} files in parallel with batch size {}", totalFiles, config.batchSize());
+    return processInBatches(newFilesToProcess, signerParser, configFilesHandled, totalFiles);
   }
 
   /**
-   * Processes files in batches using virtual threads with individual task timeouts. Batching
-   * controls memory usage while individual timeouts ensure fair processing time per file.
+   * Processes files in parallel using virtual threads, subdivided into batches.
    *
-   * @param filesToProcess complete set of files to process
-   * @param signerParser parser for converting metadata to signers
-   * @param configFilesHandled atomic counter for processed files
-   * @param errorCount atomic counter for errors
+   * @param filesToProcess set of file paths to process
+   * @param signerParser parser for converting file content
+   * @param configFilesHandled atomic counter for progress tracking
    * @param totalFiles total number of files for progress reporting
-   * @return pair of all processed signers and final error count
+   * @return LoadResult with all loaded signers and total error count
    */
-  private Pair<Map<String, Set<ArtifactSigner>>, Integer> processInBatches(
+  @VisibleForTesting
+  LoadResult processInBatches(
       final Set<String> filesToProcess,
       final SignerParser signerParser,
       final AtomicLong configFilesHandled,
-      final AtomicInteger errorCount,
       final int totalFiles) {
 
     final Map<String, Set<ArtifactSigner>> allLoadedSigners = new HashMap<>();
+    int totalErrorCount = 0;
     final List<String> fileList = new ArrayList<>(filesToProcess);
 
-    for (int batchStart = 0; batchStart < fileList.size(); batchStart += batchSize) {
+    for (int batchStart = 0; batchStart < fileList.size(); batchStart += config.batchSize()) {
       if (closed.get()) {
         LOG.warn("SignerLoader closed during batch processing");
         break;
       }
-      final int batchEnd = Math.min(batchStart + batchSize, fileList.size());
+      final int batchEnd = Math.min(batchStart + config.batchSize(), fileList.size());
       final List<String> batch = fileList.subList(batchStart, batchEnd);
 
-      if (totalFiles > batchSize) {
+      if (totalFiles > config.batchSize()) {
         LOG.info("Processing batch {}-{} of {} files", batchStart + 1, batchEnd, totalFiles);
       }
 
-      // Submit this batch
-      final List<Future<Map.Entry<String, Set<ArtifactSigner>>>> futures = new ArrayList<>();
+      // Submit all tasks in this batch
+      final List<Future<LoadResult>> futures = new ArrayList<>();
       for (String pathStr : batch) {
         futures.add(
             virtualThreadExecutor.submit(
-                () ->
-                    processFile(
-                        pathStr, signerParser, configFilesHandled, errorCount, totalFiles)));
+                () -> processFile(pathStr, signerParser, configFilesHandled, totalFiles)));
       }
 
-      // Collect results with individual timeouts
-      if (!collectBatchResults(futures, batch, allLoadedSigners, errorCount)) {
-        // Interrupted - stop processing further batches
-        break;
+      try {
+        // Collect results from this batch
+        final LoadResult batchResult = collectBatchResults(futures, batch);
+
+        // Accumulate into overall results
+        allLoadedSigners.putAll(batchResult.loadedSigners());
+        totalErrorCount += batchResult.errorCount();
+
+      } catch (final InterruptedException e) {
+        // Interrupted while collecting batch results
+        LOG.warn("Batch processing interrupted, returning partial results");
+        // Thread interrupt status already restored by collectBatchResults
+        break; // Stop processing further batches
       }
     }
 
-    return Pair.of(allLoadedSigners, errorCount.get());
+    return new LoadResult(allLoadedSigners, totalErrorCount);
   }
 
   /**
    * Collects results from a batch of futures, applying individual timeout to each task.
    *
-   * @param futures list of submitted futures
-   * @param batch corresponding file paths for logging
-   * @param allLoadedSigners map to store successful results
-   * @param errorCount counter for errors
-   * @return true if processing should continue, false if interrupted
+   * <p>If interrupted while waiting for a future, this method:
+   *
+   * <ol>
+   *   <li>Restores the thread's interrupt status
+   *   <li>Cancels all remaining unprocessed futures
+   *   <li>Propagates the InterruptedException to the caller
+   * </ol>
+   *
+   * @param futures list of submitted futures to collect results from
+   * @param batch corresponding file paths for logging purposes
+   * @return LoadResult containing all successfully loaded signers and total error count
+   * @throws InterruptedException if interrupted while waiting for any future to complete
    */
-  private boolean collectBatchResults(
-      final List<Future<Map.Entry<String, Set<ArtifactSigner>>>> futures,
-      final List<String> batch,
-      final Map<String, Set<ArtifactSigner>> allLoadedSigners,
-      final AtomicInteger errorCount) {
+  private LoadResult collectBatchResults(
+      final List<Future<LoadResult>> futures, final List<String> batch)
+      throws InterruptedException {
+
+    final Map<String, Set<ArtifactSigner>> allLoadedSigners = new HashMap<>();
+    int errorCount = 0;
 
     for (int i = 0; i < futures.size(); i++) {
-      final Future<Map.Entry<String, Set<ArtifactSigner>>> future = futures.get(i);
+      final Future<LoadResult> future = futures.get(i);
       final String filePath = batch.get(i);
 
       try {
-        final Map.Entry<String, Set<ArtifactSigner>> result =
-            future.get(taskTimeoutSeconds, TimeUnit.SECONDS);
-        if (result != null) {
-          allLoadedSigners.put(result.getKey(), result.getValue());
-        }
-        // result == null means processFile returned null (error already logged/counted)
-      } catch (TimeoutException e) {
-        LOG.error("Task timed out after {} seconds: {}", taskTimeoutSeconds, filePath);
+        final LoadResult result = future.get(config.taskTimeoutSeconds(), TimeUnit.SECONDS);
+
+        // Accumulate results
+        allLoadedSigners.putAll(result.loadedSigners);
+        errorCount += result.errorCount;
+      } catch (final TimeoutException e) {
+        LOG.error("Task timed out after {} seconds: {}", config.taskTimeoutSeconds(), filePath);
         future.cancel(true);
-        errorCount.incrementAndGet();
-      } catch (InterruptedException e) {
+        errorCount++;
+      } catch (final InterruptedException e) {
+        // Restore interrupt status
         Thread.currentThread().interrupt();
+
         LOG.error("Interrupted while collecting batch results");
-        cancelAllFutures(futures);
-        return false;
-      } catch (ExecutionException e) {
+
+        // Cancel all remaining futures to free resources
+        cancelRemainingFutures(futures, i);
+        throw e; // propagate interruption to caller
+      } catch (final ExecutionException e) {
         LOG.warn("Task execution failed: {}", filePath, e);
-        errorCount.incrementAndGet();
-      } catch (CancellationException e) {
-        LOG.info("Task was cancelled: {}", filePath);
+        errorCount++;
+      } catch (final CancellationException e) {
+        // task was intentionally canceled - not an error
+        LOG.debug("Task was canceled: {}", filePath);
       }
     }
-    return true;
+    return new LoadResult(allLoadedSigners, errorCount);
   }
 
-  private static void cancelAllFutures(
-      final List<Future<Map.Entry<String, Set<ArtifactSigner>>>> futures) {
-    for (Future<?> f : futures) {
-      if (!f.isDone()) {
-        f.cancel(true);
-      }
+  /** Cancels all futures starting from the given index. */
+  private void cancelRemainingFutures(
+      final List<Future<LoadResult>> futures, final int startIndex) {
+    for (int j = startIndex; j < futures.size(); j++) {
+      futures.get(j).cancel(true);
     }
   }
 
@@ -517,28 +405,26 @@ public class SignerLoader implements Closeable {
    * @param newFilesToProcess files to process
    * @param signerParser parser for converting metadata to signers
    * @param configFilesHandled counter for processed files
-   * @param errorCount counter for errors encountered
    * @param totalFiles total number of files for progress reporting
-   * @return pair of processed signers and final error count
+   * @return LoadResult with loaded signers and error count
    */
-  private static Pair<Map<String, Set<ArtifactSigner>>, Integer> processSequentially(
+  @VisibleForTesting
+  LoadResult processSequentially(
       final Set<String> newFilesToProcess,
       final SignerParser signerParser,
       final AtomicLong configFilesHandled,
-      final AtomicInteger errorCount,
       final int totalFiles) {
 
     final Map<String, Set<ArtifactSigner>> loadedArtSigners = new HashMap<>();
+    int errorCount = 0;
 
     for (String pathStr : newFilesToProcess) {
-      Map.Entry<String, Set<ArtifactSigner>> result =
-          processFile(pathStr, signerParser, configFilesHandled, errorCount, totalFiles);
-      if (result != null) {
-        loadedArtSigners.put(result.getKey(), result.getValue());
-      }
+      final LoadResult result = processFile(pathStr, signerParser, configFilesHandled, totalFiles);
+      loadedArtSigners.putAll(result.loadedSigners);
+      errorCount += result.errorCount;
     }
 
-    return Pair.of(loadedArtSigners, errorCount.get());
+    return new LoadResult(loadedArtSigners, errorCount);
   }
 
   /**
@@ -575,7 +461,6 @@ public class SignerLoader implements Closeable {
    * @param signerParser parser implementation for converting metadata to ArtifactSigners
    * @param configFilesHandled atomic counter tracking total files processed (for progress
    *     reporting)
-   * @param errorCount atomic counter tracking processing errors across all threads
    * @param totalFiles total number of files being processed in this batch (for progress
    *     calculation)
    * @return a Map.Entry with the file path as key and immutable Set of ArtifactSigners as value, or
@@ -585,17 +470,18 @@ public class SignerLoader implements Closeable {
    *     operation and may involve HSM operations, encrypted key material decryption, or remote key
    *     vault access.
    */
-  private static Map.Entry<String, Set<ArtifactSigner>> processFile(
+  @VisibleForTesting
+  LoadResult processFile(
       final String pathStr,
       final SignerParser signerParser,
       final AtomicLong configFilesHandled,
-      final AtomicInteger errorCount,
       final int totalFiles) {
+    int errorCount = 0;
 
     // Check interruption at the beginning
     if (Thread.currentThread().isInterrupted()) {
       LOG.debug("File processing interrupted before start: {}", pathStr);
-      return null;
+      return new LoadResult(Map.of(), errorCount);
     }
 
     reportProgress(configFilesHandled, totalFiles);
@@ -608,7 +494,7 @@ public class SignerLoader implements Closeable {
       // Check interruption after IO operation
       if (Thread.currentThread().isInterrupted()) {
         LOG.debug("File processing interrupted after reading: {}", pathStr);
-        return null;
+        return new LoadResult(Map.of(), errorCount);
       }
 
       // Step 2: Parse metadata (mixed IO/CPU)
@@ -620,14 +506,13 @@ public class SignerLoader implements Closeable {
             "Error parsing metadata file {} to signing metadata: {}",
             pathStr,
             ExceptionUtils.getRootCauseMessage(e));
-        errorCount.incrementAndGet();
-        return null;
+        return new LoadResult(Map.of(), ++errorCount);
       }
 
       // Check interruption before expensive decryption operation
       if (Thread.currentThread().isInterrupted()) {
         LOG.debug("File processing interrupted before decryption: {}", pathStr);
-        return null;
+        return new LoadResult(Map.of(), errorCount);
       }
 
       // Step 3: Decryption and conversion (CPU-bound, can take up to a minute)
@@ -639,22 +524,20 @@ public class SignerLoader implements Closeable {
             "Error converting signing metadata to Artifact Signer for file {}: {}",
             pathStr,
             ExceptionUtils.getRootCauseMessage(e));
-        errorCount.incrementAndGet();
-        return null;
+        return new LoadResult(Map.of(), ++errorCount);
       }
 
       LOG.trace("Successfully processed file {} with {} signers", pathStr, artifactSigners.size());
-      return new SimpleEntry<>(pathStr, artifactSigners);
-
+      return new LoadResult(Map.of(pathStr, artifactSigners), errorCount);
     } catch (final IOException e) {
       // Check if IOException was caused by interruption
       if (Thread.currentThread().isInterrupted()) {
         LOG.debug("File processing interrupted during IO: {}", pathStr);
       } else {
         LOG.error("Error reading metadata config file: {}", pathStr, e);
-        errorCount.incrementAndGet();
+        errorCount++;
       }
-      return null;
+      return new LoadResult(Map.of(), errorCount);
     } catch (final Exception e) {
       // Check if exception is due to thread interruption (timeout/cancellation)
       if (Thread.currentThread().isInterrupted()
@@ -663,9 +546,9 @@ public class SignerLoader implements Closeable {
         LOG.debug("File processing cancelled: {}", pathStr);
       } else {
         LOG.error("Unexpected error processing file: {}", pathStr, e);
-        errorCount.incrementAndGet();
+        errorCount++;
       }
-      return null;
+      return new LoadResult(Map.of(), errorCount);
     }
   }
 
@@ -677,7 +560,7 @@ public class SignerLoader implements Closeable {
    * @param processed atomic counter of processed files
    * @param total total number of files being processed
    */
-  private static void reportProgress(final AtomicLong processed, final int total) {
+  private void reportProgress(final AtomicLong processed, final int total) {
     long count = processed.incrementAndGet();
     // Report ~100 times max, or every 10 files minimum
     int interval = Math.max(10, total / 100);
@@ -725,15 +608,15 @@ public class SignerLoader implements Closeable {
    * @throws IOException If there is an error reading the config directory
    */
   private Map<String, FileTime> getMetadataConfigFilesWithTime() throws IOException {
-    if (!Files.exists(configsDirectory)) {
+    if (!Files.exists(config.configsDirectory())) {
       throw new FileNotFoundException("Config directory does not exist");
     }
 
-    if (!Files.isDirectory(configsDirectory)) {
-      throw new IOException("Path is not a directory: " + configsDirectory);
+    if (!Files.isDirectory(config.configsDirectory())) {
+      throw new IOException("Path is not a directory: " + config.configsDirectory());
     }
 
-    try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
+    try (final Stream<Path> fileStream = Files.list(config.configsDirectory())) {
       return fileStream
           .filter(SignerLoader::validFileExtension)
           .collect(
@@ -772,20 +655,5 @@ public class SignerLoader implements Closeable {
     final boolean isHidden = filename.toFile().isHidden();
     final String extension = FilenameUtils.getExtension(filename.toString());
     return !isHidden && CONFIG_FILE_EXTENSIONS.contains(extension.toLowerCase(Locale.ROOT));
-  }
-
-  @VisibleForTesting
-  public int getBatchSize() {
-    return batchSize;
-  }
-
-  @VisibleForTesting
-  public int getTaskTimeoutSeconds() {
-    return taskTimeoutSeconds;
-  }
-
-  @VisibleForTesting
-  public int getSequentialThreshold() {
-    return sequentialThreshold;
   }
 }

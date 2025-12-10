@@ -61,13 +61,5 @@ public interface BaseConfig {
 
   int getVertxWorkerPoolSize();
 
-  boolean isSignerLoadParallel();
-
-  long getReloadTimeoutMinutes();
-
-  int getSignerLoadTimeoutSeconds();
-
-  int getSignerLoadBatchSize();
-
-  int getSignerLoadSequentialThreshold();
+  tech.pegasys.web3signer.common.config.SignerLoaderConfig getSignerLoaderConfig();
 }

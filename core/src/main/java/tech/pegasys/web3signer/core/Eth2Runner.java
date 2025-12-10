@@ -157,17 +157,11 @@ public class Eth2Runner extends Runner {
   protected List<ArtifactSignerProvider> createArtifactSignerProvider(
       final Vertx vertx, final MetricsSystem metricsSystem) {
     // create factory instance ONCE at startup
-    final SignerLoader signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(baseConfig.getKeyConfigPath())
-            .parallelProcess(baseConfig.isSignerLoadParallel())
-            .batchSize(baseConfig.getSignerLoadBatchSize())
-            .sequentialThreshold(baseConfig.getSignerLoadSequentialThreshold())
-            .taskTimeoutSeconds(baseConfig.getSignerLoadTimeoutSeconds())
-            .build();
+    final SignerLoader signerLoader = new SignerLoader(baseConfig.getSignerLoaderConfig());
 
     // Register for cleanup ONCE
     registerClose(signerLoader);
+
     return List.of(
         new DefaultArtifactSignerProvider(
             createArtifactSignerSupplier(signerLoader, metricsSystem),

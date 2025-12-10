@@ -25,6 +25,7 @@ import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptions;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptionsValidator;
 import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.common.config.SignerLoaderConfig;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.MetricsPushOptions;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -362,28 +363,13 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   }
 
   @Override
-  public long getReloadTimeoutMinutes() {
-    return reloadTimeoutMinutes;
-  }
-
-  @Override
-  public int getSignerLoadTimeoutSeconds() {
-    return signerLoadTimeoutSeconds;
-  }
-
-  @Override
-  public int getSignerLoadBatchSize() {
-    return signerLoadBatchSize;
-  }
-
-  @Override
-  public int getSignerLoadSequentialThreshold() {
-    return signerLoadSequentialThreshold;
-  }
-
-  @Override
-  public boolean isSignerLoadParallel() {
-    return signerLoadParallel;
+  public SignerLoaderConfig getSignerLoaderConfig() {
+    return new SignerLoaderConfig(
+        keyStorePath,
+        signerLoadParallel,
+        signerLoadBatchSize,
+        signerLoadTimeoutSeconds,
+        signerLoadSequentialThreshold);
   }
 
   @Override
@@ -405,6 +391,7 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
         .add("idleConnectionTimeoutSeconds", idleConnectionTimeoutSeconds)
         .add("vertxWorkerPoolSize", vertxWorkerPoolSize)
+        .add("signerLoaderConfig", getSignerLoaderConfig())
         .toString();
   }
 

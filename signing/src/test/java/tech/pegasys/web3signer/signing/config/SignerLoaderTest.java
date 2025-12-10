@@ -22,6 +22,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.FileHiddenUtil;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.common.config.SignerLoaderConfig;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
@@ -116,8 +117,7 @@ class SignerLoaderTest {
         new YamlSignerParser(
             List.of(blsArtifactSignerFactory), YamlMapperFactory.createYamlMapper());
 
-    signerLoader =
-        SignerLoader.builder().configsDirectory(configsDirectory).parallelProcess(true).build();
+    signerLoader = new SignerLoader(SignerLoaderConfig.withDefaults(configsDirectory));
   }
 
   @AfterEach
@@ -178,7 +178,7 @@ class SignerLoaderTest {
 
     final Path missingConfigDir = configsDirectory.resolve("idontexist");
     try (SignerLoader signerLoaderWithInvalidConfigDir =
-        SignerLoader.builder().configsDirectory(missingConfigDir).build()) {
+        new SignerLoader(SignerLoaderConfig.withDefaults(missingConfigDir))) {
       final MappedResults<ArtifactSigner> result =
           signerLoaderWithInvalidConfigDir.load(signerParser);
 
@@ -408,14 +408,7 @@ class SignerLoaderTest {
     createBLSRawConfigFiles(3);
 
     // Create loader with 2 second timeout
-    signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(configsDirectory)
-            .parallelProcess(true)
-            .sequentialThreshold(1) // Force parallel processing for testing timeout
-            .taskTimeoutSeconds(2)
-            .build();
-
+    signerLoader = new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 500, 2, 1));
     MappedResults<ArtifactSigner> result = signerLoader.load(slowParser);
 
     // All tasks should timeout and be cancelled
@@ -439,13 +432,7 @@ class SignerLoaderTest {
     createBLSRawConfigFiles(2);
 
     // Create loader with 1 second timeout (should succeed with 500ms tasks)
-    signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(configsDirectory)
-            .parallelProcess(true)
-            .sequentialThreshold(1) // Force parallel processing
-            .taskTimeoutSeconds(1)
-            .build();
+    signerLoader = new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 500, 1, 1));
 
     MappedResults<ArtifactSigner> result = signerLoader.load(slowParser);
 
@@ -461,16 +448,10 @@ class SignerLoaderTest {
   @Test
   void minimumTimeoutIsEnforced() {
     // taskTimeoutSeconds with value less than 1 should be clamped to 1
-    signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(configsDirectory)
-            .parallelProcess(true)
-            .taskTimeoutSeconds(0)
-            .build();
-
-    // Verify by introspection that the minimum is applied
-    // The minimum is enforced in the constructor: Math.max(1, builder.taskTimeoutSeconds)
-    assertThat(signerLoader.getTaskTimeoutSeconds()).isOne();
+    SignerLoaderConfig signerLoaderConfig =
+        new SignerLoaderConfig(configsDirectory, true, 500, 0, 0);
+    assertThat(signerLoaderConfig.taskTimeoutSeconds()).isOne();
+    assertThat(signerLoaderConfig.sequentialThreshold()).isOne();
   }
 
   // ==================== BATCH SIZE BEHAVIOR TESTS ====================
@@ -478,16 +459,10 @@ class SignerLoaderTest {
   @Test
   void batchSizeControlsProgressLogging() throws Exception {
     int fileCount = 250;
-
+    int batchSize = 120;
     createBLSRawConfigFiles(fileCount);
-
     signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(configsDirectory)
-            .parallelProcess(true)
-            .batchSize(120)
-            .build();
-    assertThat(signerLoader.getBatchSize()).isEqualTo(120);
+        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, batchSize, 60, 100));
 
     signerLoader.load(signerParser);
 
@@ -503,17 +478,13 @@ class SignerLoaderTest {
   @Test
   void largeBatchSizeProcessesInSingleBatch() throws Exception {
     int fileCount = 150;
+    int batchSize = 200;
 
     createBLSRawConfigFiles(fileCount);
 
     // Use batch size larger than file count
     signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(configsDirectory)
-            .parallelProcess(true)
-            .batchSize(200)
-            .build();
-    assertThat(signerLoader.getBatchSize()).isEqualTo(200);
+        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, batchSize, 60, 100));
 
     MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
@@ -535,15 +506,12 @@ class SignerLoaderTest {
   @Test
   void batchSizeLessThan100IsClampedTo100() throws Exception {
     int fileCount = 150;
+    int batchSize = 50; // should be clamped to 100
     createBLSRawConfigFiles(fileCount);
+    SignerLoaderConfig config = new SignerLoaderConfig(configsDirectory, true, batchSize, 60, 100);
+    assertThat(config.batchSize()).isEqualTo(100);
 
-    signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(configsDirectory)
-            .parallelProcess(true)
-            .batchSize(50) // Should be clamped to 100
-            .build();
-    assertThat(signerLoader.getBatchSize()).isEqualTo(100);
+    signerLoader = new SignerLoader(config);
 
     signerLoader.load(signerParser);
 
@@ -555,15 +523,10 @@ class SignerLoaderTest {
   @Test
   void exactlyOneBatchWhenFilesEqualBatchSize() throws Exception {
     int fileCount = 100;
+    int batchSize = 100;
     createBLSRawConfigFiles(fileCount);
-
-    signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(configsDirectory)
-            .parallelProcess(true)
-            .batchSize(100)
-            .build();
-    assertThat(signerLoader.getBatchSize()).isEqualTo(100);
+    SignerLoaderConfig config = new SignerLoaderConfig(configsDirectory, true, batchSize, 60, 100);
+    signerLoader = new SignerLoader(config);
 
     signerLoader.load(signerParser);
 
@@ -582,15 +545,11 @@ class SignerLoaderTest {
   @Test
   void batchProgressOnlyLoggedWhenTotalExceedsBatchSize() throws Exception {
     int fileCount = 150;
+    int batchSize = 100;
     createBLSRawConfigFiles(fileCount);
 
     signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(configsDirectory)
-            .parallelProcess(true)
-            .batchSize(100)
-            .build();
-    assertThat(signerLoader.getBatchSize()).isEqualTo(100);
+        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, batchSize, 60, 100));
 
     signerLoader.load(signerParser);
 
@@ -608,12 +567,7 @@ class SignerLoaderTest {
     // Create files below sequential threshold (default 100)
     createBLSRawConfigFiles(50);
 
-    signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(configsDirectory)
-            .parallelProcess(true)
-            .sequentialThreshold(100)
-            .build();
+    signerLoader = new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 100, 60, 100));
 
     MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
@@ -630,12 +584,7 @@ class SignerLoaderTest {
     // Create files above sequential threshold
     createBLSRawConfigFiles(150);
 
-    signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(configsDirectory)
-            .parallelProcess(true)
-            .sequentialThreshold(100)
-            .build();
+    signerLoader = new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 500, 60, 100));
 
     final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
@@ -652,11 +601,7 @@ class SignerLoaderTest {
     // Create many files
     createBLSRawConfigFiles(200);
 
-    signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(configsDirectory)
-            .parallelProcess(false) // Explicitly disable parallel processing
-            .build();
+    signerLoader = new SignerLoader(new SignerLoaderConfig(configsDirectory, false, 1, 60, 1));
 
     final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
@@ -673,12 +618,7 @@ class SignerLoaderTest {
     createBLSRawConfigFiles(75);
 
     // Set custom threshold to 50
-    signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(configsDirectory)
-            .parallelProcess(true)
-            .sequentialThreshold(50)
-            .build();
+    signerLoader = new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 500, 60, 50));
 
     final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
@@ -692,23 +632,15 @@ class SignerLoaderTest {
   @Test
   void minimumSequentialThresholdIsEnforced() {
     // sequentialThreshold less than 1 should be clamped to 1
-    signerLoader =
-        SignerLoader.builder()
-            .configsDirectory(configsDirectory)
-            .parallelProcess(true)
-            .sequentialThreshold(0)
-            .build();
-
-    // The minimum is enforced in constructor: Math.max(1, builder.sequentialThreshold)
-    assertThat(signerLoader.getSequentialThreshold()).isOne();
+    SignerLoaderConfig config = new SignerLoaderConfig(configsDirectory, true, 100, 60, 1);
+    assertThat(config.sequentialThreshold()).isOne();
   }
 
   @Test
   void sequentialProcessingProducesCorrectResults() throws Exception {
     final List<BLSKeyPair> keyPairs = createBLSRawConfigFiles(10);
 
-    signerLoader =
-        SignerLoader.builder().configsDirectory(configsDirectory).parallelProcess(false).build();
+    signerLoader = new SignerLoader(new SignerLoaderConfig(configsDirectory, false, 100, 60, 100));
 
     final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 

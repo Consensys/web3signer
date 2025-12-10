@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy.support;
 
+import tech.pegasys.web3signer.common.config.SignerLoaderConfig;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.MetricsPushOptions;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -133,27 +134,7 @@ public class TestBaseConfig implements BaseConfig {
   }
 
   @Override
-  public long getReloadTimeoutMinutes() {
-    return 30;
-  }
-
-  @Override
-  public int getSignerLoadTimeoutSeconds() {
-    return 60;
-  }
-
-  @Override
-  public int getSignerLoadBatchSize() {
-    return 500;
-  }
-
-  @Override
-  public int getSignerLoadSequentialThreshold() {
-    return 100;
-  }
-
-  @Override
-  public boolean isSignerLoadParallel() {
-    return true;
+  public SignerLoaderConfig getSignerLoaderConfig() {
+    return new SignerLoaderConfig(getKeyConfigPath(), true, 500, 60, 100);
   }
 }
