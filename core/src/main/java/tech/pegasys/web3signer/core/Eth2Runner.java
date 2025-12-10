@@ -64,8 +64,6 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContext;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContextFactory;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -177,19 +175,17 @@ public class Eth2Runner extends Runner {
             Optional.of(commitBoostApiParameters)));
   }
 
-  private Supplier<Collection<ArtifactSigner>> createArtifactSignerSupplier(
+  private Supplier<MappedResults<ArtifactSigner>> createArtifactSignerSupplier(
       final SignerLoader signerLoader, final MetricsSystem metricsSystem) {
     return () -> {
       try (final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory()) {
-        final List<ArtifactSigner> signers = new ArrayList<>();
         // load keys from key config files
-        signers.addAll(
-            loadSignersFromKeyConfigFiles(signerLoader, azureKeyVaultFactory, metricsSystem)
-                .getValues());
-        // bulk load keys
-        signers.addAll(bulkLoadSigners(azureKeyVaultFactory).getValues());
+        MappedResults<ArtifactSigner> configFileResults =
+            loadSignersFromKeyConfigFiles(signerLoader, azureKeyVaultFactory, metricsSystem);
+        // bulkload keys
+        MappedResults<ArtifactSigner> bulkLoadResults = bulkLoadSigners(azureKeyVaultFactory);
 
-        return signers;
+        return MappedResults.merge(configFileResults, bulkLoadResults);
       }
     };
   }

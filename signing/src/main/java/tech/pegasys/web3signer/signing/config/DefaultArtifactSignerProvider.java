@@ -24,7 +24,6 @@ import tech.pegasys.web3signer.signing.bulkloading.SecpV3KeystoresBulkLoader;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -77,7 +76,8 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
+  // MappedResults = Collection + Error count
+  private final Supplier<MappedResults<ArtifactSigner>> artifactSignerResultsSupplier;
   private final Optional<Consumer<Set<String>>> postLoadingCallback;
   private final Optional<KeystoresParameters> commitBoostKeystoresParameters;
 
@@ -96,10 +96,10 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
           });
 
   public DefaultArtifactSignerProvider(
-      final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier,
+      final Supplier<MappedResults<ArtifactSigner>> artifactSignerResultsSupplier,
       final Optional<Consumer<Set<String>>> postLoadingCallback,
       final Optional<KeystoresParameters> commitBoostKeystoresParameters) {
-    this.artifactSignerCollectionSupplier = artifactSignerCollectionSupplier;
+    this.artifactSignerResultsSupplier = artifactSignerResultsSupplier;
     this.postLoadingCallback = postLoadingCallback;
     this.commitBoostKeystoresParameters = commitBoostKeystoresParameters;
   }
@@ -111,11 +111,11 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
    * serialization with other write operations. The loading process:
    *
    * <ol>
-   *   <li>Invokes the {@code artifactSignerCollectionSupplier} to load signers from all configured
+   *   <li>Invokes the {@code artifactSignerResultsSupplier} to load signers from all configured
    *       sources (encrypted keystores, AWS KMS, Azure Key Vault, GCP Secret Manager, HashiCorp
-   *       Vault, etc.)
-   *   <li>Builds a new immutable signers map, handling duplicate keys by keeping the first signer
-   *       and logging a warning
+   *       Vault, etc.), capturing both successfully loaded signers and error counts
+   *   <li>Builds a new immutable signers map from successfully loaded signers, handling duplicate
+   *       keys by keeping the first signer and logging a warning
    *   <li>If commit boost parameters are enabled, loads proxy signers for each consensus public key
    *   <li>Atomically swaps the volatile references to the new immutable maps
    *   <li>Invokes the optional post-loading callback (e.g., for slashing protection registration)
@@ -124,6 +124,11 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
    * <p>The atomic swap ensures that concurrent readers see either the complete old state or the
    * complete new state, never a mix. This is critical for maintaining consistency during signing
    * operations while a reload is in progress.
+   *
+   * <p><b>Error Handling:</b> Individual signer loading failures (e.g., malformed keystores,
+   * invalid keys) are counted but do not prevent the loading of other valid signers. Successfully
+   * loaded signers are made available even if some configurations fail. The returned error count
+   * allows callers to detect partial failures.
    *
    * <p>This method is typically invoked:
    *
@@ -135,20 +140,25 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
    *
    * <p><b>Note:</b> Loading can be a time-consuming operation, especially when loading from remote
    * vaults or decrypting many keystores. The returned {@link Future} completes when all signers
-   * have been loaded and the swap has occurred.
+   * have been processed (both successful and failed) and the state swap has occurred.
    *
-   * @return a {@link Future} that completes when the load operation has finished
+   * @return a {@link Future} containing the number of signer configurations that failed to load (0
+   *     indicates all signers loaded successfully)
    */
   @Override
-  public Future<Void> load() {
+  public Future<Long> load() {
     return executorService.submit(
         () -> {
           final SignerState currentState = this.state;
           LOG.debug("Signer keys pre-loaded in memory {}", currentState.signers.size());
 
-          // Build new signers map - this can be time-consuming
+          // Get MappedResults - includes error count
+          final MappedResults<ArtifactSigner> results = artifactSignerResultsSupplier.get();
+          final long errorCount = results.getErrorCount();
+
+          // Build new signers map from successful results
           final Map<String, ArtifactSigner> newSigners =
-              artifactSignerCollectionSupplier.get().stream()
+              results.getValues().stream()
                   .collect(
                       Collectors.toMap(
                           ArtifactSigner::getIdentifier,
@@ -200,7 +210,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
           postLoadingCallback.ifPresent(callback -> callback.accept(state.signers.keySet()));
 
           LOG.info("Total signers (keys) currently loaded in memory: {}", state.signers.size());
-          return null;
+          return errorCount;
         });
   }
 

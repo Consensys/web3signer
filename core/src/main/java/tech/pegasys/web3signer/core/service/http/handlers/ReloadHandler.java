@@ -38,6 +38,7 @@ public class ReloadHandler implements Handler<RoutingContext> {
     IDLE,
     RUNNING,
     COMPLETED,
+    COMPLETED_WITH_ERRORS,
     FAILED
   }
 
@@ -114,9 +115,11 @@ public class ReloadHandler implements Handler<RoutingContext> {
       workerExecutor
           .executeBlocking(
               () -> {
+                long totalErrors = 0L;
                 for (ArtifactSignerProvider signerProvider : orderedArtifactSignerProviders) {
                   try {
-                    signerProvider.load().get();
+                    Long errorCount = signerProvider.load().get();
+                    totalErrors += errorCount;
                   } catch (final InterruptedException e) {
                     Thread.currentThread().interrupt();
                     LOG.error("Interrupted while reloading signer", e);
@@ -126,15 +129,26 @@ public class ReloadHandler implements Handler<RoutingContext> {
                     throw new RuntimeException("Reload failed", e);
                   }
                 }
-                return null;
+                return totalErrors;
               },
               false) // unordered is fine since we have pool size 1
           .onSuccess(
-              result -> {
+              totalErrors -> {
                 reloadInProgress.set(false);
-                currentStatus.set(ReloadStatus.COMPLETED);
                 lastOperationTime.set(Instant.now());
-                LOG.info("Reload operation completed successfully");
+
+                if (totalErrors > 0) {
+                  // Completed with errors
+                  currentStatus.set(ReloadStatus.COMPLETED_WITH_ERRORS);
+                  lastErrorMessage.set(
+                      String.format(
+                          "Reload completed with %d signer loading error(s)", totalErrors));
+                  LOG.warn("Reload operation completed with {} errors", totalErrors);
+                } else {
+                  // Completed successfully
+                  currentStatus.set(ReloadStatus.COMPLETED);
+                  LOG.info("Reload operation completed successfully");
+                }
               })
           .onFailure(
               err -> {

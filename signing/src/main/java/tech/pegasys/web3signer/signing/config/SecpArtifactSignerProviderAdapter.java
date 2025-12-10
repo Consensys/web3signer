@@ -44,15 +44,37 @@ public class SecpArtifactSignerProviderAdapter implements ArtifactSignerProvider
     this.signerProvider = signerProvider;
   }
 
+  /**
+   * Maps loaded signers to their Ethereum (eth1) address identifiers.
+   *
+   * <p>This adapter does not perform actual signer loading - it assumes the underlying {@code
+   * signerProvider} has already completed its load operation. This method:
+   *
+   * <ol>
+   *   <li>Retrieves all available identifiers from the underlying provider
+   *   <li>Maps each secp256k1 public key to its corresponding Ethereum address
+   *   <li>Populates the internal map for address-based lookups
+   * </ol>
+   *
+   * <p><b>Important:</b> This method should be called <em>after</em> the underlying {@code
+   * signerProvider.load()} has completed, as it relies on signers already being available.
+   *
+   * <p>Since this is a mapping operation rather than loading from external sources, it always
+   * returns an error count of 0. Any errors from the underlying provider's load operation are not
+   * reflected in this adapter's error count.
+   *
+   * @return a {@link Future} containing 0, as this operation performs mapping rather than loading
+   *     and does not encounter signer loading errors
+   */
   @Override
-  public Future<Void> load() {
+  public Future<Long> load() {
     return executorService.submit(
         () -> {
           LOG.debug("Adding eth1 address for eth1 keys");
-
+          // this assumes that signerProvider.load has already been executed
           signerProvider.availableIdentifiers().forEach(this::mapPublicKeyToEth1Address);
 
-          return null;
+          return 0L;
         });
   }
 

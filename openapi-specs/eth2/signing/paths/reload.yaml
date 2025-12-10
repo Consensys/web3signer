@@ -4,6 +4,12 @@ get:
   summary: 'Get reload operation status'
   description: |
     Returns the current status of the reload operation. Use this to monitor background reload progress.
+    
+    The status endpoint provides visibility into:
+    - Whether a reload is currently in progress
+    - Success or failure of the last reload operation
+    - Number of signer loading errors encountered (if any)
+    - Timestamp of the last operation
   operationId: 'RELOAD_STATUS'
   responses:
     '200':
@@ -12,46 +18,80 @@ get:
         application/json:
           schema:
             type: object
+            required:
+              - status
             properties:
               status:
                 type: string
-                enum: ['idle', 'running', 'completed', 'failed']
-                description: 'Current status of reload operation'
+                enum: ['idle', 'running', 'completed', 'completed_with_errors', 'failed']
+                description: |
+                  Current status of reload operation:
+                  - `idle`: No reload has been triggered yet, or system just started
+                  - `running`: Reload operation is currently in progress
+                  - `completed`: Last reload completed successfully with no errors
+                  - `completed_with_errors`: Last reload completed but some signer configurations failed to load
+                  - `failed`: Last reload failed due to infrastructure error (e.g., executor shutdown)
               lastOperationTime:
                 type: string
                 format: date-time
-                description: 'Timestamp of last reload operation (ISO-8601 format)'
+                description: 'Timestamp of last reload operation start/completion (ISO-8601 format). Absent if no reload has been triggered yet.'
               lastError:
                 type: string
-                description: 'Error message from last failed reload (only present if status is failed)'
+                description: |
+                  Error or warning message from last reload operation. Present when:
+                  - `status` is `failed`: Contains infrastructure failure details
+                  - `status` is `completed_with_errors`: Contains count of signer loading failures
+                  
+                  Absent when status is `idle`, `running`, or `completed`.
           examples:
             idle:
+              summary: 'Initial state - no reload triggered yet'
               value:
                 status: 'idle'
             running:
+              summary: 'Reload in progress'
               value:
                 status: 'running'
                 lastOperationTime: '2025-12-10T10:30:00Z'
             completed:
+              summary: 'Successful reload with no errors'
               value:
                 status: 'completed'
                 lastOperationTime: '2025-12-10T10:30:15Z'
+            completed_with_errors:
+              summary: 'Reload completed but some signers failed to load'
+              value:
+                status: 'completed_with_errors'
+                lastOperationTime: '2025-12-10T10:30:12Z'
+                lastError: 'Reload completed with 3 signer loading error(s)'
             failed:
+              summary: 'Reload failed due to infrastructure error'
               value:
                 status: 'failed'
                 lastOperationTime: '2025-12-10T10:30:10Z'
-                lastError: 'Reload failed: Connection timeout'
+                lastError: 'Reload failed: Executor service unavailable'
 post:
   tags:
     - 'Reload Signer Keys'
   summary: 'Reload signer keys asynchronously'
   description: |
-    Reloads signer keys asynchronously in the background. This is used after adding new keys to a current set of validators.
-    The call accepts the reload request and returns immediately while the actual reload happens asynchronously.
+    Reloads signer keys asynchronously in the background. This endpoint is used after adding, removing, 
+    or modifying keystore files to make Web3Signer aware of the changes without restarting.
     
-    Use GET /reload to monitor the reload status. Only one reload operation can run at a time.
+    The reload operation:
+    - Scans all configured keystore directories and remote vaults
+    - Loads valid signer configurations
+    - Logs warnings for any invalid configurations (malformed files, invalid keys, etc.)
+    - Makes successfully loaded signers available for signing operations
+    - Returns immediately with 202 Accepted while processing continues in the background
     
-    Not used by validator clients - this is an administrative endpoint.
+    **Important notes:**
+    - Only one reload operation can run at a time (subsequent requests return 409 Conflict)
+    - Individual signer loading failures do not cause the entire reload to fail
+    - Use `GET /reload` to check status and error counts
+    - Successfully loaded signers are available even if some configurations fail
+    
+    **Not used by validator clients** - this is an administrative endpoint for node operators.
   operationId: 'RELOAD'
   responses:
     '202':
@@ -60,25 +100,39 @@ post:
         application/json:
           schema:
             type: object
+            required:
+              - status
+              - message
             properties:
               status:
                 type: string
-                example: 'accepted'
+                enum: ['accepted']
+                description: 'Request acceptance status'
               message:
                 type: string
-                example: 'Reload operation accepted and is running in the background. Use GET /reload to check status.'
+                description: 'Human-readable message with instructions to check status'
+          example:
+            status: 'accepted'
+            message: 'Reload operation accepted and is running in the background. Use GET /reload to check status.'
     '409':
       description: 'A reload operation is already in progress'
       content:
         application/json:
           schema:
             type: object
+            required:
+              - status
+              - message
             properties:
               status:
                 type: string
-                example: 'error'
+                enum: ['error']
+                description: 'Error status'
               message:
                 type: string
-                example: 'A reload operation is already in progress. Please try again later.'
+                description: 'Human-readable error message'
+          example:
+            status: 'error'
+            message: 'A reload operation is already in progress. Please try again later.'
     '500':
       description: 'Internal Web3Signer server error - failed to initiate reload operation'

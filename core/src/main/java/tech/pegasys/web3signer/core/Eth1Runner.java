@@ -46,7 +46,6 @@ import tech.pegasys.web3signer.signing.secp256k1.aws.CachedAwsKmsClientFactory;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureHttpClientFactory;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -118,22 +117,17 @@ public class Eth1Runner extends Runner {
         new DefaultArtifactSignerProvider(
             () -> {
               // Supplier reuses the same factory instances on every reload
-              final List<ArtifactSigner> signers = new ArrayList<>();
-              signers.addAll(
+              final MappedResults<ArtifactSigner> configFileResults =
                   loadSignersFromKeyConfigFiles(
-                          azureKeyVaultFactory,
-                          azureSignerFactory,
-                          awsKmsSignerFactory,
-                          signerLoader)
-                      .getValues());
-              signers.addAll(
+                      azureKeyVaultFactory, azureSignerFactory, awsKmsSignerFactory, signerLoader);
+              final MappedResults<ArtifactSigner> bulkLoadResults =
                   bulkLoadSigners(
-                          azureKeyVaultFactory,
-                          azureSignerFactory,
-                          cachedAwsKmsClientFactory,
-                          awsKmsSignerFactory)
-                      .getValues());
-              return signers;
+                      azureKeyVaultFactory,
+                      azureSignerFactory,
+                      cachedAwsKmsClientFactory,
+                      awsKmsSignerFactory);
+
+              return MappedResults.merge(configFileResults, bulkLoadResults);
             },
             Optional.empty(),
             Optional.empty());
