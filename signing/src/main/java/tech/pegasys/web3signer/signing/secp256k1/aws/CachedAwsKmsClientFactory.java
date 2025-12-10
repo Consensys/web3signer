@@ -25,8 +25,6 @@ import java.util.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
@@ -44,7 +42,6 @@ import software.amazon.awssdk.services.kms.KmsClientBuilder;
  * <p>This factory must be closed during application shutdown to release AWS SDK resources.
  */
 public class CachedAwsKmsClientFactory implements Closeable {
-  private static final Logger LOG = LogManager.getLogger();
   private final LoadingCache<AwsKmsClientKey, AwsKmsClient> cache;
 
   public CachedAwsKmsClientFactory(final long cacheSize) {
@@ -86,15 +83,11 @@ public class CachedAwsKmsClientFactory implements Closeable {
   public void close() {
     cache
         .asMap()
-        .values()
-        .forEach(
-            client -> {
-              try {
-                client.close();
-              } catch (final Exception e) {
-                LOG.warn("Error closing AWS KMS client", e);
-              }
+        .entrySet()
+        .removeIf(
+            entry -> {
+              entry.getValue().close(); // The AwsKmsClient.close will not raise any Exception
+              return true;
             });
-    cache.invalidateAll();
   }
 }
