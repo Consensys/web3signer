@@ -14,7 +14,9 @@ package tech.pegasys.web3signer.signing.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.spy;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
@@ -26,6 +28,7 @@ import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
+import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
@@ -55,6 +58,7 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
@@ -394,6 +398,344 @@ class SignerLoaderTest {
         .hasInfoMessage("Processing 3 metadata files. Cached paths: 2");
   }
 
+  // ==================== TIMEOUT BEHAVIOR TESTS ====================
+  @Test
+  @Timeout(30)
+  void taskTimeoutCancelsLongRunningTask() throws Exception {
+    // Create a slow parser that takes longer than the timeout
+    SignerParser slowParser = createSlowParser(10000); // 10 second delay
+
+    createBLSRawConfigFiles(3);
+
+    // Create loader with 2 second timeout
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .sequentialThreshold(1) // Force parallel processing for testing timeout
+            .taskTimeoutSeconds(2)
+            .build();
+
+    MappedResults<ArtifactSigner> result = signerLoader.load(slowParser);
+
+    // All tasks should timeout and be cancelled
+    assertThat(result.getErrorCount()).isEqualTo(3);
+    assertThat(result.getValues()).isEmpty();
+
+    // Verify we got exactly 3 timeout messages
+    long timeoutCount =
+        logging.getLogEvents().stream()
+            .filter(
+                event -> event.getMessage().matches("Task timed out after 2 seconds: .*\\.yaml"))
+            .count();
+    assertThat(timeoutCount).isEqualTo(3);
+  }
+
+  @Test
+  @Timeout(15)
+  void customTimeoutIsRespected() throws Exception {
+    SignerParser slowParser = createSlowParser(500); // 500ms delay
+
+    createBLSRawConfigFiles(2);
+
+    // Create loader with 1 second timeout (should succeed with 500ms tasks)
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .sequentialThreshold(1) // Force parallel processing
+            .taskTimeoutSeconds(1)
+            .build();
+
+    MappedResults<ArtifactSigner> result = signerLoader.load(slowParser);
+
+    // Tasks should complete within timeout
+    assertThat(result.getErrorCount()).isZero();
+    assertThat(result.getValues()).hasSize(2);
+
+    // Verify parallel processing was used
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 2 files in parallel with batch size 500");
+  }
+
+  @Test
+  void minimumTimeoutIsEnforced() {
+    // taskTimeoutSeconds with value less than 1 should be clamped to 1
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .taskTimeoutSeconds(0)
+            .build();
+
+    // Verify by introspection that the minimum is applied
+    // The minimum is enforced in the constructor: Math.max(1, builder.taskTimeoutSeconds)
+    assertThat(signerLoader.getTaskTimeoutSeconds()).isOne();
+  }
+
+  // ==================== BATCH SIZE BEHAVIOR TESTS ====================
+
+  @Test
+  void batchSizeControlsProgressLogging() throws Exception {
+    int fileCount = 250;
+
+    createBLSRawConfigFiles(fileCount);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .batchSize(120)
+            .build();
+    assertThat(signerLoader.getBatchSize()).isEqualTo(120);
+
+    signerLoader.load(signerParser);
+
+    // With 250 files and batch size 120, should process in 3 batches
+    // Verify we see batch progress logs
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 250 files in parallel with batch size 120")
+        .hasInfoMessage("Processing batch 1-120 of 250 files")
+        .hasInfoMessage("Processing batch 121-240 of 250 files")
+        .hasInfoMessage("Processing batch 241-250 of 250 files");
+  }
+
+  @Test
+  void largeBatchSizeProcessesInSingleBatch() throws Exception {
+    int fileCount = 150;
+
+    createBLSRawConfigFiles(fileCount);
+
+    // Use batch size larger than file count
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .batchSize(200)
+            .build();
+    assertThat(signerLoader.getBatchSize()).isEqualTo(200);
+
+    MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+
+    assertThat(result.getValues()).hasSize(fileCount);
+    assertThat(result.getErrorCount()).isZero();
+
+    // Should see parallel processing but not batch-specific messages
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 150 files in parallel with batch size 200");
+
+    // Verify no batch subdivision occurred by checking all log messages
+    assertThat(
+            logging.getLogEvents().stream()
+                .map(LogEvent::getMessage)
+                .noneMatch(msg -> msg.contains("Processing batch")))
+        .isTrue();
+  }
+
+  @Test
+  void batchSizeLessThan100IsClampedTo100() throws Exception {
+    int fileCount = 150;
+    createBLSRawConfigFiles(fileCount);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .batchSize(50) // Should be clamped to 100
+            .build();
+    assertThat(signerLoader.getBatchSize()).isEqualTo(100);
+
+    signerLoader.load(signerParser);
+
+    // Verify it used 100, not 50
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 150 files in parallel with batch size 100");
+  }
+
+  @Test
+  void exactlyOneBatchWhenFilesEqualBatchSize() throws Exception {
+    int fileCount = 100;
+    createBLSRawConfigFiles(fileCount);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .batchSize(100)
+            .build();
+    assertThat(signerLoader.getBatchSize()).isEqualTo(100);
+
+    signerLoader.load(signerParser);
+
+    // Should see parallel processing but not batch-specific messages
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 100 files in parallel with batch size 100");
+
+    // Verify no batch subdivision occurred by checking all log messages
+    assertThat(
+            logging.getLogEvents().stream()
+                .map(LogEvent::getMessage)
+                .noneMatch(msg -> msg.contains("Processing batch")))
+        .isTrue();
+  }
+
+  @Test
+  void batchProgressOnlyLoggedWhenTotalExceedsBatchSize() throws Exception {
+    int fileCount = 150;
+    createBLSRawConfigFiles(fileCount);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .batchSize(100)
+            .build();
+    assertThat(signerLoader.getBatchSize()).isEqualTo(100);
+
+    signerLoader.load(signerParser);
+
+    // With 150 files and batch size 100, should see 2 batches
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 150 files in parallel with batch size 100")
+        .hasInfoMessage("Processing batch 1-100 of 150 files")
+        .hasInfoMessage("Processing batch 101-150 of 150 files");
+  }
+
+  // ==================== SEQUENTIAL VS PARALLEL PROCESSING TESTS ====================
+
+  @Test
+  void sequentialProcessingWhenBelowThreshold() throws Exception {
+    // Create files below sequential threshold (default 100)
+    createBLSRawConfigFiles(50);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .sequentialThreshold(100)
+            .build();
+
+    MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+
+    assertThat(result.getValues()).hasSize(50);
+    assertThat(result.getErrorCount()).isZero();
+
+    // Verify sequential processing was used
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 50 files sequentially");
+  }
+
+  @Test
+  void parallelProcessingWhenAboveThreshold() throws Exception {
+    // Create files above sequential threshold
+    createBLSRawConfigFiles(150);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .sequentialThreshold(100)
+            .build();
+
+    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+
+    assertThat(result.getValues()).hasSize(150);
+    assertThat(result.getErrorCount()).isZero();
+
+    // Verify parallel processing was used
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 150 files in parallel with batch size 500");
+  }
+
+  @Test
+  void sequentialProcessingWhenParallelDisabled() throws Exception {
+    // Create many files
+    createBLSRawConfigFiles(200);
+
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(false) // Explicitly disable parallel processing
+            .build();
+
+    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+
+    assertThat(result.getValues()).hasSize(200);
+    assertThat(result.getErrorCount()).isZero();
+
+    // Verify sequential processing was used despite file count
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 200 files sequentially");
+  }
+
+  @Test
+  void customSequentialThresholdIsRespected() throws Exception {
+    createBLSRawConfigFiles(75);
+
+    // Set custom threshold to 50
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .sequentialThreshold(50)
+            .build();
+
+    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+
+    assertThat(result.getValues()).hasSize(75);
+
+    // With 75 files and threshold of 50, should use parallel processing
+    ExpectedLoggingAssertions.assertThat(logging)
+        .hasInfoMessage("Processing 75 files in parallel with batch size 500");
+  }
+
+  @Test
+  void minimumSequentialThresholdIsEnforced() {
+    // sequentialThreshold less than 1 should be clamped to 1
+    signerLoader =
+        SignerLoader.builder()
+            .configsDirectory(configsDirectory)
+            .parallelProcess(true)
+            .sequentialThreshold(0)
+            .build();
+
+    // The minimum is enforced in constructor: Math.max(1, builder.sequentialThreshold)
+    assertThat(signerLoader.getSequentialThreshold()).isOne();
+  }
+
+  @Test
+  void sequentialProcessingProducesCorrectResults() throws Exception {
+    final List<BLSKeyPair> keyPairs = createBLSRawConfigFiles(10);
+
+    signerLoader =
+        SignerLoader.builder().configsDirectory(configsDirectory).parallelProcess(false).build();
+
+    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+
+    assertThat(result.getValues()).hasSize(10);
+
+    // Verify all expected signers are present
+    final List<String> expectedIds =
+        keyPairs.stream().map(kp -> kp.getPublicKey().toHexString()).collect(Collectors.toList());
+
+    final List<String> actualIds =
+        result.getValues().stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toList());
+
+    assertThat(actualIds).containsExactlyInAnyOrderElementsOf(expectedIds);
+  }
+
+  // ==================== HELPER METHODS ====================
+  private List<BLSKeyPair> createBLSRawConfigFiles(final int numberOfFiles) throws IOException {
+    final List<BLSKeyPair> keyPairs = new ArrayList<>();
+    for (int i = 0; i < numberOfFiles; i++) {
+      final BLSKeyPair blsKey = BLSTestUtil.randomKeyPair(i);
+      keyPairs.add(blsKey);
+      createFileInConfigsDirectory(
+          configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
+    }
+    return keyPairs;
+  }
+
   private Path createFileInConfigsDirectory(final String fileName, final String privateKeyHex)
       throws IOException {
     final Path file = configsDirectory.resolve(fileName);
@@ -415,5 +757,20 @@ class SignerLoaderTest {
   private void createEmptyFileInConfigsDirectory(final String filename) throws IOException {
     final File file = configsDirectory.resolve(filename).toFile();
     assertThat(file.createNewFile()).isTrue();
+  }
+
+  /** Creates a parser that introduces a delay to simulate slow processing */
+  private SignerParser createSlowParser(long delayMillis) throws SigningMetadataException {
+    SignerParser slowParser = spy(signerParser);
+
+    doAnswer(
+            invocation -> {
+              Thread.sleep(delayMillis);
+              return invocation.callRealMethod();
+            })
+        .when(slowParser)
+        .parse(any());
+
+    return slowParser;
   }
 }
