@@ -137,4 +137,9 @@ public class TestBaseConfig implements BaseConfig {
   public SignerLoaderConfig getSignerLoaderConfig() {
     return new SignerLoaderConfig(getKeyConfigPath(), true, 500, 60, 100);
   }
+
+  @Override
+  public long getReloadTimeoutMinutes() {
+    return 30L;
+  }
 }

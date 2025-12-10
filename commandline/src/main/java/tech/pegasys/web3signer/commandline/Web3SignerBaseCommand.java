@@ -373,6 +373,11 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   }
 
   @Override
+  public long getReloadTimeoutMinutes() {
+    return reloadTimeoutMinutes;
+  }
+
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("configFile", configFile)
