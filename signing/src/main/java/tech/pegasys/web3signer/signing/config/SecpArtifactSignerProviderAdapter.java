@@ -71,6 +71,7 @@ public class SecpArtifactSignerProviderAdapter implements ArtifactSignerProvider
     return executorService.submit(
         () -> {
           LOG.debug("Adding eth1 address for eth1 keys");
+          signers.clear();
           // this assumes that signerProvider.load has already been executed
           signerProvider.availableIdentifiers().forEach(this::mapPublicKeyToEth1Address);
 
