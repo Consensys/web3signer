@@ -12,19 +12,25 @@
 - Access OpenAPI specs at https://consensys.github.io/web3signer/
 
 ### Features Added
+- **Enhanced `/reload` endpoint with status monitoring:**
+  - New `GET /reload` endpoint to check reload operation status
+  - Reports detailed status: `idle`, `running`, `completed`, `completed_with_errors`, `failed`
+  - Exposes error counts when individual signer configurations fail to load
+  - Distinguishes between complete success and partial success (some signers failed)
+  - Provides timestamps and error messages for last reload operation
 - Virtual thread-based signer loading for improved performance
 - New file system signer loading configuration:
-    - `--signer-load-timeout` (default: 60 sec) - Timeout per file during parallel processing
-    - `--signer-load-batch-size` (default: 500) - Files processed per batch in parallel mode
-    - `--signer-load-sequential-threshold` (default: 100) - Minimum files to trigger parallel processing
-    - `--signer-load-parallel` (default: true) - Enable/disable parallel processing
+  - `--signer-load-timeout` (default: 60 sec) - Timeout per file during parallel processing
+  - `--signer-load-batch-size` (default: 500) - Files processed per batch in parallel mode
+  - `--signer-load-sequential-threshold` (default: 100) - Minimum files to trigger parallel processing
+  - `--signer-load-parallel` (default: true) - Enable/disable parallel processing
 - New `/reload` endpoint configuration:
   - `--reload-timeout` (default: 30 min) - Maximum time for entire reload operation
 - Improved reload concurrency control prevents multiple simultaneous reloads
 
-
 ### Bugs Fixed
 - Fix memory leak during reload API endpoint. Issue [#1073][issue_1073] via PR [#1135][PR_1135].
+- Fix race condition in reload flag management when executor initialization fails synchronously
 
 [issue_1073]: https://github.com/Consensys/web3signer/issues/1073
 [PR_1135]: https://github.com/Consensys/web3signer/pull/1135
