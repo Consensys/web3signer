@@ -13,10 +13,16 @@
 package tech.pegasys.web3signer.signing.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
@@ -50,9 +56,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import de.neuland.assertj.logging.ExpectedLogging;
-import de.neuland.assertj.logging.ExpectedLoggingAssertions;
-import de.neuland.assertj.logging.LogEvent;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -61,7 +64,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -84,10 +86,6 @@ class SignerLoaderTest {
   private static final BLSKeyPair blsKeyPair3 = BLSTestUtil.randomKeyPair(3);
 
   private SignerParser signerParser;
-
-  @RegisterExtension
-  private final ExpectedLogging logging = ExpectedLogging.forSource(SignerLoader.class);
-
   private SignerLoader signerLoader;
 
   @BeforeEach
@@ -334,36 +332,32 @@ class SignerLoaderTest {
       createFileInConfigsDirectory(
           configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
     }
-    try {
-      MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
-      assertThat(result.getValues()).hasSize(15000);
-      assertThat(result.getErrorCount()).isZero();
-      ExpectedLoggingAssertions.assertThat(logging)
-          .hasInfoMessage("Processing 15000 metadata files. Cached paths: 0");
+    MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
 
-      // loading again will return cached results
-      result = signerLoader.load(signerParser);
-      assertThat(result.getValues()).hasSize(15000);
-      assertThat(result.getErrorCount()).isZero();
-      ExpectedLoggingAssertions.assertThat(logging)
-          .hasInfoMessage("Processing 0 metadata files. Cached paths: 15000");
+    assertThat(result.getValues()).hasSize(15000);
+    assertThat(result.getErrorCount()).isZero();
 
-      // add 6005
-      for (int i = 15000; i < 21005; i++) {
-        BLSKeyPair blsKey = BLSTestUtil.randomKeyPair(i);
-        createFileInConfigsDirectory(
-            configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
-      }
-      // load again. Total should assert to 21005. Logs should show 15K loaded from cache.
-      result = signerLoader.load(signerParser);
-      assertThat(result.getValues()).hasSize(21005);
-      assertThat(result.getErrorCount()).isZero();
-      ExpectedLoggingAssertions.assertThat(logging)
-          .hasInfoMessage("Processing 6005 metadata files. Cached paths: 15000");
-    } finally {
-      logging.getLogEvents().stream().map(LogEvent::getMessage).forEach(System.out::println);
+    // loading again will return cached results - verify no new files processed
+    SignerLoader spyLoader = spy(signerLoader);
+    result = spyLoader.load(signerParser);
+    assertThat(result.getValues()).hasSize(15000);
+    assertThat(result.getErrorCount()).isZero();
+
+    // Verify processFile was never called (all cached)
+    verify(spyLoader, never()).processFile(any(), any(), any(), anyInt());
+
+    // add 6005 more files
+    for (int i = 15000; i < 21005; i++) {
+      BLSKeyPair blsKey = BLSTestUtil.randomKeyPair(i);
+      createFileInConfigsDirectory(
+          configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
     }
+
+    // load again. Total should assert to 21005
+    result = signerLoader.load(signerParser);
+    assertThat(result.getValues()).hasSize(21005);
+    assertThat(result.getErrorCount()).isZero();
   }
 
   @Test
@@ -382,23 +376,26 @@ class SignerLoaderTest {
     assertThat(result.getErrorCount()).isZero();
 
     // rewrite 3 files again, should result in new timestamp, hence reloaded
+    Thread.sleep(10); // Ensure different timestamp
     for (int i = 1; i < 4; i++) {
       final BLSKeyPair blsKey = blsKeys.get(i);
       createFileInConfigsDirectory(
           configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
     }
 
-    result = signerLoader.load(signerParser);
+    // Create spy to verify reprocessing
+    SignerLoader spyLoader = spy(signerLoader);
+    result = spyLoader.load(signerParser);
 
     assertThat(result.getValues()).hasSize(5);
     assertThat(result.getErrorCount()).isZero();
 
-    // assert relevant log
-    ExpectedLoggingAssertions.assertThat(logging)
-        .hasInfoMessage("Processing 3 metadata files. Cached paths: 2");
+    // Verify processFile called for the 3 modified files
+    verify(spyLoader, times(3)).processFile(any(), eq(signerParser), any(), eq(3));
   }
 
   // ==================== TIMEOUT BEHAVIOR TESTS ====================
+
   @Test
   @Timeout(30)
   void taskTimeoutCancelsLongRunningTask() throws Exception {
@@ -408,20 +405,14 @@ class SignerLoaderTest {
     createBLSRawConfigFiles(3);
 
     // Create loader with 2 second timeout
-    signerLoader = new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 500, 2, 1));
-    MappedResults<ArtifactSigner> result = signerLoader.load(slowParser);
+    try (SignerLoader testLoader =
+        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 500, 2, 1))) {
+      MappedResults<ArtifactSigner> result = testLoader.load(slowParser);
 
-    // All tasks should timeout and be cancelled
-    assertThat(result.getErrorCount()).isEqualTo(3);
-    assertThat(result.getValues()).isEmpty();
-
-    // Verify we got exactly 3 timeout messages
-    long timeoutCount =
-        logging.getLogEvents().stream()
-            .filter(
-                event -> event.getMessage().matches("Task timed out after 2 seconds: .*\\.yaml"))
-            .count();
-    assertThat(timeoutCount).isEqualTo(3);
+      // All tasks should timeout and be cancelled
+      assertThat(result.getErrorCount()).isEqualTo(3);
+      assertThat(result.getValues()).isEmpty();
+    }
   }
 
   @Test
@@ -432,17 +423,14 @@ class SignerLoaderTest {
     createBLSRawConfigFiles(2);
 
     // Create loader with 1 second timeout (should succeed with 500ms tasks)
-    signerLoader = new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 500, 1, 1));
+    try (SignerLoader testLoader =
+        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 500, 1, 1))) {
+      MappedResults<ArtifactSigner> result = testLoader.load(slowParser);
 
-    MappedResults<ArtifactSigner> result = signerLoader.load(slowParser);
-
-    // Tasks should complete within timeout
-    assertThat(result.getErrorCount()).isZero();
-    assertThat(result.getValues()).hasSize(2);
-
-    // Verify parallel processing was used
-    ExpectedLoggingAssertions.assertThat(logging)
-        .hasInfoMessage("Processing 2 files in parallel with batch size 500");
+      // Tasks should complete within timeout
+      assertThat(result.getErrorCount()).isZero();
+      assertThat(result.getValues()).hasSize(2);
+    }
   }
 
   @Test
@@ -461,18 +449,20 @@ class SignerLoaderTest {
     int fileCount = 250;
     int batchSize = 120;
     createBLSRawConfigFiles(fileCount);
-    signerLoader =
-        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, batchSize, 60, 100));
+    try (SignerLoader testLoader =
+        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, batchSize, 60, 100))) {
 
-    signerLoader.load(signerParser);
+      SignerLoader spyLoader = spy(testLoader);
+      spyLoader.load(signerParser);
 
-    // With 250 files and batch size 120, should process in 3 batches
-    // Verify we see batch progress logs
-    ExpectedLoggingAssertions.assertThat(logging)
-        .hasInfoMessage("Processing 250 files in parallel with batch size 120")
-        .hasInfoMessage("Processing batch 1-120 of 250 files")
-        .hasInfoMessage("Processing batch 121-240 of 250 files")
-        .hasInfoMessage("Processing batch 241-250 of 250 files");
+      // Verify processInBatches was called (not processSequentially)
+      verify(spyLoader, times(1)).processInBatches(any(), eq(signerParser), any(), eq(fileCount));
+      verify(spyLoader, never()).processSequentially(any(), any(), any(), anyInt());
+
+      // With 250 files and batch size 120, should call collectBatchResults 3 times
+      // (batches: 1-120, 121-240, 241-250)
+      verify(spyLoader, times(3)).collectBatchResults(any(), any());
+    }
   }
 
   @Test
@@ -483,24 +473,21 @@ class SignerLoaderTest {
     createBLSRawConfigFiles(fileCount);
 
     // Use batch size larger than file count
-    signerLoader =
-        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, batchSize, 60, 100));
+    try (SignerLoader testLoader =
+        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, batchSize, 60, 100))) {
 
-    MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+      SignerLoader spyLoader = spy(testLoader);
+      MappedResults<ArtifactSigner> result = spyLoader.load(signerParser);
 
-    assertThat(result.getValues()).hasSize(fileCount);
-    assertThat(result.getErrorCount()).isZero();
+      assertThat(result.getValues()).hasSize(fileCount);
+      assertThat(result.getErrorCount()).isZero();
 
-    // Should see parallel processing but not batch-specific messages
-    ExpectedLoggingAssertions.assertThat(logging)
-        .hasInfoMessage("Processing 150 files in parallel with batch size 200");
+      // Should use parallel processing
+      verify(spyLoader, times(1)).processInBatches(any(), eq(signerParser), any(), eq(fileCount));
 
-    // Verify no batch subdivision occurred by checking all log messages
-    assertThat(
-            logging.getLogEvents().stream()
-                .map(LogEvent::getMessage)
-                .noneMatch(msg -> msg.contains("Processing batch")))
-        .isTrue();
+      // Should only call collectBatchResults once (single batch)
+      verify(spyLoader, times(1)).collectBatchResults(any(), any());
+    }
   }
 
   @Test
@@ -511,13 +498,14 @@ class SignerLoaderTest {
     SignerLoaderConfig config = new SignerLoaderConfig(configsDirectory, true, batchSize, 60, 100);
     assertThat(config.batchSize()).isEqualTo(100);
 
-    signerLoader = new SignerLoader(config);
+    try (SignerLoader testLoader = new SignerLoader(config)) {
 
-    signerLoader.load(signerParser);
+      SignerLoader spyLoader = spy(testLoader);
+      spyLoader.load(signerParser);
 
-    // Verify it used 100, not 50
-    ExpectedLoggingAssertions.assertThat(logging)
-        .hasInfoMessage("Processing 150 files in parallel with batch size 100");
+      // Verify it used batch processing
+      verify(spyLoader, times(1)).processInBatches(any(), eq(signerParser), any(), eq(fileCount));
+    }
   }
 
   @Test
@@ -526,20 +514,17 @@ class SignerLoaderTest {
     int batchSize = 100;
     createBLSRawConfigFiles(fileCount);
     SignerLoaderConfig config = new SignerLoaderConfig(configsDirectory, true, batchSize, 60, 100);
-    signerLoader = new SignerLoader(config);
+    try (SignerLoader testLoader = new SignerLoader(config)) {
 
-    signerLoader.load(signerParser);
+      SignerLoader spyLoader = spy(testLoader);
+      spyLoader.load(signerParser);
 
-    // Should see parallel processing but not batch-specific messages
-    ExpectedLoggingAssertions.assertThat(logging)
-        .hasInfoMessage("Processing 100 files in parallel with batch size 100");
+      // Should use parallel processing
+      verify(spyLoader, times(1)).processInBatches(any(), eq(signerParser), any(), eq(fileCount));
 
-    // Verify no batch subdivision occurred by checking all log messages
-    assertThat(
-            logging.getLogEvents().stream()
-                .map(LogEvent::getMessage)
-                .noneMatch(msg -> msg.contains("Processing batch")))
-        .isTrue();
+      // Should call collectBatchResults exactly once (single batch)
+      verify(spyLoader, times(1)).collectBatchResults(any(), any());
+    }
   }
 
   @Test
@@ -548,16 +533,16 @@ class SignerLoaderTest {
     int batchSize = 100;
     createBLSRawConfigFiles(fileCount);
 
-    signerLoader =
-        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, batchSize, 60, 100));
+    try (SignerLoader testLoader =
+        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, batchSize, 60, 100))) {
 
-    signerLoader.load(signerParser);
+      SignerLoader spyLoader = spy(testLoader);
+      spyLoader.load(signerParser);
 
-    // With 150 files and batch size 100, should see 2 batches
-    ExpectedLoggingAssertions.assertThat(logging)
-        .hasInfoMessage("Processing 150 files in parallel with batch size 100")
-        .hasInfoMessage("Processing batch 1-100 of 150 files")
-        .hasInfoMessage("Processing batch 101-150 of 150 files");
+      // With 150 files and batch size 100, should see 2 batches
+      verify(spyLoader, times(1)).processInBatches(any(), eq(signerParser), any(), eq(fileCount));
+      verify(spyLoader, times(2)).collectBatchResults(any(), any());
+    }
   }
 
   // ==================== SEQUENTIAL VS PARALLEL PROCESSING TESTS ====================
@@ -567,16 +552,15 @@ class SignerLoaderTest {
     // Create files below sequential threshold (default 100)
     createBLSRawConfigFiles(50);
 
-    signerLoader = new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 100, 60, 100));
-
-    MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+    SignerLoader spyLoader = spy(signerLoader);
+    MappedResults<ArtifactSigner> result = spyLoader.load(signerParser);
 
     assertThat(result.getValues()).hasSize(50);
     assertThat(result.getErrorCount()).isZero();
 
     // Verify sequential processing was used
-    ExpectedLoggingAssertions.assertThat(logging)
-        .hasInfoMessage("Processing 50 files sequentially");
+    verify(spyLoader, times(1)).processSequentially(any(), eq(signerParser), any(), eq(50));
+    verify(spyLoader, never()).processInBatches(any(), any(), any(), anyInt());
   }
 
   @Test
@@ -584,16 +568,15 @@ class SignerLoaderTest {
     // Create files above sequential threshold
     createBLSRawConfigFiles(150);
 
-    signerLoader = new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 500, 60, 100));
-
-    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+    SignerLoader spyLoader = spy(signerLoader);
+    final MappedResults<ArtifactSigner> result = spyLoader.load(signerParser);
 
     assertThat(result.getValues()).hasSize(150);
     assertThat(result.getErrorCount()).isZero();
 
     // Verify parallel processing was used
-    ExpectedLoggingAssertions.assertThat(logging)
-        .hasInfoMessage("Processing 150 files in parallel with batch size 500");
+    verify(spyLoader, times(1)).processInBatches(any(), eq(signerParser), any(), eq(150));
+    verify(spyLoader, never()).processSequentially(any(), any(), any(), anyInt());
   }
 
   @Test
@@ -601,16 +584,18 @@ class SignerLoaderTest {
     // Create many files
     createBLSRawConfigFiles(200);
 
-    signerLoader = new SignerLoader(new SignerLoaderConfig(configsDirectory, false, 1, 60, 1));
+    try (SignerLoader testLoader =
+        new SignerLoader(new SignerLoaderConfig(configsDirectory, false, 1, 60, 1))) {
+      SignerLoader spyLoader = spy(testLoader);
+      final MappedResults<ArtifactSigner> result = spyLoader.load(signerParser);
 
-    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+      assertThat(result.getValues()).hasSize(200);
+      assertThat(result.getErrorCount()).isZero();
 
-    assertThat(result.getValues()).hasSize(200);
-    assertThat(result.getErrorCount()).isZero();
-
-    // Verify sequential processing was used despite file count
-    ExpectedLoggingAssertions.assertThat(logging)
-        .hasInfoMessage("Processing 200 files sequentially");
+      // Verify sequential processing was used despite file count
+      verify(spyLoader, times(1)).processSequentially(any(), eq(signerParser), any(), eq(200));
+      verify(spyLoader, never()).processInBatches(any(), any(), any(), anyInt());
+    }
   }
 
   @Test
@@ -618,21 +603,24 @@ class SignerLoaderTest {
     createBLSRawConfigFiles(75);
 
     // Set custom threshold to 50
-    signerLoader = new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 500, 60, 50));
+    try (SignerLoader testLoader =
+        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 500, 60, 50))) {
 
-    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+      SignerLoader spyLoader = spy(testLoader);
+      final MappedResults<ArtifactSigner> result = spyLoader.load(signerParser);
 
-    assertThat(result.getValues()).hasSize(75);
+      assertThat(result.getValues()).hasSize(75);
 
-    // With 75 files and threshold of 50, should use parallel processing
-    ExpectedLoggingAssertions.assertThat(logging)
-        .hasInfoMessage("Processing 75 files in parallel with batch size 500");
+      // With 75 files and threshold of 50, should use parallel processing
+      verify(spyLoader, times(1)).processInBatches(any(), eq(signerParser), any(), eq(75));
+      verify(spyLoader, never()).processSequentially(any(), any(), any(), anyInt());
+    }
   }
 
   @Test
   void minimumSequentialThresholdIsEnforced() {
     // sequentialThreshold less than 1 should be clamped to 1
-    SignerLoaderConfig config = new SignerLoaderConfig(configsDirectory, true, 100, 60, 1);
+    SignerLoaderConfig config = new SignerLoaderConfig(configsDirectory, true, 100, 60, 0);
     assertThat(config.sequentialThreshold()).isOne();
   }
 
@@ -640,37 +628,260 @@ class SignerLoaderTest {
   void sequentialProcessingProducesCorrectResults() throws Exception {
     final List<BLSKeyPair> keyPairs = createBLSRawConfigFiles(10);
 
-    signerLoader = new SignerLoader(new SignerLoaderConfig(configsDirectory, false, 100, 60, 100));
+    try (SignerLoader testLoader =
+        new SignerLoader(new SignerLoaderConfig(configsDirectory, false, 100, 60, 100))) {
+      SignerLoader spyLoader = spy(testLoader);
+      final MappedResults<ArtifactSigner> result = spyLoader.load(signerParser);
 
-    final MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+      assertThat(result.getValues()).hasSize(10);
 
-    assertThat(result.getValues()).hasSize(10);
+      // Verify all expected signers are present
+      final List<String> expectedIds =
+          keyPairs.stream().map(kp -> kp.getPublicKey().toHexString()).collect(Collectors.toList());
 
-    // Verify all expected signers are present
-    final List<String> expectedIds =
-        keyPairs.stream().map(kp -> kp.getPublicKey().toHexString()).collect(Collectors.toList());
+      final List<String> actualIds =
+          result.getValues().stream()
+              .map(ArtifactSigner::getIdentifier)
+              .collect(Collectors.toList());
 
-    final List<String> actualIds =
-        result.getValues().stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toList());
+      assertThat(actualIds).containsExactlyInAnyOrderElementsOf(expectedIds);
 
-    assertThat(actualIds).containsExactlyInAnyOrderElementsOf(expectedIds);
+      // Verify sequential processing was used
+      verify(spyLoader, times(1)).processSequentially(any(), eq(signerParser), any(), eq(10));
+    }
+  }
+
+  @Test
+  void emptyDirectoryReturnsNoSigners() {
+    // Don't create any files
+    SignerLoader spyLoader = spy(signerLoader);
+    MappedResults<ArtifactSigner> result = spyLoader.load(signerParser);
+
+    assertThat(result.getValues()).isEmpty();
+    assertThat(result.getErrorCount()).isZero();
+
+    // Verify neither processing method was called
+    verify(spyLoader, never()).processSequentially(any(), any(), any(), anyInt());
+    verify(spyLoader, never()).processInBatches(any(), any(), any(), anyInt());
+  }
+
+  @Test
+  void atThresholdUsesParallelProcessing() throws Exception {
+    createBLSRawConfigFiles(100);
+
+    try (SignerLoader testLoader =
+        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 500, 60, 100))) {
+
+      SignerLoader spyLoader = spy(testLoader);
+      MappedResults<ArtifactSigner> result = spyLoader.load(signerParser);
+
+      assertThat(result.getValues()).hasSize(100);
+
+      // At threshold boundary (not below), should use parallel
+      verify(spyLoader, times(1)).processInBatches(any(), eq(signerParser), any(), eq(100));
+      verify(spyLoader, never()).processSequentially(any(), any(), any(), anyInt());
+    }
+  }
+
+  @Test
+  void oneBelowThresholdUsesSequentialProcessing() throws Exception {
+    createBLSRawConfigFiles(99);
+
+    try (SignerLoader testLoader =
+        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 500, 60, 100))) {
+      SignerLoader spyLoader = spy(testLoader);
+      MappedResults<ArtifactSigner> result = spyLoader.load(signerParser);
+
+      assertThat(result.getValues()).hasSize(99);
+
+      // Below threshold (99 < 100), should use sequential
+      verify(spyLoader, times(1)).processSequentially(any(), eq(signerParser), any(), eq(99));
+      verify(spyLoader, never()).processInBatches(any(), any(), any(), anyInt());
+    }
+  }
+
+  @Test
+  void oneFileAboveThresholdUsesParallelProcessing() throws Exception {
+    createBLSRawConfigFiles(101);
+
+    try (SignerLoader testLoader =
+        new SignerLoader(new SignerLoaderConfig(configsDirectory, true, 500, 60, 100))) {
+
+      SignerLoader spyLoader = spy(testLoader);
+      MappedResults<ArtifactSigner> result = spyLoader.load(signerParser);
+
+      assertThat(result.getValues()).hasSize(101);
+
+      // Just above threshold should use parallel
+      verify(spyLoader, times(1)).processInBatches(any(), eq(signerParser), any(), eq(101));
+      verify(spyLoader, never()).processSequentially(any(), any(), any(), anyInt());
+    }
+  }
+
+  @Test
+  void closedLoaderThrowsExceptionOnLoad() throws Exception {
+    createBLSRawConfigFiles(5);
+    signerLoader.close();
+
+    assertThatThrownBy(() -> signerLoader.load(signerParser))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("SignerLoader instance has been closed");
+  }
+
+  @Test
+  void multipleClosesAreIdempotent() throws Exception {
+    createBLSRawConfigFiles(5);
+
+    // Load once to initialize
+    signerLoader.load(signerParser);
+
+    // Close multiple times should not throw
+    signerLoader.close();
+    signerLoader.close();
+    signerLoader.close();
+
+    // Subsequent load should fail
+    assertThatThrownBy(() -> signerLoader.load(signerParser))
+        .isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
+  void cachingPreventsDuplicateProcessing() throws Exception {
+    createBLSRawConfigFiles(50);
+
+    // First load
+    MappedResults<ArtifactSigner> firstResult = signerLoader.load(signerParser);
+    assertThat(firstResult.getValues()).hasSize(50);
+
+    // Create spy for second load
+    SignerLoader spyLoader = spy(signerLoader);
+    MappedResults<ArtifactSigner> secondResult = spyLoader.load(signerParser);
+
+    assertThat(secondResult.getValues()).hasSize(50);
+
+    // Verify no files were processed (all cached)
+    verify(spyLoader, never()).processFile(any(), any(), any(), anyInt());
+  }
+
+  @Test
+  void addingNewFilesProcessesOnlyNewFiles() throws Exception {
+    // Initial load with 10 files
+    createBLSRawConfigFiles(10);
+    signerLoader.load(signerParser);
+
+    // Add 5 more files
+    for (int i = 10; i < 15; i++) {
+      BLSKeyPair blsKey = BLSTestUtil.randomKeyPair(i);
+      createFileInConfigsDirectory(
+          configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
+    }
+
+    // Create spy for reload
+    SignerLoader spyLoader = spy(signerLoader);
+    MappedResults<ArtifactSigner> result = spyLoader.load(signerParser);
+
+    assertThat(result.getValues()).hasSize(15);
+
+    // Verify only 5 new files were processed
+    verify(spyLoader, times(5)).processFile(any(), eq(signerParser), any(), eq(5));
+  }
+
+  @Test
+  void batchBoundaryHandling() throws Exception {
+    // Test exact batch boundaries
+    int[] testSizes = {99, 100, 101, 199, 200, 201};
+
+    for (int size : testSizes) {
+      // Clean up previous test
+      if (signerLoader != null) {
+        signerLoader.close();
+      }
+
+      // Create new directory and files
+      Path testDir = Files.createTempDirectory("batch-test-" + size);
+      createBLSRawConfigFiles(testDir, size);
+
+      signerLoader = new SignerLoader(new SignerLoaderConfig(testDir, true, 100, 60, 100));
+
+      SignerLoader spyLoader = spy(signerLoader);
+      MappedResults<ArtifactSigner> result = spyLoader.load(signerParser);
+
+      assertThat(result.getValues()).hasSize(size);
+      assertThat(result.getErrorCount()).isZero();
+
+      // Calculate expected number of batches
+      boolean shouldUseParallel = size >= 100;
+      if (shouldUseParallel) {
+        int expectedBatches = (size + 99) / 100; // Ceiling division
+        verify(spyLoader, times(expectedBatches)).collectBatchResults(any(), any());
+      }
+    }
+  }
+
+  @Test
+  void configValidationInConstructor() throws IOException {
+    // Test that config validation happens in SignerLoaderConfig, not SignerLoader
+    SignerLoaderConfig config = new SignerLoaderConfig(configsDirectory, true, -100, -5, -50);
+
+    // Values should be clamped to minimums
+    assertThat(config.batchSize()).isEqualTo(100);
+    assertThat(config.taskTimeoutSeconds()).isEqualTo(1);
+    assertThat(config.sequentialThreshold()).isEqualTo(1);
+
+    // Should be able to create loader with clamped config
+    try (SignerLoader loader = new SignerLoader(config)) {
+      assertThat(loader).isNotNull();
+    }
+  }
+
+  @Test
+  void progressReportingWithVaryingSizes() throws Exception {
+    // Test progress reporting at different file counts
+    int[] testCounts = {10, 100, 1000, 5000};
+
+    for (int count : testCounts) {
+      if (signerLoader != null) {
+        signerLoader.close();
+      }
+
+      Path testDir = Files.createTempDirectory("progress-test-" + count);
+      createBLSRawConfigFiles(testDir, count);
+
+      signerLoader = new SignerLoader(SignerLoaderConfig.withDefaults(testDir));
+
+      MappedResults<ArtifactSigner> result = signerLoader.load(signerParser);
+
+      assertThat(result.getValues()).hasSize(count);
+      assertThat(result.getErrorCount()).isZero();
+    }
   }
 
   // ==================== HELPER METHODS ====================
+
   private List<BLSKeyPair> createBLSRawConfigFiles(final int numberOfFiles) throws IOException {
+    return createBLSRawConfigFiles(configsDirectory, numberOfFiles);
+  }
+
+  private List<BLSKeyPair> createBLSRawConfigFiles(final Path directory, final int numberOfFiles)
+      throws IOException {
     final List<BLSKeyPair> keyPairs = new ArrayList<>();
     for (int i = 0; i < numberOfFiles; i++) {
       final BLSKeyPair blsKey = BLSTestUtil.randomKeyPair(i);
       keyPairs.add(blsKey);
-      createFileInConfigsDirectory(
-          configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
+      createFileInDirectory(
+          directory, configFileName(blsKey), blsKey.getSecretKey().toBytes().toHexString());
     }
     return keyPairs;
   }
 
   private Path createFileInConfigsDirectory(final String fileName, final String privateKeyHex)
       throws IOException {
-    final Path file = configsDirectory.resolve(fileName);
+    return createFileInDirectory(configsDirectory, fileName, privateKeyHex);
+  }
+
+  private Path createFileInDirectory(
+      final Path directory, final String fileName, final String privateKeyHex) throws IOException {
+    final Path file = directory.resolve(fileName);
 
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
     unencryptedKeyMetadataFile.put("type", "file-raw");

@@ -349,8 +349,8 @@ public class SignerLoader implements Closeable {
    * @return LoadResult containing all successfully loaded signers and total error count
    * @throws InterruptedException if interrupted while waiting for any future to complete
    */
-  private LoadResult collectBatchResults(
-      final List<Future<LoadResult>> futures, final List<String> batch)
+  @VisibleForTesting
+  LoadResult collectBatchResults(final List<Future<LoadResult>> futures, final List<String> batch)
       throws InterruptedException {
 
     final Map<String, Set<ArtifactSigner>> allLoadedSigners = new HashMap<>();
