@@ -493,6 +493,7 @@ public class SignerLoader implements Closeable {
         return false;
       } catch (ExecutionException e) {
         LOG.warn("Task execution failed: {}", filePath, e);
+        errorCount.incrementAndGet();
       } catch (CancellationException e) {
         LOG.info("Task was cancelled: {}", filePath);
       }
