@@ -37,15 +37,16 @@ dependencies {
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j2-impl'
 
-    // JUnit dependencies
-    testImplementation 'org.junit.jupiter:junit-jupiter-api'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+  // JUnit dependencies
+  testImplementation 'org.junit.jupiter:junit-jupiter-api'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params'
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    testImplementation 'org.assertj:assertj-core'
-    testImplementation 'org.mockito:mockito-junit-jupiter'
-    testImplementation 'io.vertx:vertx-web'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
+  testImplementation 'io.vertx:vertx-web'
+  testImplementation project(':keystorage')
 }
 
 artifacts {

@@ -28,6 +28,7 @@ import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.core.config.BaseConfig;
+import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 
@@ -656,7 +657,7 @@ class CommandlineParserTest {
         final Vertx vertx, final MetricsSystem metricsSystem) {
       return List.of(
           new DefaultArtifactSignerProvider(
-              Collections::emptyList, Optional.empty(), Optional.empty()));
+              MappedResults::newSetInstance, Optional.empty(), Optional.empty()));
     }
 
     @Override
