@@ -15,6 +15,8 @@ package tech.pegasys.web3signer.tests.reload;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -160,5 +162,129 @@ public class ReloadAcceptanceTest extends SigningAcceptanceTestBase {
         .contains(blsKeyPair3.getPublicKey().toHexString())
         .doesNotContain(blsKeyPair1.getPublicKey().toHexString()) // Old version
         .doesNotContain(blsKeyPair2.getPublicKey().toHexString()); // Deleted
+  }
+
+  @Test
+  void getReloadStatusReturnsIdleWhenNoReloadHasBeenTriggered() {
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory).withMode("eth2");
+    startSigner(builder.build());
+
+    signer
+        .getReloadStatus()
+        .then()
+        .statusCode(200)
+        .body("status", equalTo("idle"))
+        .body("lastOperationTime", nullValue())
+        .body("lastError", nullValue());
+  }
+
+  @Test
+  void getReloadStatusTransitionsFromIdleToCompleteDuringReload() {
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory).withMode("eth2");
+    startSigner(builder.build());
+
+    signer
+        .getReloadStatus()
+        .then()
+        .statusCode(200)
+        .body("status", equalTo("idle"))
+        .body("lastOperationTime", nullValue())
+        .body("lastError", nullValue());
+
+    // Create encrypted files to slow down reload
+    for (int i = 0; i < 10; i++) {
+      final BLSKeyPair blsKeyPair = BLSTestUtil.randomKeyPair(i);
+      final Path keyConfigFile =
+          testDirectory.resolve(blsKeyPair.getPublicKey().toHexString() + ".yaml");
+      METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(keyConfigFile, blsKeyPair, KdfFunction.PBKDF2);
+    }
+
+    // Trigger reload
+    signer.callReload().then().statusCode(202);
+
+    // Immediately check status - should be running
+    signer
+        .getReloadStatus()
+        .then()
+        .statusCode(200)
+        .body("status", equalTo("running"))
+        .body("lastOperationTime", notNullValue())
+        .body("lastError", nullValue());
+
+    // Wait for completion using status endpoint
+    Awaitility.await()
+        .atMost(10, TimeUnit.SECONDS)
+        .pollInterval(500, TimeUnit.MILLISECONDS)
+        .untilAsserted(
+            () ->
+                signer
+                    .getReloadStatus()
+                    .then()
+                    .statusCode(200)
+                    .body("status", equalTo("completed"))
+                    .body("lastOperationTime", notNullValue())
+                    .body("lastError", nullValue()));
+  }
+
+  @Test
+  void getReloadStatusCanBeCalledMultipleTimesDuringReload() {
+    // Tests concurrent GET requests don't interfere with reload
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory).withMode("eth2");
+    startSigner(builder.build());
+
+    // Create encrypted files to slow down reload
+    for (int i = 0; i < 10; i++) {
+      final BLSKeyPair blsKeyPair = BLSTestUtil.randomKeyPair(i);
+      final Path keyConfigFile =
+          testDirectory.resolve(blsKeyPair.getPublicKey().toHexString() + ".yaml");
+      METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(keyConfigFile, blsKeyPair, KdfFunction.PBKDF2);
+    }
+
+    signer.callReload().then().statusCode(202);
+
+    // Poll status multiple times - all should succeed with "running"
+    for (int i = 0; i < 5; i++) {
+      signer.getReloadStatus().then().statusCode(200).body("status", equalTo("running"));
+    }
+  }
+
+  @Test
+  void lastOperationTimeIsUpdatedOnEachReload() {
+    // Tests timestamp tracking across multiple reloads
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory).withMode("eth2");
+    startSigner(builder.build());
+
+    // First reload
+    signer.callReload().then().statusCode(202);
+
+    Awaitility.await()
+        .atMost(10, TimeUnit.SECONDS)
+        .untilAsserted(() -> signer.getReloadStatus().then().body("status", equalTo("completed")));
+
+    final String firstTimestamp =
+        signer.getReloadStatus().then().extract().path("lastOperationTime");
+
+    // Wait to ensure timestamp difference
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+
+    // Second reload
+    signer.callReload().then().statusCode(202);
+
+    Awaitility.await()
+        .atMost(10, TimeUnit.SECONDS)
+        .untilAsserted(() -> signer.getReloadStatus().then().body("status", equalTo("completed")));
+
+    final String secondTimestamp =
+        signer.getReloadStatus().then().extract().path("lastOperationTime");
+
+    assertThat(secondTimestamp).isNotEqualTo(firstTimestamp);
   }
 }

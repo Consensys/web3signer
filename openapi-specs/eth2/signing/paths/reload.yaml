@@ -1,3 +1,46 @@
+get:
+  tags:
+    - 'Reload Signer Keys'
+  summary: 'Get reload operation status'
+  description: |
+    Returns the current status of the reload operation. Use this to monitor background reload progress.
+  operationId: 'RELOAD_STATUS'
+  responses:
+    '200':
+      description: 'Current reload status'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: ['idle', 'running', 'completed', 'failed']
+                description: 'Current status of reload operation'
+              lastOperationTime:
+                type: string
+                format: date-time
+                description: 'Timestamp of last reload operation (ISO-8601 format)'
+              lastError:
+                type: string
+                description: 'Error message from last failed reload (only present if status is failed)'
+          examples:
+            idle:
+              value:
+                status: 'idle'
+            running:
+              value:
+                status: 'running'
+                lastOperationTime: '2025-12-10T10:30:00Z'
+            completed:
+              value:
+                status: 'completed'
+                lastOperationTime: '2025-12-10T10:30:15Z'
+            failed:
+              value:
+                status: 'failed'
+                lastOperationTime: '2025-12-10T10:30:10Z'
+                lastError: 'Reload failed: Connection timeout'
 post:
   tags:
     - 'Reload Signer Keys'
@@ -5,6 +48,8 @@ post:
   description: |
     Reloads signer keys asynchronously in the background. This is used after adding new keys to a current set of validators.
     The call accepts the reload request and returns immediately while the actual reload happens asynchronously.
+    
+    Use GET /reload to monitor the reload status. Only one reload operation can run at a time.
     
     Not used by validator clients - this is an administrative endpoint.
   operationId: 'RELOAD'
@@ -21,7 +66,7 @@ post:
                 example: 'accepted'
               message:
                 type: string
-                example: 'Reload operation accepted and is running in the background. Check /healthcheck for status.'
+                example: 'Reload operation accepted and is running in the background. Use GET /reload to check status.'
     '409':
       description: 'A reload operation is already in progress'
       content:

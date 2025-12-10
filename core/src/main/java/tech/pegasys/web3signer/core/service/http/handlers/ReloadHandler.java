@@ -14,13 +14,18 @@ package tech.pegasys.web3signer.core.service.http.handlers;
 
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.vertx.core.Handler;
 import io.vertx.core.WorkerExecutor;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
@@ -29,9 +34,20 @@ import org.apache.logging.log4j.Logger;
 public class ReloadHandler implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
 
+  public enum ReloadStatus {
+    IDLE,
+    RUNNING,
+    COMPLETED,
+    FAILED
+  }
+
   private final List<ArtifactSignerProvider> orderedArtifactSignerProviders;
   private final WorkerExecutor workerExecutor;
   private final AtomicBoolean reloadInProgress = new AtomicBoolean(false);
+  private final AtomicReference<ReloadStatus> currentStatus =
+      new AtomicReference<>(ReloadStatus.IDLE);
+  private final AtomicReference<String> lastErrorMessage = new AtomicReference<>();
+  private final AtomicReference<Instant> lastOperationTime = new AtomicReference<>();
 
   public ReloadHandler(
       final List<ArtifactSignerProvider> orderedArtifactSignerProviders,
@@ -42,6 +58,37 @@ public class ReloadHandler implements Handler<RoutingContext> {
 
   @Override
   public void handle(final RoutingContext routingContext) {
+    if (routingContext.request().method().equals(HttpMethod.GET)) {
+      handleStatusRequest(routingContext);
+    } else if (routingContext.request().method().equals(HttpMethod.POST)) {
+      handleReloadRequest(routingContext);
+    } else {
+      routingContext.response().setStatusCode(405).end(); // Method Not Allowed
+    }
+  }
+
+  private void handleStatusRequest(final RoutingContext routingContext) {
+    final Map<String, Object> statusResponse = new HashMap<>();
+    statusResponse.put("status", currentStatus.get().name().toLowerCase(Locale.ENGLISH));
+
+    final Instant lastOpTime = lastOperationTime.get();
+    if (lastOpTime != null) {
+      statusResponse.put("lastOperationTime", lastOpTime.toString());
+    }
+
+    final String errorMsg = lastErrorMessage.get();
+    if (errorMsg != null) {
+      statusResponse.put("lastError", errorMsg);
+    }
+
+    routingContext
+        .response()
+        .setStatusCode(200)
+        .putHeader("Content-Type", "application/json")
+        .end(Json.encode(statusResponse));
+  }
+
+  private void handleReloadRequest(final RoutingContext routingContext) {
     // Check if reload is already in progress
     if (!reloadInProgress.compareAndSet(false, true)) {
       routingContext
@@ -59,6 +106,9 @@ public class ReloadHandler implements Handler<RoutingContext> {
     }
 
     LOG.debug("Reload operation initiated");
+    currentStatus.set(ReloadStatus.RUNNING);
+    lastOperationTime.set(Instant.now());
+    lastErrorMessage.set(null); // Clear previous error
 
     try {
       workerExecutor
@@ -82,18 +132,23 @@ public class ReloadHandler implements Handler<RoutingContext> {
           .onSuccess(
               result -> {
                 reloadInProgress.set(false);
+                currentStatus.set(ReloadStatus.COMPLETED);
+                lastOperationTime.set(Instant.now());
                 LOG.info("Reload operation completed successfully");
               })
           .onFailure(
               err -> {
                 reloadInProgress.set(false);
+                currentStatus.set(ReloadStatus.FAILED);
+                lastErrorMessage.set(err.getMessage());
+                lastOperationTime.set(Instant.now());
                 LOG.error("Reload operation failed", err);
               });
 
       // Respond immediately - reload happens in background
       routingContext
           .response()
-          .setStatusCode(202) // Accepted (not using 200 - OK)
+          .setStatusCode(202) // Accepted
           .putHeader("Content-Type", "application/json")
           .end(
               Json.encode(
@@ -101,10 +156,13 @@ public class ReloadHandler implements Handler<RoutingContext> {
                       "status",
                       "accepted",
                       "message",
-                      "Reload operation accepted and is running in the background. Check /healthcheck for status.")));
-    } catch (final RuntimeException e) {
-      // Reset flag and let error handlers deal with the response
+                      "Reload operation accepted and is running in the background. Use GET /reload to check status.")));
+    } catch (RuntimeException e) {
+      // Reset flag and state if executeBlocking throws synchronously
       reloadInProgress.set(false);
+      currentStatus.set(ReloadStatus.FAILED);
+      lastErrorMessage.set(e.getMessage());
+      lastOperationTime.set(Instant.now());
       LOG.error("Failed to submit reload operation", e);
       throw e;
     }
