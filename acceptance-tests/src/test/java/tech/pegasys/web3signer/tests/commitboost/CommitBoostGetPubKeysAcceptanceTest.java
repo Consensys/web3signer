@@ -133,7 +133,7 @@ public class CommitBoostGetPubKeysAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void listEmptyCommitBoostPublicKeys() throws Exception {
+  void reloadReturnsEmptyProxyKeysAfterPhysicalKeystoreDeletion() throws Exception {
     // call commit boost get pub keys, the proxy_bls and proxy_ecdsa should not be empty
     final Response initResponse = signer.callCommitBoostGetPubKeys();
     initResponse
