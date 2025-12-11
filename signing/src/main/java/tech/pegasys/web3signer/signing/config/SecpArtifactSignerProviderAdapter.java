@@ -18,26 +18,47 @@ import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIden
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Adapts the provided ArtifactSignerProvider into a map of signers using their eth1 address as the
- * identifier rather than the public key which is the default behaviour
+ * Thread-safe adapter that provides Ethereum address-based access to secp256k1 artifact signers.
+ *
+ * <p>This adapter wraps an existing {@link ArtifactSignerProvider} and translates secp256k1 public
+ * key identifiers to their corresponding Ethereum (eth1) addresses. This allows signers to be
+ * looked up by address rather than by public key.
+ *
+ * <h2>Thread Safety</h2>
+ *
+ * This class uses a copy-on-write strategy with a volatile immutable map to ensure thread-safe
+ * reads without locking. The {@link #load()} method atomically replaces the entire signer map,
+ * allowing concurrent reads during updates.
+ *
+ * <h2>Limitations</h2>
+ *
+ * <ul>
+ *   <li>The {@link #load()} method assumes the underlying provider has already loaded its signers
+ *   <li>Signer addition and removal operations are not supported (throw {@link
+ *       NotImplementedException})
+ *   <li>Only works with secp256k1 signers that can be mapped to Ethereum addresses
+ * </ul>
+ *
+ * * @see ArtifactSignerProvider
  */
 public class SecpArtifactSignerProviderAdapter implements ArtifactSignerProvider {
   private static final Logger LOG = LogManager.getLogger();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-  private final Map<String, ArtifactSigner> signers = new HashMap<>();
+  // volatile reference with immutable map with copy-on-write
+  private volatile Map<String, ArtifactSigner> signers = Map.of();
   private final ArtifactSignerProvider signerProvider;
 
   public SecpArtifactSignerProviderAdapter(final ArtifactSignerProvider signerProvider) {
@@ -71,22 +92,34 @@ public class SecpArtifactSignerProviderAdapter implements ArtifactSignerProvider
     return executorService.submit(
         () -> {
           LOG.debug("Adding eth1 address for eth1 keys");
-          signers.clear();
-          // this assumes that signerProvider.load has already been executed
-          signerProvider.availableIdentifiers().forEach(this::mapPublicKeyToEth1Address);
+          // this assumes that signerProvider.load() has already been executed
+          signers =
+              signerProvider.availableIdentifiers().stream()
+                  .flatMap(
+                      publicKey ->
+                          signerProvider.getSigner(publicKey).stream()
+                              .map(
+                                  signer ->
+                                      Map.entry(
+                                          normaliseIdentifier(getAddress(publicKey)), signer)))
+                  .collect(
+                      Collectors.toUnmodifiableMap(
+                          Map.Entry::getKey,
+                          Map.Entry::getValue,
+                          (existing, replacement) -> existing));
 
-          return 0L;
+          return 0L; // no error, since its a mapping method
         });
   }
 
   @Override
-  public Optional<ArtifactSigner> getSigner(String eth1Address) {
+  public Optional<ArtifactSigner> getSigner(final String eth1Address) {
     return Optional.ofNullable(signers.get(eth1Address));
   }
 
   @Override
   public Set<String> availableIdentifiers() {
-    return Set.copyOf(signers.keySet());
+    return signers.keySet(); // immutable view
   }
 
   @Override
@@ -102,12 +135,5 @@ public class SecpArtifactSignerProviderAdapter implements ArtifactSignerProvider
   @Override
   public void close() {
     executorService.shutdownNow();
-  }
-
-  private void mapPublicKeyToEth1Address(String publicKey) {
-    signerProvider
-        .getSigner(publicKey)
-        .ifPresent(
-            signer -> signers.putIfAbsent(normaliseIdentifier(getAddress(publicKey)), signer));
   }
 }
