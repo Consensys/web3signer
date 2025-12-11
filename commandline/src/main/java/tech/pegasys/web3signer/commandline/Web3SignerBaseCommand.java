@@ -436,7 +436,7 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   }
 
   private void validateSignerLoaderConfigOptions() {
-    if (signerLoadTimeoutSeconds < 0) {
+    if (signerLoadTimeoutSeconds < 1) {
       throw new ParameterException(spec.commandLine(), "--signer-load-timeout must be at least 1");
     }
 
