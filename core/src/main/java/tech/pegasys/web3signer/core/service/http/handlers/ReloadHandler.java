@@ -134,7 +134,6 @@ public class ReloadHandler implements Handler<RoutingContext> {
               false) // unordered is fine since we have pool size 1
           .onSuccess(
               totalErrors -> {
-                reloadInProgress.set(false);
                 lastOperationTime.set(Instant.now());
 
                 if (totalErrors > 0) {
@@ -149,14 +148,15 @@ public class ReloadHandler implements Handler<RoutingContext> {
                   currentStatus.set(ReloadStatus.COMPLETED);
                   LOG.info("Reload operation completed successfully");
                 }
+                reloadInProgress.set(false);
               })
           .onFailure(
               err -> {
-                reloadInProgress.set(false);
                 currentStatus.set(ReloadStatus.FAILED);
                 lastErrorMessage.set(err.getMessage());
                 lastOperationTime.set(Instant.now());
                 LOG.error("Reload operation failed", err);
+                reloadInProgress.set(false);
               });
 
       // Respond immediately - reload happens in background
@@ -171,13 +171,13 @@ public class ReloadHandler implements Handler<RoutingContext> {
                       "accepted",
                       "message",
                       "Reload operation accepted and is running in the background. Use GET /reload to check status.")));
-    } catch (RuntimeException e) {
+    } catch (final RuntimeException e) {
       // Reset flag and state if executeBlocking throws synchronously
-      reloadInProgress.set(false);
       currentStatus.set(ReloadStatus.FAILED);
       lastErrorMessage.set(e.getMessage());
       lastOperationTime.set(Instant.now());
       LOG.error("Failed to submit reload operation", e);
+      reloadInProgress.set(false);
       throw e;
     }
   }
