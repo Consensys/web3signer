@@ -426,20 +426,28 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
               + "time.  Please refer to CLI reference for more details about this constraint.");
     }
 
-    // signer-load config options validations
-    if (signerLoadBatchSize < 100) {
+    // reload endpoint handler timeout option validation
+    if (reloadTimeoutMinutes < 1) {
       throw new CommandLine.ParameterException(
+          spec.commandLine(), "--reload-timeout must be at least 1");
+    }
+
+    validateSignerLoaderConfigOptions();
+  }
+
+  private void validateSignerLoaderConfigOptions() {
+    if (signerLoadTimeoutSeconds < 0) {
+      throw new ParameterException(spec.commandLine(), "--signer-load-timeout must be at least 1");
+    }
+
+    if (signerLoadBatchSize < 100) {
+      throw new ParameterException(
           spec.commandLine(), "--signer-load-batch-size must be at least 100");
     }
 
     if (signerLoadSequentialThreshold < 1) {
-      throw new CommandLine.ParameterException(
+      throw new ParameterException(
           spec.commandLine(), "--signer-load-sequential-threshold must be at least 1");
-    }
-
-    if (reloadTimeoutMinutes < 1) {
-      throw new CommandLine.ParameterException(
-          spec.commandLine(), "--reload-timeout must be at least 1");
     }
   }
 
