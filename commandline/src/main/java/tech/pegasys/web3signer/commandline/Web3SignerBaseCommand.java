@@ -436,6 +436,11 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
       throw new CommandLine.ParameterException(
           spec.commandLine(), "--signer-load-sequential-threshold must be at least 1");
     }
+
+    if (reloadTimeoutMinutes < 1) {
+      throw new CommandLine.ParameterException(
+          spec.commandLine(), "--reload-timeout must be at least 1");
+    }
   }
 
   public static class Web3signerMetricCategoryConverter extends MetricCategoryConverter {
