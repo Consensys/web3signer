@@ -107,7 +107,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     validateApiResponse(response, contains(keys));
 
     final String[] additionalKeys = createKeys(keyType, true, prvKeys[1]);
-    signer.callReload().then().statusCode(200);
+    signer.callReload().then().statusCode(202);
 
     // reload is async ...
     Awaitility.await()
@@ -131,7 +131,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     assertThat(getHealthcheckStatusValue(jsonBody)).isEqualTo("UP");
 
     final String[] additionalKeys = createKeys(keyType, true, prvKeys[1]);
-    signer.callReload().then().statusCode(200);
+    signer.callReload().then().statusCode(202);
 
     // reload is async ...
     Awaitility.await()
@@ -160,7 +160,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     assertThat(testDirectory.resolve(keys[1] + ".yaml").toFile().delete()).isTrue();
 
     // reload API call
-    signer.callReload().then().statusCode(200);
+    signer.callReload().then().statusCode(202);
 
     // reload is async ... assert that the key is removed
     Awaitility.await()

@@ -36,8 +36,6 @@ public class HashicorpConnectionFactoryTest {
 
   final String CONFIGURED_HOST = "Host";
 
-  final HashicorpConnectionFactory connectionFactory = new HashicorpConnectionFactory();
-
   @Test
   void invalidWhiteListFileCausesConnectionToThrowHashicorpException() throws IOException {
     final File invalidWhitelist = File.createTempFile("invalid", ".whitelist");
@@ -52,8 +50,10 @@ public class HashicorpConnectionFactoryTest {
             .withTimeoutMs(10L)
             .build();
 
-    assertThatThrownBy(() -> connectionFactory.create(params))
-        .isInstanceOf(HashicorpException.class);
+    try (final HashicorpConnectionFactory connectionFactory = new HashicorpConnectionFactory()) {
+      assertThatThrownBy(() -> connectionFactory.create(params))
+          .isInstanceOf(HashicorpException.class);
+    }
   }
 
   @Test
@@ -68,10 +68,11 @@ public class HashicorpConnectionFactoryTest {
             .withTlsOptions(tlsOptions)
             .withTimeoutMs(10L)
             .build();
-
-    assertThatThrownBy(() -> connectionFactory.create(params))
-        .isInstanceOf(HashicorpException.class)
-        .hasMessage("Unable to initialise connection to hashicorp vault.");
+    try (final HashicorpConnectionFactory connectionFactory = new HashicorpConnectionFactory()) {
+      assertThatThrownBy(() -> connectionFactory.create(params))
+          .isInstanceOf(HashicorpException.class)
+          .hasMessage("Unable to initialise connection to hashicorp vault.");
+    }
   }
 
   @Test
@@ -88,7 +89,9 @@ public class HashicorpConnectionFactoryTest {
             .withTimeoutMs(10L)
             .build();
 
-    connectionFactory.create(params);
+    try (final HashicorpConnectionFactory connectionFactory = new HashicorpConnectionFactory()) {
+      connectionFactory.create(params);
+    }
 
     // methods will be called first during validation, second when truststore to be initialized.
     Mockito.verify(tlsOptions, Mockito.times(2)).getTrustStorePath();
@@ -118,9 +121,10 @@ public class HashicorpConnectionFactoryTest {
             .withTlsOptions(tlsOptions)
             .withTimeoutMs(10L)
             .build();
-
-    assertThatThrownBy(() -> connectionFactory.create(params))
-        .isInstanceOf(HashicorpException.class);
+    try (final HashicorpConnectionFactory connectionFactory = new HashicorpConnectionFactory()) {
+      assertThatThrownBy(() -> connectionFactory.create(params))
+          .isInstanceOf(HashicorpException.class);
+    }
   }
 
   @ParameterizedTest
@@ -138,8 +142,37 @@ public class HashicorpConnectionFactoryTest {
             .withTlsOptions(tlsOptions)
             .withTimeoutMs(10L)
             .build();
+    try (final HashicorpConnectionFactory connectionFactory = new HashicorpConnectionFactory()) {
+      assertThatThrownBy(() -> connectionFactory.create(params))
+          .isInstanceOf(HashicorpException.class);
+    }
+  }
 
+  @Test
+  void createAfterCloseRaiseException() {
+    final HashicorpConnectionFactory connectionFactory = new HashicorpConnectionFactory();
+    final ConnectionParameters params =
+        ConnectionParameters.newBuilder()
+            .withServerHost(CONFIGURED_HOST)
+            .withTimeoutMs(10L)
+            .build();
+    connectionFactory.create(params);
+    connectionFactory.close();
     assertThatThrownBy(() -> connectionFactory.create(params))
-        .isInstanceOf(HashicorpException.class);
+        .isInstanceOf(HashicorpException.class)
+        .hasMessage("HashicorpConnectionFactory is closed");
+  }
+
+  @Test
+  void repeatedCloseWithoutException() {
+    final HashicorpConnectionFactory connectionFactory = new HashicorpConnectionFactory();
+    final ConnectionParameters params =
+        ConnectionParameters.newBuilder()
+            .withServerHost(CONFIGURED_HOST)
+            .withTimeoutMs(10L)
+            .build();
+    connectionFactory.create(params);
+    connectionFactory.close();
+    connectionFactory.close();
   }
 }

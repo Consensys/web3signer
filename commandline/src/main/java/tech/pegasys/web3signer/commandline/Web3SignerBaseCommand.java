@@ -25,6 +25,7 @@ import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptions;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptionsValidator;
 import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.common.config.SignerLoaderConfig;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.MetricsPushOptions;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -192,14 +193,6 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   private final Boolean accessLogsEnabled = false;
 
   @Option(
-      names = "--Xkey-store-parallel-processing-enabled",
-      description = "Set to false to disable parallel processing of key stores.",
-      paramLabel = "<BOOL>",
-      arity = "1",
-      hidden = true)
-  private boolean keystoreParallelProcessingEnabled = true;
-
-  @Option(
       names = "--vertx-worker-pool-size",
       description =
           "Configure the Vert.x worker pool size used for processing requests. (default: "
@@ -207,6 +200,64 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
               + ")",
       paramLabel = INTEGER_FORMAT_HELP)
   private Integer vertxWorkerPoolSize = null;
+
+  // Reload endpoint timeout (Vert.x Worker Executor)
+  @CommandLine.Option(
+      names = {"--reload-timeout"},
+      description =
+          "Maximum time allowed for the entire reload operation via /reload endpoint "
+              + "(default: ${DEFAULT-VALUE} minutes). "
+              + "Includes loading from all sources (file system, key vaults, etc.).",
+      defaultValue = "30",
+      paramLabel = "<MINUTES>",
+      arity = "1")
+  private long reloadTimeoutMinutes = 30;
+
+  // SignerLoader timeout (per-file processing)
+  @CommandLine.Option(
+      names = {"--signer-load-timeout"},
+      description =
+          "Maximum time for processing each individual signer configuration file "
+              + "(default: ${DEFAULT-VALUE} seconds). "
+              + "Applies during parallel processing of files from the file system.",
+      defaultValue = "60",
+      paramLabel = "<SECONDS>",
+      arity = "1")
+  private int signerLoadTimeoutSeconds = 60;
+
+  // SignerLoader batch configuration
+  @CommandLine.Option(
+      names = {"--signer-load-batch-size"},
+      description =
+          "Number of signer configuration files to process per batch during parallel loading "
+              + "(default: ${DEFAULT-VALUE}). Minimum value is 100. "
+              + "Reduce if hitting OS file descriptor limits.",
+      defaultValue = "500",
+      paramLabel = "<COUNT>",
+      arity = "1")
+  private int signerLoadBatchSize = 500;
+
+  @CommandLine.Option(
+      names = {"--signer-load-sequential-threshold"},
+      description =
+          "Minimum number of files required to use parallel processing "
+              + "(default: ${DEFAULT-VALUE}). Minimum value is 1. "
+              + "Files below this threshold are processed sequentially.",
+      defaultValue = "100",
+      paramLabel = "<COUNT>",
+      arity = "1")
+  private int signerLoadSequentialThreshold = 100;
+
+  @CommandLine.Option(
+      names = {"--signer-load-parallel"},
+      description =
+          "Enable parallel processing of signer configuration files "
+              + "(default: ${DEFAULT-VALUE}). "
+              + "Set to false for sequential processing.",
+      defaultValue = "true",
+      paramLabel = "<BOOLEAN>",
+      arity = "1")
+  private boolean signerLoadParallel = true;
 
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
@@ -303,17 +354,27 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   }
 
   @Override
-  public boolean keystoreParallelProcessingEnabled() {
-    return keystoreParallelProcessingEnabled;
-  }
-
-  @Override
   public int getVertxWorkerPoolSize() {
     if (vertxWorkerPoolSize != null) {
       return vertxWorkerPoolSize;
     }
 
     return VERTX_WORKER_POOL_SIZE_DEFAULT;
+  }
+
+  @Override
+  public SignerLoaderConfig getSignerLoaderConfig() {
+    return new SignerLoaderConfig(
+        keyStorePath,
+        signerLoadParallel,
+        signerLoadBatchSize,
+        signerLoadTimeoutSeconds,
+        signerLoadSequentialThreshold);
+  }
+
+  @Override
+  public long getReloadTimeoutMinutes() {
+    return reloadTimeoutMinutes;
   }
 
   @Override
@@ -335,6 +396,7 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
         .add("idleConnectionTimeoutSeconds", idleConnectionTimeoutSeconds)
         .add("vertxWorkerPoolSize", vertxWorkerPoolSize)
+        .add("signerLoaderConfig", getSignerLoaderConfig())
         .toString();
   }
 
@@ -362,6 +424,30 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
           spec.commandLine(),
           "--metrics-enabled option and --metrics-push-enabled option can't be used at the same "
               + "time.  Please refer to CLI reference for more details about this constraint.");
+    }
+
+    // reload endpoint handler timeout option validation
+    if (reloadTimeoutMinutes < 1) {
+      throw new CommandLine.ParameterException(
+          spec.commandLine(), "--reload-timeout must be at least 1");
+    }
+
+    validateSignerLoaderConfigOptions();
+  }
+
+  private void validateSignerLoaderConfigOptions() {
+    if (signerLoadTimeoutSeconds < 1) {
+      throw new ParameterException(spec.commandLine(), "--signer-load-timeout must be at least 1");
+    }
+
+    if (signerLoadBatchSize < 100) {
+      throw new ParameterException(
+          spec.commandLine(), "--signer-load-batch-size must be at least 100");
+    }
+
+    if (signerLoadSequentialThreshold < 1) {
+      throw new ParameterException(
+          spec.commandLine(), "--signer-load-sequential-threshold must be at least 1");
     }
   }
 

@@ -264,6 +264,10 @@ public class Signer {
     return given().baseUri(getUrl()).post(RELOAD_ENDPOINT);
   }
 
+  public Response getReloadStatus() {
+    return given().baseUri(getUrl()).get(RELOAD_ENDPOINT);
+  }
+
   public Response healthcheck() {
     return given().baseUri(getUrl()).get(HEALTHCHECK_ENDPOINT);
   }

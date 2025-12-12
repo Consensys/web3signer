@@ -13,7 +13,10 @@
 package tech.pegasys.web3signer.tests.commitboost;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.KeystoreUtil;
@@ -27,6 +30,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +40,7 @@ import java.util.stream.Stream;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.commons.lang3.tuple.Pair;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -124,6 +130,41 @@ public class CommitBoostGetPubKeysAcceptanceTest extends AcceptanceTestBase {
       assertThat(responseProxySECPKeys)
           .containsExactlyInAnyOrder(expectedProxySECPKeys.toArray(String[]::new));
     }
+  }
+
+  @Test
+  void reloadReturnsEmptyProxyKeysAfterPhysicalKeystoreDeletion() throws Exception {
+    // call commit boost get pub keys, the proxy_bls and proxy_ecdsa should not be empty
+    final Response initResponse = signer.callCommitBoostGetPubKeys();
+    initResponse
+        .then()
+        .log()
+        .body()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("keys", hasSize(2))
+        .body("keys.proxy_bls", everyItem(not(empty())))
+        .body("keys.proxy_ecdsa", everyItem(not(empty())));
+
+    // delete everything under commitBoostKeystoresPath and /reload
+    deleteDirectoryContents(commitBoostKeystoresPath);
+    signer.callReload().then().statusCode(202);
+
+    // Wait until proxy keys are empty (reload completed)
+    Awaitility.await()
+        .atMost(Duration.ofSeconds(5))
+        .pollInterval(Duration.ofMillis(100)) // Check every 100ms
+        .untilAsserted(
+            () -> {
+              final Response response = signer.callCommitBoostGetPubKeys();
+              response
+                  .then()
+                  .statusCode(200)
+                  .contentType(ContentType.JSON)
+                  .body("keys", hasSize(2))
+                  .body("keys.proxy_bls", everyItem(empty()))
+                  .body("keys.proxy_ecdsa", everyItem(empty()));
+            });
   }
 
   private List<String> getProxyECPubKeys(final String consensusKeyHex) {
@@ -238,5 +279,23 @@ public class CommitBoostGetPubKeysAcceptanceTest extends AcceptanceTestBase {
    */
   static List<BLSKeyPair> randomBLSKeyPairs(final int count) {
     return Stream.generate(() -> BLSKeyPair.random(SECURE_RANDOM)).limit(count).toList();
+  }
+
+  private void deleteDirectoryContents(Path directory) throws IOException {
+    if (Files.exists(directory)) {
+      try (Stream<Path> paths = Files.walk(directory)) {
+        paths
+            .filter(path -> !path.equals(directory)) // Keep the directory itself
+            .sorted(Comparator.reverseOrder()) // Delete children before parents
+            .forEach(
+                path -> {
+                  try {
+                    Files.delete(path);
+                  } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                  }
+                });
+      }
+    }
   }
 }

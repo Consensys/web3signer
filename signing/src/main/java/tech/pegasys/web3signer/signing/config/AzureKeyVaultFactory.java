@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.signing.config;
 
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 
+import java.io.Closeable;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -22,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.annotations.VisibleForTesting;
 
-public class AzureKeyVaultFactory implements AutoCloseable {
+public class AzureKeyVaultFactory implements Closeable {
   private final AtomicReference<ExecutorService> executorServiceCache = new AtomicReference<>();
 
   public AzureKeyVault createAzureKeyVault(final AzureKeyVaultParameters azureKeyVaultParameters) {

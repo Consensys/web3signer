@@ -16,6 +16,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 
+import java.io.Closeable;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
@@ -53,10 +54,10 @@ import software.amazon.awssdk.services.kms.model.Tag;
 
 /**
  * Wraps KmsClient to allow the same instance to be cached and re-used. It exposes the methods that
- * our code use. Since AwsKmsClient is meant to live for the duration of web3signer life, we have
- * not implemented close method.
+ * our code use. This instance lives for the duration of web3signer life and is closed during
+ * application shutdown via CachedAwsKmsClientFactory.
  */
-public class AwsKmsClient {
+public class AwsKmsClient implements Closeable {
   private static final Logger LOG = LogManager.getLogger();
   private static final Provider BC_PROVIDER = new BouncyCastleProvider();
   private final KmsClient kmsClient;
@@ -183,5 +184,16 @@ public class AwsKmsClient {
   @VisibleForTesting
   public void disableKey(final DisableKeyRequest disableKeyRequest) {
     kmsClient.disableKey(disableKeyRequest);
+  }
+
+  @Override
+  public void close() {
+    if (kmsClient != null) {
+      try {
+        kmsClient.close();
+      } catch (final Exception e) {
+        LOG.warn("Error closing KMS client", e);
+      }
+    }
   }
 }

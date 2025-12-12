@@ -48,6 +48,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.WorkerExecutor;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
@@ -109,11 +110,11 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
     final LogErrorHandler errorHandler = new LogErrorHandler();
     healthCheckHandler = HealthCheckHandler.create(vertx);
-
-    final List<ArtifactSignerProvider> artifactSignerProviders =
-        Optional.ofNullable(createArtifactSignerProvider(vertx, metricsSystem)).orElse(List.of());
-
     try {
+      final List<ArtifactSignerProvider> artifactSignerProviders =
+          Optional.ofNullable(createArtifactSignerProvider(vertx, metricsSystem)).orElse(List.of());
+      artifactSignerProviders.forEach(this::registerClose);
+
       createVersionMetric(metricsSystem);
       metricsService = MetricsService.create(metricsConfiguration, metricsSystem);
       metricsService.ifPresent(MetricsService::start);
@@ -161,8 +162,26 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
       registerHealthCheckProcedure(DEFAULT_CHECK, promise -> promise.complete(Status.OK()));
 
+      // Create shared worker executor for reload operations with generous timeout
+      // Pool size of 1 ensures reloads are serialized (only one reload at a time)
+      final WorkerExecutor reloadWorkerExecutor =
+          vertx.createSharedWorkerExecutor(
+              "web3signer-reload-pool",
+              1, // pool size
+              baseConfig.getReloadTimeoutMinutes(), // max execute time
+              TimeUnit.MINUTES); // generous timeout for encrypted keystores and cloud provider
+
+      // Register for cleanup
+      registerClose(reloadWorkerExecutor::close);
+
       final Context context =
-          new Context(router, metricsSystem, errorHandler, vertx, artifactSignerProviders);
+          new Context(
+              router,
+              metricsSystem,
+              errorHandler,
+              vertx,
+              artifactSignerProviders,
+              reloadWorkerExecutor);
 
       populateRouter(context);
 
@@ -179,7 +198,11 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
       closeables.add(() -> shutdownVertx(vertx));
     } catch (final Throwable e) {
-      artifactSignerProviders.forEach(ArtifactSignerProvider::close);
+      try {
+        close(); // Close all registered resources (signerProviders, workerExecutor, etc.)
+      } catch (Exception closeException) {
+        LOG.error("Error during cleanup", closeException);
+      }
       shutdownVertx(vertx);
       metricsService.ifPresent(MetricsService::stop);
       LOG.error("Failed to initialise application", e);

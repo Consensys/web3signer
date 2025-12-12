@@ -21,11 +21,41 @@ import java.util.concurrent.Future;
 public interface ArtifactSignerProvider extends Closeable {
 
   /**
-   * Load the signers from the underlying providers.
+   * Load or reload signers from the underlying provider sources.
    *
-   * @return a future that completes when the signers are loaded
+   * <p>The load operation retrieves signer configurations from all configured sources (keystores,
+   * remote vaults, etc.) and makes them available for signing operations. This method is typically
+   * called:
+   *
+   * <ul>
+   *   <li>During application startup to perform initial signer loading
+   *   <li>Via the {@code /reload} API endpoint to refresh signers without restarting
+   * </ul>
+   *
+   * <p>The returned error count represents the number of signer configurations that failed to load
+   * due to issues such as:
+   *
+   * <ul>
+   *   <li>Malformed keystore files or configuration files
+   *   <li>Invalid cryptographic key material
+   *   <li>Inaccessible remote vault services
+   *   <li>Permission or authentication failures
+   * </ul>
+   *
+   * <p>A non-zero error count does <b>not</b> mean the entire operation failed - successfully
+   * loaded signers are still made available for use. The error count allows callers to distinguish
+   * between:
+   *
+   * <ul>
+   *   <li>Complete success (error count = 0)
+   *   <li>Partial success (error count > 0, some signers loaded)
+   *   <li>Infrastructure failure (exception thrown, no signers loaded)
+   * </ul>
+   *
+   * @return a {@link Future} containing the number of signer configurations that failed to load (0
+   *     indicates all signers loaded successfully)
    */
-  Future<Void> load();
+  Future<Long> load();
 
   /**
    * Get the signer for the given identifier.

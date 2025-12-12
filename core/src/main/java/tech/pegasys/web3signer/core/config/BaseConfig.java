@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.core.config;
 
+import tech.pegasys.web3signer.common.config.SignerLoaderConfig;
+
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -59,7 +61,9 @@ public interface BaseConfig {
 
   Boolean isAccessLogsEnabled();
 
-  boolean keystoreParallelProcessingEnabled();
-
   int getVertxWorkerPoolSize();
+
+  SignerLoaderConfig getSignerLoaderConfig();
+
+  long getReloadTimeoutMinutes();
 }

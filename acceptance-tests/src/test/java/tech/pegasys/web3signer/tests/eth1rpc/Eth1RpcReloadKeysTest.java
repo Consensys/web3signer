@@ -71,7 +71,7 @@ public class Eth1RpcReloadKeysTest extends Eth1RpcAcceptanceTestBase {
     assertThat(accounts).isNotEmpty();
 
     final String[] additionalKeys = createSecpKeys(prvKeys[1]);
-    signer.callReload().then().statusCode(200);
+    signer.callReload().then().statusCode(202);
 
     // reload is async ...
     Awaitility.await()

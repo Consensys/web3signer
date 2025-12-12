@@ -38,6 +38,7 @@ import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import tech.pegasys.web3signer.signing.config.SecpArtifactSignerProviderAdapter;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
+import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsSignerFactory;
@@ -45,7 +46,6 @@ import tech.pegasys.web3signer.signing.secp256k1.aws.CachedAwsKmsClientFactory;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureHttpClientFactory;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -87,32 +87,40 @@ public class Eth1Runner extends Runner {
   @Override
   protected List<ArtifactSignerProvider> createArtifactSignerProvider(
       final Vertx vertx, final MetricsSystem metricsSystem) {
+    // Create factories ONCE at startup
+    final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory();
+    final AzureHttpClientFactory azureHttpClientFactory = new AzureHttpClientFactory();
+    final CachedAwsKmsClientFactory cachedAwsKmsClientFactory =
+        new CachedAwsKmsClientFactory(eth1Config.getAwsKmsClientCacheSize());
+    final SignerLoader signerLoader = new SignerLoader(baseConfig.getSignerLoaderConfig());
+
+    // Register ALL for cleanup ONCE
+    registerClose(azureKeyVaultFactory);
+    registerClose(azureHttpClientFactory);
+    registerClose(cachedAwsKmsClientFactory);
+    registerClose(signerLoader);
+
+    // Create signer factories that use the shared instances
+    final AzureKeyVaultSignerFactory azureSignerFactory =
+        new AzureKeyVaultSignerFactory(azureKeyVaultFactory, azureHttpClientFactory);
+    final AwsKmsSignerFactory awsKmsSignerFactory =
+        new AwsKmsSignerFactory(cachedAwsKmsClientFactory, true);
 
     final ArtifactSignerProvider signerProvider =
         new DefaultArtifactSignerProvider(
             () -> {
-              final List<ArtifactSigner> signers = new ArrayList<>();
-              final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory();
-              final AzureHttpClientFactory azureHttpClientFactory = new AzureHttpClientFactory();
-              registerClose(azureKeyVaultFactory::close);
-              final AzureKeyVaultSignerFactory azureSignerFactory =
-                  new AzureKeyVaultSignerFactory(azureKeyVaultFactory, azureHttpClientFactory);
-              final CachedAwsKmsClientFactory cachedAwsKmsClientFactory =
-                  new CachedAwsKmsClientFactory(eth1Config.getAwsKmsClientCacheSize());
-              final AwsKmsSignerFactory awsKmsSignerFactory =
-                  new AwsKmsSignerFactory(cachedAwsKmsClientFactory, true);
-              signers.addAll(
+              // Supplier reuses the same factory instances on every reload
+              final MappedResults<ArtifactSigner> configFileResults =
                   loadSignersFromKeyConfigFiles(
-                          azureKeyVaultFactory, azureSignerFactory, awsKmsSignerFactory)
-                      .getValues());
-              signers.addAll(
+                      azureKeyVaultFactory, azureSignerFactory, awsKmsSignerFactory, signerLoader);
+              final MappedResults<ArtifactSigner> bulkLoadResults =
                   bulkLoadSigners(
-                          azureKeyVaultFactory,
-                          azureSignerFactory,
-                          cachedAwsKmsClientFactory,
-                          awsKmsSignerFactory)
-                      .getValues());
-              return signers;
+                      azureKeyVaultFactory,
+                      azureSignerFactory,
+                      cachedAwsKmsClientFactory,
+                      awsKmsSignerFactory);
+
+              return MappedResults.merge(configFileResults, bulkLoadResults);
             },
             Optional.empty(),
             Optional.empty());
@@ -128,24 +136,27 @@ public class Eth1Runner extends Runner {
   private MappedResults<ArtifactSigner> loadSignersFromKeyConfigFiles(
       final AzureKeyVaultFactory azureKeyVaultFactory,
       final AzureKeyVaultSignerFactory azureSignerFactory,
-      final AwsKmsSignerFactory awsKmsSignerFactory) {
-    final HashicorpConnectionFactory hashicorpConnectionFactory = new HashicorpConnectionFactory();
-    final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
-        new Secp256k1ArtifactSignerFactory(
-            hashicorpConnectionFactory,
-            baseConfig.getKeyConfigPath(),
-            azureSignerFactory,
-            EthSecpArtifactSigner::new,
-            azureKeyVaultFactory,
-            awsKmsSignerFactory,
-            true);
+      final AwsKmsSignerFactory awsKmsSignerFactory,
+      final SignerLoader signerLoader) {
+    try (final HashicorpConnectionFactory hashicorpConnectionFactory =
+        new HashicorpConnectionFactory()) {
+      final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
+          new Secp256k1ArtifactSignerFactory(
+              hashicorpConnectionFactory,
+              baseConfig.getKeyConfigPath(),
+              azureSignerFactory,
+              EthSecpArtifactSigner::new,
+              azureKeyVaultFactory,
+              awsKmsSignerFactory,
+              true);
 
-    return SignerLoader.load(
-        baseConfig.getKeyConfigPath(),
-        new YamlSignerParser(
-            List.of(ethSecpArtifactSignerFactory),
-            YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())),
-        baseConfig.keystoreParallelProcessingEnabled());
+      final SignerParser signerParser =
+          new YamlSignerParser(
+              List.of(ethSecpArtifactSignerFactory),
+              YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize()));
+
+      return signerLoader.load(signerParser);
+    }
   }
 
   private MappedResults<ArtifactSigner> bulkLoadSigners(

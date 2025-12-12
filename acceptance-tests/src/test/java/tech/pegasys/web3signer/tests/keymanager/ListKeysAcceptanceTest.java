@@ -57,7 +57,7 @@ public class ListKeysAcceptanceTest extends KeyManagerTestBase {
     validateApiResponse(callListKeys(), "data.validating_pubkey", hasItem(firstPubKey));
 
     final String secondPubKey = createKeystoreYamlFile(BLS_PRIVATE_KEY_2);
-    signer.callReload().then().statusCode(200);
+    signer.callReload().then().statusCode(202);
 
     // reload is async
     Awaitility.await()

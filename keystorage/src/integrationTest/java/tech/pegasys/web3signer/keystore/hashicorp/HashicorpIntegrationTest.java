@@ -31,6 +31,8 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HttpsURLConnection;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.logging.MockServerLogger;
@@ -44,7 +46,19 @@ class HashicorpIntegrationTest {
   private static final String EXPECTED_KEY_STRING =
       "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
 
-  private final HashicorpConnectionFactory factory = new HashicorpConnectionFactory();
+  private HashicorpConnectionFactory factory;
+
+  @BeforeEach
+  void setup() {
+    factory = new HashicorpConnectionFactory();
+  }
+
+  @AfterEach
+  void cleanup() {
+    if (factory != null) {
+      factory.close();
+    }
+  }
 
   @Test
   void hashicorpVaultReturnsEncryptionKey() {

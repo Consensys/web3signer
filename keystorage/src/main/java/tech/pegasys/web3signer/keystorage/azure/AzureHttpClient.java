@@ -12,13 +12,14 @@
  */
 package tech.pegasys.web3signer.keystorage.azure;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
 
-public class AzureHttpClient {
+public class AzureHttpClient implements Closeable {
   private final HttpClient httpClient;
 
   public AzureHttpClient(final HttpClient httpClient) {
@@ -41,5 +42,10 @@ public class AzureHttpClient {
     }
 
     return AzureKVResponseMapper.from(response.body());
+  }
+
+  @Override
+  public void close() {
+    httpClient.close();
   }
 }

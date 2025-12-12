@@ -248,7 +248,7 @@ public class AzureKeyVaultTest {
     // map all remote Secrets values to null - this is to simulate failure in mapping function
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets((name, value) -> null, Collections.emptyMap());
-    final Collection<SimpleEntry<String, String>> entries = result.getValues();
+
     assertThat(result.getErrorCount()).isNotZero();
     assertThat(result.getValues()).isEmpty();
   }
