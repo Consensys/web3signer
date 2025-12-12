@@ -1,71 +1,56 @@
-// default version list in case of JSON loading issue
-let versions = {'latest':{'spec':'latest','source':'master'}};
-let defaultVersion = Object.keys(versions)[0];
+// Hardcoded versions for eth1 and eth2
+const versions = {
+  'eth2': { spec: 'openapi-specs/eth2', source: 'eth2' },
+  'eth1': { spec: 'openapi-specs/eth1', source: 'eth1' }
+};
+const defaultVersion = 'eth2'; // Set eth2 as default
 
-// return the json OPENAPI spec path to load for a version
-// or a default version (first one in list) if no matching version.
-function getSpecPath(version){
-  let spec = (version in versions) ? versions[version].spec : versions[defaultVersion].spec;
-  return `${spec}/${SPEC_PREFIX}/web3signer.yaml`;
+// Return the OpenAPI spec path for a version
+function getSpecPath(version) {
+  const spec = versions[version] ? versions[version].spec : versions[defaultVersion].spec;
+  return `${spec}/web3signer.yaml`;
 }
 
-// is the version passed as param the one displayed accoring to the url
-function isDisplayedVersion(version,displayedVersion){
+// Check if the version is the one displayed in the URL
+function isDisplayedVersion(version, displayedVersion) {
   return displayedVersion === version || (displayedVersion === '' && version === defaultVersion);
 }
 
-// Update the redoc element and run the redoc display
-function updateSpec(version){
-  const element = $( `<redoc spec-url="${getSpecPath(version)}"></redoc>` );
-  element.appendTo( "main.container" );
-  Redoc.init(`${element.attr('spec-url')}?ts=${Date.now()}`, {hideHostname: true});
-  updateVersionsDropDown(version);
-}
-
-// Update the drop down list and set active version
-function updateVersionsDropDown(versionFromUrl){
+// Update the dropdown to show only eth1 and eth2
+function updateVersionsDropDown(versionFromUrl) {
   $("#versionsList").empty();
-  $.each( versions, function( version, infos ) {
-    let sourceText = (version === infos.source) ? '' : ` (${infos.source})`;
-
-    let item = $( `<a class="version-number-item dropdown-item" href="?version=${version}">${version}${sourceText}</a>" `);
-
-    if(isDisplayedVersion(version,versionFromUrl)){
+  $.each(versions, function(version, infos) {
+    const item = $(`<a class="version-number-item dropdown-item" href="?version=${version}">${version}</a>`);
+    if (isDisplayedVersion(version, versionFromUrl)) {
       item.addClass("active");
-      $('#dropdownMenuButton').text(`${version}${sourceText}`);
-      document.title = `Consensys Web3Signer ${SPEC_PREFIX} API Documentation - ${version}`;
+      $('#dropdownMenuButton').text(`${version}`);
+      document.title = `Consensys Web3Signer ${version.toUpperCase()} API Documentation`;
     }
-
     item.appendTo("#versionsList");
   });
 }
 
-// get the version in the URL from the search query or hash part (for retro compatibility)
-// removes the and # at the beginning of the hash part
-// returns empty string if no version present at all
-function getVersionFromURL(){
-  let params = new URLSearchParams($(location).attr('search').substring(1));
+// Get the version from the URL (query or hash)
+function getVersionFromURL() {
+  const params = new URLSearchParams(window.location.search.substring(1));
   const version = params.get("version");
-  return version != null ? version : $(location).attr('hash').replace(/^[#]/, '');
+  return version || '';
 }
 
-// set the global versions value from the Json file,
-// update spec page on completions
-function getVersionsFromJsonFile(){
-  $.ajaxSetup({ cache: false });
-  $.getJSON( 'versions.json', function( data ) {
-    if(!jQuery.isEmptyObject(data)){
-      versions = data;
-    }
-  })
-  .always(function() { updateSpec(getVersionFromURL()); });
+// Initialize Redoc with the selected version
+function updateSpec(version) {
+  const element = $(`<redoc spec-url="${getSpecPath(version)}"></redoc>`);
+  element.appendTo("main.container");
+  Redoc.init(`${element.attr('spec-url')}?ts=${Date.now()}`, { hideHostname: true });
+  updateVersionsDropDown(version);
 }
 
-// event trigger functions
-$(window).on( 'hashchange', function( e ) {
+// Initialize on page load
+$(function() {
   updateSpec(getVersionFromURL());
 });
 
-$(function() {
-  getVersionsFromJsonFile();
+// Update on hash change (e.g., manual URL update)
+$(window).on('hashchange', function() {
+  updateSpec(getVersionFromURL());
 });
