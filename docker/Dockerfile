@@ -1,38 +1,17 @@
 # syntax=docker/dockerfile:1
 
-# Stage 1: Validate and prepare the application tarball
-FROM alpine AS app-prepare
+# Stage 1: Validate and extract application
+FROM alpine AS app-extract
 ARG TAR_FILE
 RUN test -n "$TAR_FILE" || (echo "ERROR: TAR_FILE build argument is required" && exit 1)
-COPY ${TAR_FILE} /app/web3signer.tar.gz
-RUN gzip -t /app/web3signer.tar.gz || (echo "ERROR: TAR_FILE is not a valid gzip archive" && exit 1)
-
-# Stage 2: Extract application
-FROM alpine AS app-extract
-COPY --from=app-prepare /app/web3signer.tar.gz /tmp/web3signer.tar.gz
-RUN mkdir -p /opt/web3signer && \
+COPY ${TAR_FILE} /tmp/web3signer.tar.gz
+RUN gzip -t /tmp/web3signer.tar.gz || (echo "ERROR: TAR_FILE is not a valid gzip archive" && exit 1) && \
+    mkdir -p /opt/web3signer && \
     tar -xzf /tmp/web3signer.tar.gz -C /opt/web3signer --strip-components=1 && \
     rm /tmp/web3signer.tar.gz
 
-# Stage 3: Build custom JRE
-FROM eclipse-temurin:25 AS jre-build
-# Create a custom Java runtime
-RUN JAVA_TOOL_OPTIONS="-Djdk.lang.Process.launchMechanism=vfork" $JAVA_HOME/bin/jlink \
-         --add-modules java.base \
-         --add-modules java.se \
-         --add-modules java.management \
-         --add-modules java.prefs \
-         --add-modules jdk.httpserver \
-         --add-modules jdk.unsupported \
-         --add-modules jdk.jdwp.agent \
-         --strip-debug \
-         --no-man-pages \
-         --no-header-files \
-         --compress=zip-6 \
-         --output /javaruntime
-
-# Stage 4: Final image
-FROM ubuntu:latest
+# Stage 2: Final image
+FROM ubuntu:24.04
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -48,7 +27,7 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.version=$VERSION \
       org.label-schema.schema-version="1.0"
 
-ENV JAVA_HOME=/opt/java/openjdk \
+ENV JAVA_HOME="/opt/java/openjdk" \
     PATH="/opt/java/openjdk/bin:${PATH}" \
     WEB3SIGNER_HTTP_LISTEN_HOST="0.0.0.0" \
     WEB3SIGNER_METRICS_HOST="0.0.0.0"
@@ -61,7 +40,8 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     useradd --system --no-create-home --shell /bin/false web3signer
 
-COPY --from=jre-build /javaruntime $JAVA_HOME
+# Copy JRE from the Eclipse Termuin docker image
+COPY --from=eclipse-temurin:25-jre /opt/java/openjdk /opt/java/openjdk
 COPY --from=app-extract --chown=web3signer:web3signer /opt/web3signer /opt/web3signer
 
 USER web3signer
