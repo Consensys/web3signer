@@ -27,6 +27,7 @@
 - New `/reload` endpoint configuration:
   - `--reload-timeout` (default: 30 min) - Maximum time for entire reload operation
 - Improved reload concurrency control prevents multiple simultaneous reloads
+- Include Log4J JSON Template Layout library that provides predefined event templates such as ECS and GCP layouts in log4j configuration file.
 
 ### Bugs Fixed
 - Fix memory leak during reload API endpoint. Issue [#1073][issue_1073] via PR [#1135][PR_1135].
