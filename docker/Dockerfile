@@ -10,7 +10,7 @@ RUN gzip -t /tmp/web3signer.tar.gz || (echo "ERROR: TAR_FILE is not a valid gzip
     tar -xzf /tmp/web3signer.tar.gz -C /opt/web3signer --strip-components=1 && \
     rm /tmp/web3signer.tar.gz
 
-# Stage 2: Final image
+# Stage 2: Final image with Ubuntu base for latest security patches
 FROM ubuntu:24.04
 
 ARG BUILD_DATE
@@ -32,7 +32,7 @@ ENV JAVA_HOME="/opt/java/openjdk" \
     WEB3SIGNER_HTTP_LISTEN_HOST="0.0.0.0" \
     WEB3SIGNER_METRICS_HOST="0.0.0.0"
 
-# Install dependencies and create user first (before copying files)
+# Install dependencies and create user
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -40,7 +40,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     useradd --system --no-create-home --shell /bin/false web3signer
 
-# Copy JRE from the Eclipse Termuin docker image
+# Copy full JRE from Eclipse Temurin (no module complexity, all features available)
 COPY --from=eclipse-temurin:25-jre /opt/java/openjdk /opt/java/openjdk
 COPY --from=app-extract --chown=web3signer:web3signer /opt/web3signer /opt/web3signer
 
@@ -50,4 +50,3 @@ WORKDIR /opt/web3signer
 EXPOSE 9000 9001
 
 ENTRYPOINT ["/opt/web3signer/bin/web3signer"]
-
