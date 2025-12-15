@@ -2,6 +2,9 @@
 
 ## Upcoming Releases
 ### Breaking Changes
+#### Java25 Docker image
+- Java 25, which is the latest Long-Term Support release, is used in the docker image instead of previous LTS version, Java 21.
+
 #### `/reload` Endpoint Response Format Changed
 - Now returns HTTP `202 Accepted` (previously `200 OK`) with JSON response body
 - Returns `409 Conflict` with error message if reload already in progress
