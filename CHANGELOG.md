@@ -1,6 +1,6 @@
 # Changelog
 
-## Upcoming Releases
+## 25.12.0
 ### Breaking Changes
 #### Java25 Docker image
 - Java 25, which is the latest Long-Term Support release, is used in the docker image instead of previous LTS version, Java 21.
