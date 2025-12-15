@@ -374,6 +374,8 @@ application {
     "-Dio.netty.tryReflectionSetAccessible=true",
     "--add-exports",
     "jdk.crypto.cryptoki/sun.security.pkcs11.wrapper=ALL-UNNAMED",
+    // required for jblst
+    "--enable-native-access=ALL-UNNAMED",
   ]
 }
 

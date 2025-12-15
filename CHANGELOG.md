@@ -2,6 +2,9 @@
 
 ## Upcoming Releases
 ### Breaking Changes
+#### Java25 Docker image
+- Java 25, which is the latest Long-Term Support release, is used in the docker image instead of previous LTS version, Java 21.
+
 #### `/reload` Endpoint Response Format Changed
 - Now returns HTTP `202 Accepted` (previously `200 OK`) with JSON response body
 - Returns `409 Conflict` with error message if reload already in progress
@@ -27,6 +30,7 @@
 - New `/reload` endpoint configuration:
   - `--reload-timeout` (default: 30 min) - Maximum time for entire reload operation
 - Improved reload concurrency control prevents multiple simultaneous reloads
+- Include Log4J JSON Template Layout library that provides predefined event templates such as ECS and GCP layouts in log4j configuration file. PR [#1140][PR_1140].
 
 ### Bugs Fixed
 - Fix memory leak during reload API endpoint. Issue [#1073][issue_1073] via PR [#1135][PR_1135].
@@ -34,7 +38,7 @@
 
 [issue_1073]: https://github.com/Consensys/web3signer/issues/1073
 [PR_1135]: https://github.com/Consensys/web3signer/pull/1135
-
+[PR_1140]: https://github.com/Consensys/web3signer/pull/1140
 
 ---
 ## 25.11.0
