@@ -1,5 +1,10 @@
 # Changelog
 
+## Upcoming Release
+
+### Features Added
+- Update Netty to 4.2.9.Final
+
 ## 25.12.0
 ### Breaking Changes
 #### Java25 Docker image
