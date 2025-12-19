@@ -17,7 +17,7 @@ dependencyManagement {
     // Import log4j BOM first with higher priority
     mavenBom "org.apache.logging.log4j:log4j-bom:2.25.2"
     mavenBom 'org.junit:junit-bom:5.14.0'
-    mavenBom 'io.netty:netty-bom:4.2.7.Final'
+    mavenBom 'io.netty:netty-bom:4.2.9.Final'
   }
 
   dependencies {
