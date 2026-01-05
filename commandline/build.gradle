@@ -12,6 +12,7 @@ jar {
 }
 
 dependencies {
+  implementation 'com.google.code.findbugs:jsr305'
 
   implementation project(":common")
   implementation project(":core")
