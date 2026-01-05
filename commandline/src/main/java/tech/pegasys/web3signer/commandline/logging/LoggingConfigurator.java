@@ -41,7 +41,8 @@ public class LoggingConfigurator {
     final AppenderComponentBuilder appenderBuilder =
         builder
             .newAppender("Console", "CONSOLE")
-            .addAttribute("target", ConsoleAppender.Target.SYSTEM_OUT);
+            .addAttribute("target", ConsoleAppender.Target.SYSTEM_OUT)
+            .addAttribute("immediateFlush", true);
 
     // Add appropriate layout
     final LayoutComponentBuilder layoutBuilder;
