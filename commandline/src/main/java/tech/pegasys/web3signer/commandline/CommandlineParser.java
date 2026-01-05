@@ -95,7 +95,7 @@ public class CommandlineParser {
     // initialize logging before execution
     if (System.getProperty("log4j.configurationFile") != null
         || System.getProperty("log4j2.configurationFile") != null) {
-      System.out.println("Using custom Log4j configuration file");
+      LOG.debug("Using custom Log4j configuration file");
     } else {
       // Apply programmatic configuration
       LoggingConfigurator.configureLogging(
