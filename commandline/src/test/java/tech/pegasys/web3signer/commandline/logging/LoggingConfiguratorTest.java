@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -62,7 +63,7 @@ class LoggingConfiguratorTest {
     testLogger.info("Test message");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     assertThat(output)
         .contains("INFO")
         .contains("TestLogger")
@@ -78,7 +79,7 @@ class LoggingConfiguratorTest {
     testLogger.debug("Debug message");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     assertThat(output).contains("DEBUG").contains("TestLogger").contains("Debug message");
   }
 
@@ -90,7 +91,7 @@ class LoggingConfiguratorTest {
     testLogger.info("Test message");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     // ECS format should produce JSON output
     assertThat(output).contains("\"message\":").contains("Test message").contains("\"log.level\":");
   }
@@ -103,7 +104,7 @@ class LoggingConfiguratorTest {
     testLogger.info("Test message");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     // GCP format should produce JSON output
     assertThat(output).contains("\"message\":").contains("Test message");
   }
@@ -116,7 +117,7 @@ class LoggingConfiguratorTest {
     testLogger.info("Test message");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     // Logstash format should produce JSON output
     assertThat(output).contains("\"message\":").contains("Test message");
   }
@@ -130,7 +131,7 @@ class LoggingConfiguratorTest {
     testLogger.info("Test message for format: {}", format);
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     assertThat(output)
         .as("Output should contain the test message for format: " + format)
         .contains("Test message for format:");
@@ -145,7 +146,7 @@ class LoggingConfiguratorTest {
     testLogger.info("This should appear");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     assertThat(output).doesNotContain("This should not appear").contains("This should appear");
   }
 
@@ -158,7 +159,7 @@ class LoggingConfiguratorTest {
     testLogger.warn("This should appear");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     assertThat(output).doesNotContain("This should not appear").contains("This should appear");
   }
 
@@ -200,7 +201,7 @@ class LoggingConfiguratorTest {
     testLogger.info("Test with timestamp");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     // Should match pattern: yyyy-MM-dd HH:mm:ss.SSSZZZ
     assertThat(output).matches("(?s).*\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}.*");
   }
@@ -213,7 +214,7 @@ class LoggingConfiguratorTest {
     testLogger.info("Test with thread");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     assertThat(output).contains(Thread.currentThread().getName());
   }
 
@@ -225,7 +226,7 @@ class LoggingConfiguratorTest {
     testLogger.info("Test with logger name");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     // Pattern uses %c{1} which shows simple class name
     assertThat(output).contains("TestLogger");
   }
@@ -237,7 +238,7 @@ class LoggingConfiguratorTest {
     Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Plain format message");
     System.out.flush();
-    final String plainOutput = outputStream.toString();
+    final String plainOutput = outputStream.toString(Charset.defaultCharset());
     assertThat(plainOutput).contains("|"); // Pattern separator
 
     outputStream.reset();
@@ -247,7 +248,7 @@ class LoggingConfiguratorTest {
     testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("ECS format message");
     System.out.flush();
-    final String ecsOutput = outputStream.toString();
+    final String ecsOutput = outputStream.toString(Charset.defaultCharset());
     assertThat(ecsOutput)
         .contains("\"message\":")
         .doesNotContain("|"); // Should not have pattern separator
@@ -261,7 +262,7 @@ class LoggingConfiguratorTest {
     testLogger.info("Message with args: {}, {}", "arg1", 42);
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     assertThat(output).contains("Message with args: arg1, 42");
   }
 
@@ -277,7 +278,7 @@ class LoggingConfiguratorTest {
     testLogger.error("ERROR message");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     // TRACE should not appear (DEBUG level is set)
     assertThat(output).doesNotContain("TRACE message");
     // All others should appear
@@ -300,7 +301,7 @@ class LoggingConfiguratorTest {
     testLogger.fatal("FATAL message");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     assertThat(output)
         .doesNotContain("DEBUG message")
         .doesNotContain("INFO message")
@@ -317,7 +318,7 @@ class LoggingConfiguratorTest {
     testLogger.info("Message with \"quotes\" and \\ backslash");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     // JSON should escape special characters
     assertThat(output).contains("\"message\":");
   }
@@ -330,7 +331,7 @@ class LoggingConfiguratorTest {
     testLogger.info("Args: {}, {}, {}, {}", "one", 2, true, 4.5);
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     assertThat(output).contains("Args: one, 2, true, 4.5");
   }
 
@@ -342,7 +343,7 @@ class LoggingConfiguratorTest {
     testLogger.info("Null arg: {}", (Object) null);
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     assertThat(output).contains("Null arg: null");
   }
 
@@ -355,7 +356,7 @@ class LoggingConfiguratorTest {
     testLogger.error("Error occurred", exception);
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     assertThat(output)
         .contains("Error occurred")
         .contains("IllegalArgumentException")
@@ -370,7 +371,7 @@ class LoggingConfiguratorTest {
     testLogger.info("Timestamped message");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     // ECS uses @timestamp field
     assertThat(output).contains("\"@timestamp\":");
   }
@@ -385,7 +386,7 @@ class LoggingConfiguratorTest {
     testLogger.info("INFO message");
     System.out.flush();
 
-    final String output = outputStream.toString();
+    final String output = outputStream.toString(Charset.defaultCharset());
     assertThat(output).contains("TRACE message").contains("DEBUG message").contains("INFO message");
   }
 }

@@ -99,7 +99,7 @@ class CommandlineParserTest {
   @Test
   void missingLoggingDefaultsToInfoLevel() {
     // Must recreate config before executions, to prevent stale data remaining in the object.
-    missingOptionalParameterIsValidAndMeetsDefault("logging", config::getLogLevel, null);
+    missingOptionalParameterIsValidAndMeetsDefault("logging", config::getLogLevel, Level.INFO);
   }
 
   @Test
