@@ -12,6 +12,9 @@
  */
 package tech.pegasys.web3signer.commandline.logging;
 
+import java.nio.file.Path;
+
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,19 +33,44 @@ public class LoggingConfigurator {
   private static final String DEFAULT_PATTERN =
       "%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | %t | %-5level | %c{1} | %msg%n";
 
+  /** Configure logging with console output. */
   public static void configureLogging(final Level logLevel, final LoggingFormat format) {
+    configureLogging(logLevel, format, null);
+  }
+
+  /**
+   * Configure logging with optional file output (primarily for testing).
+   *
+   * @param logLevel the log level
+   * @param format the logging format
+   * @param outputFile optional file path for output; if null, uses console
+   */
+  @VisibleForTesting
+  public static void configureLogging(
+      final Level logLevel, final LoggingFormat format, final Path outputFile) {
     final ConfigurationBuilder<BuiltConfiguration> builder =
         ConfigurationBuilderFactory.newConfigurationBuilder();
 
     builder.setStatusLevel(Level.ERROR);
     builder.setConfigurationName("Web3SignerProgrammaticConfig");
 
-    // Create appender
-    final AppenderComponentBuilder appenderBuilder =
-        builder
-            .newAppender("Console", "CONSOLE")
-            .addAttribute("target", ConsoleAppender.Target.SYSTEM_OUT)
-            .addAttribute("immediateFlush", true);
+    // Create appender based on whether file output is specified
+    final AppenderComponentBuilder appenderBuilder;
+    if (outputFile != null) {
+      // File appender for testing
+      appenderBuilder =
+          builder
+              .newAppender("FileAppender", "File")
+              .addAttribute("fileName", outputFile.toString())
+              .addAttribute("immediateFlush", true);
+    } else {
+      // Console appender for production
+      appenderBuilder =
+          builder
+              .newAppender("Console", "CONSOLE")
+              .addAttribute("target", ConsoleAppender.Target.SYSTEM_OUT)
+              .addAttribute("immediateFlush", true);
+    }
 
     // Add appropriate layout
     final LayoutComponentBuilder layoutBuilder;
@@ -60,12 +88,12 @@ public class LoggingConfigurator {
 
     // Create root logger
     final RootLoggerComponentBuilder rootLogger = builder.newRootLogger(logLevel);
-    rootLogger.add(builder.newAppenderRef("Console"));
+    rootLogger.add(builder.newAppenderRef(outputFile != null ? "FileAppender" : "Console"));
     builder.add(rootLogger);
 
-    // Reconfigure - replaces entire configuration
+    // Reconfigure
     Configurator.reconfigure(builder.build());
 
-    LOG.info("Logging configured: level={}, format={}", logLevel, format);
+    LOG.debug("Logging configured: level={}, format={}", logLevel, format);
   }
 }

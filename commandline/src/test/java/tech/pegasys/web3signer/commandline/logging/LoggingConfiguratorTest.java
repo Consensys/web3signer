@@ -14,9 +14,9 @@ package tech.pegasys.web3signer.commandline.logging;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.nio.charset.Charset;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -25,176 +25,136 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.junit.jupiter.api.parallel.ResourceLock;
-import org.junit.jupiter.api.parallel.Resources;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-@Execution(ExecutionMode.SAME_THREAD) // force sequential execution
-@ResourceLock(Resources.SYSTEM_OUT)
 class LoggingConfiguratorTest {
 
-  private ByteArrayOutputStream outputStream;
-  private PrintStream originalOut;
+  @TempDir Path tempDir;
+
+  private Path logFile;
 
   @BeforeEach
-  void setUp() {
-    originalOut = System.out;
-    outputStream = new ByteArrayOutputStream();
-    System.setOut(new PrintStream(outputStream));
+  void setUp() throws IOException {
+    logFile = tempDir.resolve("test.log");
   }
 
   @AfterEach
   void tearDown() {
-    flushAllAppenders();
-    System.setOut(originalOut);
     // Reset Log4j2 context to ensure clean state for next test
     LoggerContext context = LoggerContext.getContext(false);
     context.reconfigure();
   }
 
-  private void flushAllAppenders() {
-    try {
-      final LoggerContext context = LoggerContext.getContext(false);
-      final Configuration config = context.getConfiguration();
-
-      // Flush all appenders
-      config
-          .getAppenders()
-          .values()
-          .forEach(
-              appender -> {
-                if (appender != null && appender.isStarted()) {
-                  // ConsoleAppender should flush on stop
-                  appender.stop();
-                  appender.start();
-                }
-              });
-
-      System.out.flush();
-
-      // Small delay for CI environments
-      Thread.sleep(10);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+  private String readLogFile() throws IOException {
+    if (Files.exists(logFile)) {
+      return Files.readString(logFile);
     }
+    return "";
   }
 
   @Test
-  void configurePlainFormatWithInfoLevel() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN);
+  void configurePlainFormatWithInfoLevel() throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test message");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
+    final String output = readLogFile();
     assertThat(output)
         .contains("INFO")
         .contains("TestLogger")
         .contains("Test message")
-        .contains("|"); // Pattern separator
+        .contains("|");
   }
 
   @Test
-  void configurePlainFormatWithDebugLevel() {
-    LoggingConfigurator.configureLogging(Level.DEBUG, LoggingFormat.PLAIN);
+  void configurePlainFormatWithDebugLevel() throws IOException {
+    LoggingConfigurator.configureLogging(Level.DEBUG, LoggingFormat.PLAIN, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.debug("Debug message");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
+    final String output = readLogFile();
     assertThat(output).contains("DEBUG").contains("TestLogger").contains("Debug message");
   }
 
   @Test
-  void configureEcsFormatProducesJson() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS);
+  void configureEcsFormatProducesJson() throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test message");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
-    // ECS format should produce JSON output
+    final String output = readLogFile();
     assertThat(output).contains("\"message\":").contains("Test message").contains("\"log.level\":");
   }
 
   @Test
-  void configureGcpFormatProducesJson() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.GCP);
+  void configureGcpFormatProducesJson() throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.GCP, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test message");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
-    // GCP format should produce JSON output
+    final String output = readLogFile();
     assertThat(output).contains("\"message\":").contains("Test message");
   }
 
   @Test
-  void configureLogstashFormatProducesJson() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.LOGSTASH);
+  void configureLogstashFormatProducesJson() throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.LOGSTASH, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test message");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
-    // Logstash format should produce JSON output
+    final String output = readLogFile();
     assertThat(output).contains("\"message\":").contains("Test message");
   }
 
   @ParameterizedTest
   @EnumSource(LoggingFormat.class)
-  void configureLoggingWithAllFormats(final LoggingFormat format) {
-    LoggingConfigurator.configureLogging(Level.INFO, format);
+  void configureLoggingWithAllFormats(final LoggingFormat format) throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, format, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test message for format: {}", format);
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
+    final String output = readLogFile();
     assertThat(output)
         .as("Output should contain the test message for format: " + format)
         .contains("Test message for format:");
   }
 
   @Test
-  void debugLevelMessagesNotLoggedWhenInfoLevelSet() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN);
+  void debugLevelMessagesNotLoggedWhenInfoLevelSet() throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.debug("This should not appear");
     testLogger.info("This should appear");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
+    final String output = readLogFile();
     assertThat(output).doesNotContain("This should not appear").contains("This should appear");
   }
 
   @Test
-  void infoLevelMessagesNotLoggedWhenWarnLevelSet() {
-    LoggingConfigurator.configureLogging(Level.WARN, LoggingFormat.PLAIN);
+  void infoLevelMessagesNotLoggedWhenWarnLevelSet() throws IOException {
+    LoggingConfigurator.configureLogging(Level.WARN, LoggingFormat.PLAIN, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("This should not appear");
     testLogger.warn("This should appear");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
+    final String output = readLogFile();
     assertThat(output).doesNotContain("This should not appear").contains("This should appear");
   }
 
   @Test
   void configurationNameIsSet() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
 
     final LoggerContext context = LoggerContext.getContext(false);
     final Configuration config = context.getConfiguration();
@@ -204,7 +164,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void rootLoggerLevelIsSetCorrectly() {
-    LoggingConfigurator.configureLogging(Level.DEBUG, LoggingFormat.PLAIN);
+    LoggingConfigurator.configureLogging(Level.DEBUG, LoggingFormat.PLAIN, logFile);
 
     final LoggerContext context = LoggerContext.getContext(false);
     final Configuration config = context.getConfiguration();
@@ -213,91 +173,80 @@ class LoggingConfiguratorTest {
   }
 
   @Test
-  void consoleAppenderIsConfigured() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN);
+  void fileAppenderIsConfigured() {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
 
     final LoggerContext context = LoggerContext.getContext(false);
     final Configuration config = context.getConfiguration();
 
-    assertThat(config.getAppenders()).containsKey("Console");
+    assertThat(config.getAppenders()).containsKey("FileAppender");
   }
 
   @Test
-  void plainFormatIncludesTimestamp() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN);
+  void plainFormatIncludesTimestamp() throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test with timestamp");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
-    // Should match pattern: yyyy-MM-dd HH:mm:ss.SSSZZZ
+    final String output = readLogFile();
     assertThat(output).matches("(?s).*\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}.*");
   }
 
   @Test
-  void plainFormatIncludesThreadName() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN);
+  void plainFormatIncludesThreadName() throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test with thread");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
+    final String output = readLogFile();
     assertThat(output).contains(Thread.currentThread().getName());
   }
 
   @Test
-  void plainFormatIncludesLoggerName() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN);
+  void plainFormatIncludesLoggerName() throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test with logger name");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
-    // Pattern uses %c{1} which shows simple class name
+    final String output = readLogFile();
     assertThat(output).contains("TestLogger");
   }
 
   @Test
-  void reconfigurationReplacesExistingConfiguration() {
+  void reconfigurationReplacesExistingConfiguration() throws IOException {
     // Configure with PLAIN
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
     Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Plain format message");
-    System.out.flush();
-    final String plainOutput = outputStream.toString(Charset.defaultCharset());
-    assertThat(plainOutput).contains("|"); // Pattern separator
+    String plainOutput = readLogFile();
+    assertThat(plainOutput).contains("|");
 
-    outputStream.reset();
-
-    // Reconfigure with ECS
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS);
+    // Reconfigure with ECS (new file)
+    Path logFile2 = tempDir.resolve("test2.log");
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS, logFile2);
     testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("ECS format message");
-    System.out.flush();
-    final String ecsOutput = outputStream.toString(Charset.defaultCharset());
-    assertThat(ecsOutput)
-        .contains("\"message\":")
-        .doesNotContain("|"); // Should not have pattern separator
+    String ecsOutput = Files.readString(logFile2);
+    assertThat(ecsOutput).contains("\"message\":").doesNotContain("|");
   }
 
   @Test
-  void loggerWithContextInformation() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN);
+  void loggerWithContextInformation() throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Message with args: {}, {}", "arg1", 42);
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
+    final String output = readLogFile();
     assertThat(output).contains("Message with args: arg1, 42");
   }
 
   @Test
-  void multipleLogLevelsWork() {
-    LoggingConfigurator.configureLogging(Level.DEBUG, LoggingFormat.PLAIN);
+  void multipleLogLevelsWork() throws IOException {
+    LoggingConfigurator.configureLogging(Level.DEBUG, LoggingFormat.PLAIN, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.trace("TRACE message");
@@ -305,12 +254,9 @@ class LoggingConfiguratorTest {
     testLogger.info("INFO message");
     testLogger.warn("WARN message");
     testLogger.error("ERROR message");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
-    // TRACE should not appear (DEBUG level is set)
+    final String output = readLogFile();
     assertThat(output).doesNotContain("TRACE message");
-    // All others should appear
     assertThat(output)
         .contains("DEBUG message")
         .contains("INFO message")
@@ -319,8 +265,8 @@ class LoggingConfiguratorTest {
   }
 
   @Test
-  void errorLevelOnlyLogsErrorAndFatal() {
-    LoggingConfigurator.configureLogging(Level.ERROR, LoggingFormat.PLAIN);
+  void errorLevelOnlyLogsErrorAndFatal() throws IOException {
+    LoggingConfigurator.configureLogging(Level.ERROR, LoggingFormat.PLAIN, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.debug("DEBUG message");
@@ -328,9 +274,8 @@ class LoggingConfiguratorTest {
     testLogger.warn("WARN message");
     testLogger.error("ERROR message");
     testLogger.fatal("FATAL message");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
+    final String output = readLogFile();
     assertThat(output)
         .doesNotContain("DEBUG message")
         .doesNotContain("INFO message")
@@ -340,53 +285,47 @@ class LoggingConfiguratorTest {
   }
 
   @Test
-  void jsonFormatHandlesSpecialCharacters() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS);
+  void jsonFormatHandlesSpecialCharacters() throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Message with \"quotes\" and \\ backslash");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
-    // JSON should escape special characters
+    final String output = readLogFile();
     assertThat(output).contains("\"message\":");
   }
 
   @Test
-  @Disabled
-  void plainFormatHandlesMultipleArguments() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN);
+  void plainFormatHandlesMultipleArguments() throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Args: {}, {}, {}, {}", "one", 2, true, 4.5);
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
+    final String output = readLogFile();
     assertThat(output).contains("Args: one, 2, true, 4.5");
   }
 
   @Test
-  void loggerHandlesNullArguments() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN);
+  void loggerHandlesNullArguments() throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Null arg: {}", (Object) null);
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
+    final String output = readLogFile();
     assertThat(output).contains("Null arg: null");
   }
 
   @Test
-  void loggerHandlesExceptions() {
-    LoggingConfigurator.configureLogging(Level.ERROR, LoggingFormat.PLAIN);
+  void loggerHandlesExceptions() throws IOException {
+    LoggingConfigurator.configureLogging(Level.ERROR, LoggingFormat.PLAIN, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     final Exception exception = new IllegalArgumentException("Test exception");
     testLogger.error("Error occurred", exception);
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
+    final String output = readLogFile();
     assertThat(output)
         .contains("Error occurred")
         .contains("IllegalArgumentException")
@@ -394,29 +333,26 @@ class LoggingConfiguratorTest {
   }
 
   @Test
-  void ecsFormatIncludesTimestamp() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS);
+  void ecsFormatIncludesTimestamp() throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Timestamped message");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
-    // ECS uses @timestamp field
+    final String output = readLogFile();
     assertThat(output).contains("\"@timestamp\":");
   }
 
   @Test
-  void traceLevelLogsEverything() {
-    LoggingConfigurator.configureLogging(Level.TRACE, LoggingFormat.PLAIN);
+  void traceLevelLogsEverything() throws IOException {
+    LoggingConfigurator.configureLogging(Level.TRACE, LoggingFormat.PLAIN, logFile);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.trace("TRACE message");
     testLogger.debug("DEBUG message");
     testLogger.info("INFO message");
-    System.out.flush();
 
-    final String output = outputStream.toString(Charset.defaultCharset());
+    final String output = readLogFile();
     assertThat(output).contains("TRACE message").contains("DEBUG message").contains("INFO message");
   }
 }
