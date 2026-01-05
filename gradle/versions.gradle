@@ -21,6 +21,7 @@ dependencyManagement {
   }
 
   dependencies {
+    dependency 'com.google.code.findbugs:jsr305:3.0.2'
     dependency 'com.fasterxml.jackson.core:jackson-databind:2.20.0'
     dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.20.0'
 
