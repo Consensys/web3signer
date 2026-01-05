@@ -49,10 +49,38 @@ class LoggingConfiguratorTest {
 
   @AfterEach
   void tearDown() {
+    flushAllAppenders();
     System.setOut(originalOut);
     // Reset Log4j2 context to ensure clean state for next test
     LoggerContext context = LoggerContext.getContext(false);
     context.reconfigure();
+  }
+
+  private void flushAllAppenders() {
+    try {
+      final LoggerContext context = LoggerContext.getContext(false);
+      final Configuration config = context.getConfiguration();
+
+      // Flush all appenders
+      config
+          .getAppenders()
+          .values()
+          .forEach(
+              appender -> {
+                if (appender != null && appender.isStarted()) {
+                  // ConsoleAppender should flush on stop
+                  appender.stop();
+                  appender.start();
+                }
+              });
+
+      System.out.flush();
+
+      // Small delay for CI environments
+      Thread.sleep(10);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   @Test
