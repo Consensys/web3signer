@@ -35,7 +35,7 @@ runs:
       shell: bash
 
     - name: Summarize tests results
-      uses: jeantessier/test-summary-action@v1.0.7
+      uses: jeantessier/test-summary-action@v1.0.10
       if: always()
 
     - name: Upload build reports
