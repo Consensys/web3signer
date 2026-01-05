@@ -65,7 +65,6 @@ import io.vertx.ext.web.handler.LoggerFormat;
 import io.vertx.ext.web.handler.LoggerHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.metrics.MetricsSystemFactory;
@@ -92,11 +91,6 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
   @Override
   public void run() {
-    if (baseConfig.getLogLevel() != null) {
-      System.out.println("Setting logging level to " + baseConfig.getLogLevel().name());
-      Configurator.setRootLevel(baseConfig.getLogLevel());
-    }
-
     final MetricsConfiguration metricsConfiguration = createMetricsConfiguration();
     final MetricsSystem metricsSystem = MetricsSystemFactory.create(metricsConfiguration);
     Optional<MetricsService> metricsService = Optional.empty();

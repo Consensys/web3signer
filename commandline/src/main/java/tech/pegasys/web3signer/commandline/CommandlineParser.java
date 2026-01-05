@@ -14,10 +14,12 @@ package tech.pegasys.web3signer.commandline;
 
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
 
+import tech.pegasys.web3signer.commandline.logging.LoggingConfigurator;
 import tech.pegasys.web3signer.commandline.subcommands.ModeSubCommand;
 import tech.pegasys.web3signer.commandline.valueprovider.CascadingDefaultProvider;
 import tech.pegasys.web3signer.commandline.valueprovider.EnvironmentVariableDefaultProvider;
 import tech.pegasys.web3signer.commandline.valueprovider.YamlConfigFileDefaultProvider;
+import tech.pegasys.web3signer.common.ApplicationInfo;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -28,6 +30,8 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.IDefaultValueProvider;
@@ -35,6 +39,7 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ParseResult;
 
 public class CommandlineParser {
+  private static final Logger LOG = LogManager.getLogger("Web3SignerInit");
 
   private final Web3SignerBaseCommand baseCommand;
   private final PrintWriter outputWriter;
@@ -66,6 +71,7 @@ public class CommandlineParser {
     commandLine.setErr(errorWriter);
     commandLine.setExecutionExceptionHandler(this::handleExecutionException);
     commandLine.setParameterExceptionHandler(this::handleParseException);
+    commandLine.setExecutionStrategy(this::executionStrategy);
 
     for (final ModeSubCommand subcommand : modes) {
       commandLine.addSubcommand(subcommand.getCommandName(), subcommand);
@@ -83,6 +89,25 @@ public class CommandlineParser {
     commandLine.clearExecutionResults();
     commandLine.setDefaultValueProvider(defaultValueProvider(commandLine, configFile));
     return commandLine.execute(args);
+  }
+
+  private int executionStrategy(final ParseResult parseResult) {
+    // initialize logging before execution
+    if (System.getProperty("log4j.configurationFile") != null
+        || System.getProperty("log4j2.configurationFile") != null) {
+      System.out.println("Using custom Log4j configuration file");
+    } else {
+      // Apply programmatic configuration
+      LoggingConfigurator.configureLogging(
+          baseCommand.getLogLevel(), baseCommand.getLoggingFormat());
+    }
+
+    // App initialization information
+    LOG.info("Starting Web3Signer version {}", ApplicationInfo.version());
+    LOG.debug("Command line arguments: {}", String.join(" ", parseResult.originalArgs()));
+
+    // default execution strategy
+    return new CommandLine.RunLast().execute(parseResult);
   }
 
   private IDefaultValueProvider defaultValueProvider(

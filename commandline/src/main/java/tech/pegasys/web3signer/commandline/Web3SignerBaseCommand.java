@@ -24,6 +24,7 @@ import tech.pegasys.web3signer.commandline.config.PicoCliMetricsPushOptions;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptions;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptionsValidator;
 import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
+import tech.pegasys.web3signer.commandline.logging.LoggingFormat;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.common.config.SignerLoaderConfig;
 import tech.pegasys.web3signer.core.config.BaseConfig;
@@ -107,7 +108,12 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
       paramLabel = "<LOG VERBOSITY LEVEL>",
       description =
           "Logging verbosity levels: OFF, FATAL, WARN, INFO, DEBUG, TRACE, ALL (default: INFO)")
-  private final Level logLevel = null;
+  private final Level logLevel = Level.INFO;
+
+  @Option(
+      names = {"--logging-format"},
+      description = "Logging format: ${COMPLETION-CANDIDATES} (default: PLAIN)")
+  private LoggingFormat loggingFormat = LoggingFormat.PLAIN;
 
   @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
   @Option(
@@ -264,6 +270,10 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   @Override
   public Level getLogLevel() {
     return logLevel;
+  }
+
+  public LoggingFormat getLoggingFormat() {
+    return loggingFormat;
   }
 
   @Override
