@@ -34,10 +34,6 @@ runs:
       run: echo "<h2>Test Results</h2>" >> $GITHUB_STEP_SUMMARY
       shell: bash
 
-    - name: Summarize tests results
-      uses: jeantessier/test-summary-action@v1.0.7
-      if: always()
-
     - name: Upload build reports
       uses: actions/upload-artifact@v4
       if: always()
