@@ -17,9 +17,11 @@ import java.io.PrintWriter;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LifeCycle;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.WriterAppender;
+import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
 import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
@@ -46,7 +48,7 @@ public class LoggingConfigurator {
 
     // Get current context and stop/remove existing appenders
     final LoggerContext context = LoggerContext.getContext(false);
-    final org.apache.logging.log4j.core.config.Configuration oldConfig = context.getConfiguration();
+    final Configuration oldConfig = context.getConfiguration();
 
     // Stop and remove all existing appenders
     oldConfig.getAppenders().values().forEach(LifeCycle::stop);
@@ -67,7 +69,7 @@ public class LoggingConfigurator {
     final BuiltConfiguration config = builder.build();
 
     // Create layout based on format
-    final org.apache.logging.log4j.core.Layout<?> layout = createLayout(config, format);
+    final Layout<?> layout = createLayout(config, format);
 
     // Create WriterAppender programmatically
     final WriterAppender appender =
@@ -90,9 +92,7 @@ public class LoggingConfigurator {
     LOG.debug("Logging configured: level={}, format={}", logLevel, format);
   }
 
-  private static org.apache.logging.log4j.core.Layout<?> createLayout(
-      final org.apache.logging.log4j.core.config.Configuration config, final LoggingFormat format) {
-
+  private static Layout<?> createLayout(final Configuration config, final LoggingFormat format) {
     if (format.isJson()) {
       return JsonTemplateLayout.newBuilder()
           .setConfiguration(config)
