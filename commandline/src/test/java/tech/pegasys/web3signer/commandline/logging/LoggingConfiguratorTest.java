@@ -14,7 +14,9 @@ package tech.pegasys.web3signer.commandline.logging;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -35,29 +37,31 @@ class LoggingConfiguratorTest {
   @TempDir Path tempDir;
 
   private Path logFile;
+  private PrintWriter testWriter;
 
   @BeforeEach
   void setUp() throws IOException {
     logFile = tempDir.resolve("test.log");
+    testWriter = new PrintWriter(new FileWriter(logFile.toFile()), true);
   }
 
   @AfterEach
   void tearDown() {
+    if (testWriter != null) {
+      testWriter.close();
+    }
     // Reset Log4j2 context to ensure clean state for next test
     LoggerContext context = LoggerContext.getContext(false);
     context.reconfigure();
   }
 
   private String readLogFile() throws IOException {
-    if (Files.exists(logFile)) {
-      return Files.readString(logFile);
-    }
-    return "";
+    return Files.readString(logFile);
   }
 
   @Test
   void configurePlainFormatWithInfoLevel() throws IOException {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test message");
@@ -72,7 +76,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void configurePlainFormatWithDebugLevel() throws IOException {
-    LoggingConfigurator.configureLogging(Level.DEBUG, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.DEBUG, LoggingFormat.PLAIN, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.debug("Debug message");
@@ -83,7 +87,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void configureEcsFormatProducesJson() throws IOException {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test message");
@@ -94,7 +98,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void configureGcpFormatProducesJson() throws IOException {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.GCP, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.GCP, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test message");
@@ -105,7 +109,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void configureLogstashFormatProducesJson() throws IOException {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.LOGSTASH, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.LOGSTASH, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test message");
@@ -117,7 +121,7 @@ class LoggingConfiguratorTest {
   @ParameterizedTest
   @EnumSource(LoggingFormat.class)
   void configureLoggingWithAllFormats(final LoggingFormat format) throws IOException {
-    LoggingConfigurator.configureLogging(Level.INFO, format, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, format, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test message for format: {}", format);
@@ -130,7 +134,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void debugLevelMessagesNotLoggedWhenInfoLevelSet() throws IOException {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.debug("This should not appear");
@@ -142,7 +146,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void infoLevelMessagesNotLoggedWhenWarnLevelSet() throws IOException {
-    LoggingConfigurator.configureLogging(Level.WARN, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.WARN, LoggingFormat.PLAIN, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("This should not appear");
@@ -154,7 +158,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void configurationNameIsSet() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, testWriter);
 
     final LoggerContext context = LoggerContext.getContext(false);
     final Configuration config = context.getConfiguration();
@@ -164,7 +168,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void rootLoggerLevelIsSetCorrectly() {
-    LoggingConfigurator.configureLogging(Level.DEBUG, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.DEBUG, LoggingFormat.PLAIN, testWriter);
 
     final LoggerContext context = LoggerContext.getContext(false);
     final Configuration config = context.getConfiguration();
@@ -173,18 +177,18 @@ class LoggingConfiguratorTest {
   }
 
   @Test
-  void fileAppenderIsConfigured() {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
+  void appenderIsConfigured() {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, testWriter);
 
     final LoggerContext context = LoggerContext.getContext(false);
     final Configuration config = context.getConfiguration();
 
-    assertThat(config.getAppenders()).containsKey("FileAppender");
+    assertThat(config.getAppenders()).containsKey("WriterOutput");
   }
 
   @Test
   void plainFormatIncludesTimestamp() throws IOException {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test with timestamp");
@@ -195,7 +199,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void plainFormatIncludesThreadName() throws IOException {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test with thread");
@@ -206,7 +210,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void plainFormatIncludesLoggerName() throws IOException {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Test with logger name");
@@ -218,24 +222,29 @@ class LoggingConfiguratorTest {
   @Test
   void reconfigurationReplacesExistingConfiguration() throws IOException {
     // Configure with PLAIN
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, testWriter);
     Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Plain format message");
+    testWriter.flush();
     String plainOutput = readLogFile();
     assertThat(plainOutput).contains("|");
 
-    // Reconfigure with ECS (new file)
+    // Reconfigure with ECS (new file and new writer)
     Path logFile2 = tempDir.resolve("test2.log");
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS, logFile2);
-    testLogger = LogManager.getLogger("TestLogger");
-    testLogger.info("ECS format message");
-    String ecsOutput = Files.readString(logFile2);
-    assertThat(ecsOutput).contains("\"message\":").doesNotContain("|");
+    try (PrintWriter testWriter2 = new PrintWriter(new FileWriter(logFile2.toFile()), true)) {
+      LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS, testWriter2);
+      testLogger = LogManager.getLogger("TestLogger");
+      testLogger.info("ECS format message");
+      testWriter2.flush();
+
+      String ecsOutput = Files.readString(logFile2);
+      assertThat(ecsOutput).contains("\"message\":").doesNotContain("|");
+    }
   }
 
   @Test
   void loggerWithContextInformation() throws IOException {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Message with args: {}, {}", "arg1", 42);
@@ -246,7 +255,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void multipleLogLevelsWork() throws IOException {
-    LoggingConfigurator.configureLogging(Level.DEBUG, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.DEBUG, LoggingFormat.PLAIN, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.trace("TRACE message");
@@ -266,7 +275,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void errorLevelOnlyLogsErrorAndFatal() throws IOException {
-    LoggingConfigurator.configureLogging(Level.ERROR, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.ERROR, LoggingFormat.PLAIN, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.debug("DEBUG message");
@@ -286,7 +295,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void jsonFormatHandlesSpecialCharacters() throws IOException {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Message with \"quotes\" and \\ backslash");
@@ -297,7 +306,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void plainFormatHandlesMultipleArguments() throws IOException {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Args: {}, {}, {}, {}", "one", 2, true, 4.5);
@@ -308,7 +317,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void loggerHandlesNullArguments() throws IOException {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.PLAIN, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Null arg: {}", (Object) null);
@@ -319,7 +328,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void loggerHandlesExceptions() throws IOException {
-    LoggingConfigurator.configureLogging(Level.ERROR, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.ERROR, LoggingFormat.PLAIN, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     final Exception exception = new IllegalArgumentException("Test exception");
@@ -334,7 +343,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void ecsFormatIncludesTimestamp() throws IOException {
-    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS, logFile);
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.info("Timestamped message");
@@ -345,7 +354,7 @@ class LoggingConfiguratorTest {
 
   @Test
   void traceLevelLogsEverything() throws IOException {
-    LoggingConfigurator.configureLogging(Level.TRACE, LoggingFormat.PLAIN, logFile);
+    LoggingConfigurator.configureLogging(Level.TRACE, LoggingFormat.PLAIN, testWriter);
 
     final Logger testLogger = LogManager.getLogger("TestLogger");
     testLogger.trace("TRACE message");

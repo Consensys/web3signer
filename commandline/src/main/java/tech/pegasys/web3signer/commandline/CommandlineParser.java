@@ -99,7 +99,7 @@ public class CommandlineParser {
     } else {
       // Apply programmatic configuration
       LoggingConfigurator.configureLogging(
-          baseCommand.getLogLevel(), baseCommand.getLoggingFormat());
+          baseCommand.getLogLevel(), baseCommand.getLoggingFormat(), outputWriter);
     }
 
     // App initialization information
