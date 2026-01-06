@@ -139,8 +139,8 @@ public class CommandlineParser {
     errorWriter.println("Failed to initialize Web3Signer");
     errorWriter.println("Cause: " + ex.getMessage());
 
-    if (baseCommand.getLogLevel() != null
-        && Level.DEBUG.isMoreSpecificThan(baseCommand.getLogLevel())) {
+    // Print stack trace if DEBUG or TRACE is enabled
+    if (LOG.isDebugEnabled()) {
       ex.printStackTrace(errorWriter);
     }
 
