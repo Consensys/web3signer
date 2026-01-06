@@ -23,6 +23,7 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_OPTION;
 
+import org.junit.jupiter.api.AfterEach;
 import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.core.Context;
@@ -70,6 +71,16 @@ class CommandlineParserTest {
     parser = new CommandlineParser(config, outputWriter, errorWriter, Collections.emptyMap());
   }
 
+  @AfterEach
+  void cleanup() {
+    if (outputWriter != null) {
+      outputWriter.close();
+    }
+    if (errorWriter != null) {
+      errorWriter.close();
+    }
+  }
+
   @Test
   void fullyPopulatedCommandLineParsesIntoVariables() {
     final int result = parser.parseCommandLine(validBaseCommandOptions().split(" "));
@@ -86,7 +97,7 @@ class CommandlineParserTest {
   void mainCommandHelpIsDisplayedWhenNoOptionsOtherThanHelp() {
     final int result = parser.parseCommandLine("--help");
     assertThat(result).isZero();
-    assertThat(commandOutput.toString()).isEqualTo(DEFAULT_USAGE_TEXT);
+    assertThat(commandOutput.toString()).containsOnlyOnce(DEFAULT_USAGE_TEXT);
   }
 
   @Test
@@ -629,7 +640,20 @@ class CommandlineParserTest {
     final int result = parser.parseCommandLine(cmdLine.split(" "));
     assertThat(result).isZero();
     assertThat(actualValueGetter.get()).isEqualTo(expectedValue);
-    assertThat(commandOutput.toString()).isEmpty();
+
+    // default init logging at INFO level
+    final String output = commandOutput.toString().trim();
+    assertThat(output)
+            // Check timestamp format
+            .containsPattern("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}[+-]\\d{4}")
+            // Check log level
+            .contains("INFO")
+            // Check logger name
+            .contains("Web3SignerInit")
+            // Check message
+            .contains("Starting Web3Signer version")
+            // Ensure it's a single line
+            .doesNotContain("\n");
   }
 
   public static class MockEth2SubCommand extends Eth2SubCommand {
