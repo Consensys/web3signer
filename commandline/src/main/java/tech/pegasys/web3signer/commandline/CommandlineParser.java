@@ -104,8 +104,7 @@ public class CommandlineParser {
 
     if (!parseResult.isUsageHelpRequested()
         && !parseResult.isVersionHelpRequested()
-        && !(parseResult.hasSubcommand()
-            && "help".equals(parseResult.subcommand().commandSpec().name()))) {
+        && !isHelpSubcommand(parseResult)) {
       // App initialization information
       LOG.info("Starting Web3Signer version {}", ApplicationInfo.version());
       LOG.debug("Command line arguments: {}", String.join(" ", parseResult.originalArgs()));
@@ -113,6 +112,18 @@ public class CommandlineParser {
 
     // default execution strategy
     return new CommandLine.RunLast().execute(parseResult);
+  }
+
+  private boolean isHelpSubcommand(final ParseResult parseResult) {
+    // Walk through all subcommand levels to check if "help" appears anywhere
+    ParseResult current = parseResult;
+    while (current != null) {
+      if ("help".equals(current.commandSpec().name())) {
+        return true;
+      }
+      current = current.hasSubcommand() ? current.subcommand() : null;
+    }
+    return false;
   }
 
   private IDefaultValueProvider defaultValueProvider(

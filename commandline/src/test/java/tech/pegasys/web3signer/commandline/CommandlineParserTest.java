@@ -108,6 +108,20 @@ class CommandlineParserTest {
   }
 
   @Test
+  void subcommandHelpDisplaysSubcommandUsage() {
+    CommandLine expectedBaseCommandLine = new CommandLine(new Web3SignerBaseCommand());
+    expectedBaseCommandLine.setCaseInsensitiveEnumValuesAllowed(true);
+    expectedBaseCommandLine.registerConverter(Level.class, Level::valueOf);
+    expectedBaseCommandLine.addSubcommand(new MockEth2SubCommand());
+    CommandLine expectedEth2Command = expectedBaseCommandLine.getSubcommands().get("eth2");
+    final String expectedUsageMessage = expectedEth2Command.getUsageMessage();
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    parser.parseCommandLine("help eth2".split(" "));
+    assertThat(commandOutput.toString()).isEqualTo(expectedUsageMessage);
+  }
+
+  @Test
   void missingLoggingDefaultsToInfoLevel() {
     // Must recreate config before executions, to prevent stale data remaining in the object.
     missingOptionalParameterIsValidAndMeetsDefault("logging", config::getLogLevel, Level.INFO);
