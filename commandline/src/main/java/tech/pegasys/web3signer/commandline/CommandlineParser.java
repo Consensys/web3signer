@@ -102,9 +102,14 @@ public class CommandlineParser {
           baseCommand.getLogLevel(), baseCommand.getLoggingFormat(), outputWriter);
     }
 
-    // App initialization information
-    LOG.info("Starting Web3Signer version {}", ApplicationInfo.version());
-    LOG.debug("Command line arguments: {}", String.join(" ", parseResult.originalArgs()));
+    if (!parseResult.isUsageHelpRequested()
+        && !parseResult.isVersionHelpRequested()
+        && !(parseResult.hasSubcommand()
+            && "help".equals(parseResult.subcommand().commandSpec().name()))) {
+      // App initialization information
+      LOG.info("Starting Web3Signer version {}", ApplicationInfo.version());
+      LOG.debug("Command line arguments: {}", String.join(" ", parseResult.originalArgs()));
+    }
 
     // default execution strategy
     return new CommandLine.RunLast().execute(parseResult);

@@ -23,7 +23,6 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_OPTION;
 
-import org.junit.jupiter.api.AfterEach;
 import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.core.Context;
@@ -45,6 +44,7 @@ import java.util.function.Supplier;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.Level;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
@@ -97,14 +97,14 @@ class CommandlineParserTest {
   void mainCommandHelpIsDisplayedWhenNoOptionsOtherThanHelp() {
     final int result = parser.parseCommandLine("--help");
     assertThat(result).isZero();
-    assertThat(commandOutput.toString()).containsOnlyOnce(DEFAULT_USAGE_TEXT);
+    assertThat(commandOutput.toString()).isEqualTo(DEFAULT_USAGE_TEXT);
   }
 
   @Test
   void mainCommandHelpIsDisplayedWhenNoOptionsOtherThanHelpWithoutDashes() {
     final int result = parser.parseCommandLine("help");
     assertThat(result).isZero();
-    assertThat(commandOutput.toString()).containsOnlyOnce(DEFAULT_USAGE_TEXT);
+    assertThat(commandOutput.toString()).isEqualTo(DEFAULT_USAGE_TEXT);
   }
 
   @Test
@@ -125,7 +125,7 @@ class CommandlineParserTest {
   void unknownCommandLineOptionDisplaysErrorMessage() {
     final int result = parser.parseCommandLine("--nonExistentOption=9");
     assertThat(result).isNotZero();
-    assertThat(commandOutput.toString()).containsOnlyOnce(DEFAULT_USAGE_TEXT);
+    assertThat(commandOutput.toString()).isEqualTo(DEFAULT_USAGE_TEXT);
   }
 
   @Test
@@ -644,16 +644,16 @@ class CommandlineParserTest {
     // default init logging at INFO level
     final String output = commandOutput.toString().trim();
     assertThat(output)
-            // Check timestamp format
-            .containsPattern("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}[+-]\\d{4}")
-            // Check log level
-            .contains("INFO")
-            // Check logger name
-            .contains("Web3SignerInit")
-            // Check message
-            .contains("Starting Web3Signer version")
-            // Ensure it's a single line
-            .doesNotContain("\n");
+        // Check timestamp format
+        .containsPattern("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}[+-]\\d{4}")
+        // Check log level
+        .contains("INFO")
+        // Check logger name
+        .contains("Web3SignerInit")
+        // Check message
+        .contains("Starting Web3Signer version")
+        // Ensure it's a single line
+        .doesNotContain("\n");
   }
 
   public static class MockEth2SubCommand extends Eth2SubCommand {
