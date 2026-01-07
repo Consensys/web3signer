@@ -23,6 +23,7 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_OPTION;
 
+import tech.pegasys.web3signer.commandline.logging.LoggingFormat;
 import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.core.Context;
@@ -111,6 +112,12 @@ class CommandlineParserTest {
   void missingLoggingDefaultsToInfoLevel() {
     // Must recreate config before executions, to prevent stale data remaining in the object.
     missingOptionalParameterIsValidAndMeetsDefault("logging", config::getLogLevel, Level.INFO);
+  }
+
+  @Test
+  void missingLoggingFormatDefaultsToPlain() {
+    missingOptionalParameterIsValidAndMeetsDefault(
+        "logging-format", config::getLoggingFormat, LoggingFormat.PLAIN);
   }
 
   @Test
