@@ -12,9 +12,9 @@
  */
 package tech.pegasys.web3signer.commandline.logging;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -42,7 +42,7 @@ class LoggingConfiguratorTest {
   @BeforeEach
   void setUp() throws IOException {
     logFile = tempDir.resolve("test.log");
-    testWriter = new PrintWriter(new FileWriter(logFile.toFile()), true);
+    testWriter = new PrintWriter(Files.newBufferedWriter(logFile.toFile().toPath(), UTF_8), true);
   }
 
   @AfterEach
@@ -231,7 +231,8 @@ class LoggingConfiguratorTest {
 
     // Reconfigure with ECS (new file and new writer)
     Path logFile2 = tempDir.resolve("test2.log");
-    try (PrintWriter testWriter2 = new PrintWriter(new FileWriter(logFile2.toFile()), true)) {
+    try (PrintWriter testWriter2 =
+        new PrintWriter(Files.newBufferedWriter(logFile2.toFile().toPath(), UTF_8), true)) {
       LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.ECS, testWriter2);
       testLogger = LogManager.getLogger("TestLogger");
       testLogger.info("ECS format message");

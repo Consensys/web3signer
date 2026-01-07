@@ -65,6 +65,12 @@ public class CommandlineParser {
 
   public int parseCommandLine(final String... args) {
     final CommandLine commandLine = new CommandLine(baseCommand);
+
+    // register subcommands first so that they can inherit subsequent settings
+    for (final ModeSubCommand subcommand : modes) {
+      commandLine.addSubcommand(subcommand.getCommandName(), subcommand);
+    }
+
     commandLine.setCaseInsensitiveEnumValuesAllowed(true);
     commandLine.registerConverter(Level.class, Level::valueOf);
     commandLine.setOut(outputWriter);
@@ -72,10 +78,6 @@ public class CommandlineParser {
     commandLine.setExecutionExceptionHandler(this::handleExecutionException);
     commandLine.setParameterExceptionHandler(this::handleParseException);
     commandLine.setExecutionStrategy(this::executionStrategy);
-
-    for (final ModeSubCommand subcommand : modes) {
-      commandLine.addSubcommand(subcommand.getCommandName(), subcommand);
-    }
 
     Optional<File> configFile = Optional.empty();
     try {
@@ -102,9 +104,8 @@ public class CommandlineParser {
           baseCommand.getLogLevel(), baseCommand.getLoggingFormat(), outputWriter);
     }
 
-    if (!parseResult.isUsageHelpRequested()
-        && !parseResult.isVersionHelpRequested()
-        && !isHelpSubcommand(parseResult)) {
+    // Don't log startup message for any help/version requests
+    if (!isHelpOrVersionRequested(parseResult)) {
       // App initialization information
       LOG.info("Starting Web3Signer version {}", ApplicationInfo.version());
       LOG.debug("Command line arguments: {}", String.join(" ", parseResult.originalArgs()));
@@ -114,11 +115,13 @@ public class CommandlineParser {
     return new CommandLine.RunLast().execute(parseResult);
   }
 
-  private boolean isHelpSubcommand(final ParseResult parseResult) {
-    // Walk through all subcommand levels to check if "help" appears anywhere
+  private boolean isHelpOrVersionRequested(final ParseResult parseResult) {
+    // Walk through all subcommand levels to check if help or version is requested anywhere
     ParseResult current = parseResult;
     while (current != null) {
-      if ("help".equals(current.commandSpec().name())) {
+      if (current.isUsageHelpRequested()
+          || current.isVersionHelpRequested()
+          || "help".equals(current.commandSpec().name())) {
         return true;
       }
       current = current.hasSubcommand() ? current.subcommand() : null;
