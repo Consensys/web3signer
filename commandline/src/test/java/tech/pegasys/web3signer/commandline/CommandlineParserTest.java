@@ -89,23 +89,10 @@ class CommandlineParserTest {
     assertThat(result).isZero();
 
     assertThat(config.getLogLevel()).isEqualTo(Level.INFO);
+    assertThat(config.getLoggingFormat()).isEqualTo(LoggingFormat.PLAIN);
     assertThat(config.getHttpListenHost()).isEqualTo("localhost");
     assertThat(config.getHttpListenPort()).isEqualTo(5001);
     assertThat(config.getIdleConnectionTimeoutSeconds()).isEqualTo(45);
-  }
-
-  @Test
-  void mainCommandHelpIsDisplayedWhenNoOptionsOtherThanHelp() {
-    final int result = parser.parseCommandLine("--help");
-    assertThat(result).isZero();
-    assertThat(commandOutput.toString()).isEqualTo(DEFAULT_USAGE_TEXT);
-  }
-
-  @Test
-  void mainCommandHelpIsDisplayedWhenNoOptionsOtherThanHelpWithoutDashes() {
-    final int result = parser.parseCommandLine("help");
-    assertThat(result).isZero();
-    assertThat(commandOutput.toString()).isEqualTo(DEFAULT_USAGE_TEXT);
   }
 
   @Test
@@ -118,6 +105,13 @@ class CommandlineParserTest {
   void missingLoggingFormatDefaultsToPlain() {
     missingOptionalParameterIsValidAndMeetsDefault(
         "logging-format", config::getLoggingFormat, LoggingFormat.PLAIN);
+  }
+
+  @Test
+  void loggingFormatChangeIsValid() {
+    final int result = parser.parseCommandLine("--logging-format=ECS");
+    assertThat(result).isZero();
+    assertThat(config.getLoggingFormat()).isEqualTo(LoggingFormat.ECS);
   }
 
   @Test

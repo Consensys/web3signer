@@ -20,18 +20,23 @@ import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collections;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import picocli.CommandLine;
 
 public class CommandLineParserHelpUsageTest {
+  private static final String EXPECTED_USAGE = getCommandUsageMessage(false);
+  private static final String EXPECTED_SUBCOMMAND_USAGE = getCommandUsageMessage(true);
+
   private StringWriter commandOutput;
   private StringWriter commandError;
   private PrintWriter outputWriter;
   private PrintWriter errorWriter;
-  private Web3SignerBaseCommand config;
   private CommandlineParser parser;
 
   @BeforeEach
@@ -40,8 +45,9 @@ public class CommandLineParserHelpUsageTest {
     commandError = new StringWriter();
     outputWriter = new PrintWriter(commandOutput, true);
     errorWriter = new PrintWriter(commandError, true);
-    config = new Web3SignerBaseCommand();
-    parser = new CommandlineParser(config, outputWriter, errorWriter, Collections.emptyMap());
+    parser =
+        new CommandlineParser(
+            new Web3SignerBaseCommand(), outputWriter, errorWriter, Collections.emptyMap());
     parser.registerSubCommands(new Eth2SubCommand());
     parser.registerSubCommands(new Eth1SubCommand());
   }
@@ -56,36 +62,47 @@ public class CommandLineParserHelpUsageTest {
     }
   }
 
-  @Test
-  void helpSubcommandWithSubcommandDisplaysUsage() {
-    final String expectedUsageMessage = getEth2SubcommandUsageMessage();
-
-    parser.parseCommandLine("help", "eth2");
-    assertThat(commandOutput.toString()).isEqualTo(expectedUsageMessage);
+  @ParameterizedTest(name = "{index}: {1}")
+  @MethodSource("provideMainCommandHelpVariations")
+  void mainCommandHelpIsDisplayed(String[] args, String description) {
+    final int result = parser.parseCommandLine(args);
+    assertThat(result).isZero();
+    assertThat(commandOutput.toString()).isEqualTo(EXPECTED_USAGE);
+    assertThat(commandError.toString()).isEmpty();
   }
 
-  @Test
-  void subcommandHelpArgDisplaysSubcommandUsage() {
-    final String expectedUsageMessage = getEth2SubcommandUsageMessage();
-
-    parser.parseCommandLine("eth2", "--help");
-    assertThat(commandOutput.toString()).isEqualTo(expectedUsageMessage);
+  private static Stream<Arguments> provideMainCommandHelpVariations() {
+    return Stream.of(
+        Arguments.of(new String[] {"--help"}, "with --help flag"),
+        Arguments.of(new String[] {"help"}, "with help subcommand"));
   }
 
-  @Test
-  void subcommandWithHelpSubcommandDisplaysSubcommandUsage() {
-    final String expectedUsageMessage = getEth2SubcommandUsageMessage();
-
-    parser.parseCommandLine("eth2", "help");
-    assertThat(commandOutput.toString()).isEqualTo(expectedUsageMessage);
+  @ParameterizedTest(name = "{index}: {1}")
+  @MethodSource("provideHelpCommandVariations")
+  void helpCommandDisplaysSubcommandUsage(String[] args, String description) {
+    parser.parseCommandLine(args);
+    assertThat(commandOutput.toString()).isEqualTo(EXPECTED_SUBCOMMAND_USAGE);
+    assertThat(commandError.toString()).isEmpty();
   }
 
-  private static String getEth2SubcommandUsageMessage() {
+  private static Stream<Arguments> provideHelpCommandVariations() {
+    return Stream.of(
+        Arguments.of(new String[] {"help", "eth2"}, "help subcommand with subcommand"),
+        Arguments.of(new String[] {"eth2", "--help"}, "subcommand with --help flag"),
+        Arguments.of(new String[] {"eth2", "help"}, "subcommand with help subcommand"));
+  }
+
+  private static String getCommandUsageMessage(final boolean isSubCommand) {
     final CommandLine expectedBaseCommandLine = new CommandLine(new Web3SignerBaseCommand());
     expectedBaseCommandLine.setCaseInsensitiveEnumValuesAllowed(true);
     expectedBaseCommandLine.addSubcommand(new Eth2SubCommand());
+    expectedBaseCommandLine.addSubcommand(new Eth1SubCommand());
 
-    final CommandLine expectedEth2Command = expectedBaseCommandLine.getSubcommands().get("eth2");
-    return expectedEth2Command.getUsageMessage();
+    if (isSubCommand) {
+      final CommandLine expectedEth2Command = expectedBaseCommandLine.getSubcommands().get("eth2");
+      return expectedEth2Command.getUsageMessage();
+    } else {
+      return expectedBaseCommandLine.getUsageMessage();
+    }
   }
 }
