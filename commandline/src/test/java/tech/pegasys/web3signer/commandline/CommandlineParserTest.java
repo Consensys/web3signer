@@ -485,7 +485,7 @@ class CommandlineParserTest {
     assertThat(result).isNotZero();
     assertThat(commandError.toString())
         .contains(
-            "Error parsing parameters: Invalid value for option '--aws-secrets-auth-mode': expected one of [ENVIRONMENT, SPECIFIED] (case-sensitive) but was 'UNKNOWN'");
+            "Error parsing parameters: Invalid value for option '--aws-secrets-auth-mode': expected one of [ENVIRONMENT, SPECIFIED] (case-insensitive) but was 'UNKNOWN'");
   }
 
   @Test
