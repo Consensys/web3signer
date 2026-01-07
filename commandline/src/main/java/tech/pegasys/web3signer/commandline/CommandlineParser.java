@@ -159,7 +159,7 @@ public class CommandlineParser {
     errorWriter.println("Cause: " + ex.getMessage());
 
     // Print stack trace if DEBUG or TRACE is enabled
-    if (LOG.isDebugEnabled() || baseCommand.getLogLevel().isMoreSpecificThan(Level.INFO)) {
+    if (LOG.isDebugEnabled() || baseCommand.getLogLevel().isLessSpecificThan(Level.INFO)) {
       ex.printStackTrace(errorWriter);
     }
 
