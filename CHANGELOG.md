@@ -6,6 +6,7 @@
 - New `--logging-format` CLI option to select structured logging formats (PLAIN, ECS, GCP, LOGSTASH, GELF) without requiring custom Log4j2 configuration files. Issue [#1144][issue_1144] via PR [#1146][PR_1146].
 
 ### Bugs Fixed
+- Fix unregistered validator IllegalStateException due to race condition in keymanager API
 
 [issue_1144]: https://github.com/Consensys/web3signer/issues/1144
 [PR_1146]: https://github.com/Consensys/web3signer/pull/1146
