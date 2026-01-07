@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
@@ -72,7 +71,6 @@ public class CommandlineParser {
     }
 
     commandLine.setCaseInsensitiveEnumValuesAllowed(true);
-    commandLine.registerConverter(Level.class, Level::valueOf);
     commandLine.setOut(outputWriter);
     commandLine.setErr(errorWriter);
     commandLine.setExecutionExceptionHandler(this::handleExecutionException);

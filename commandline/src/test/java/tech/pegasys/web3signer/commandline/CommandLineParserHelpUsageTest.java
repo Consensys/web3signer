@@ -21,7 +21,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collections;
 
-import org.apache.logging.log4j.Level;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,7 +83,6 @@ public class CommandLineParserHelpUsageTest {
   private static String getEth2SubcommandUsageMessage() {
     final CommandLine expectedBaseCommandLine = new CommandLine(new Web3SignerBaseCommand());
     expectedBaseCommandLine.setCaseInsensitiveEnumValuesAllowed(true);
-    expectedBaseCommandLine.registerConverter(Level.class, Level::valueOf);
     expectedBaseCommandLine.addSubcommand(new Eth2SubCommand());
 
     final CommandLine expectedEth2Command = expectedBaseCommandLine.getSubcommands().get("eth2");
