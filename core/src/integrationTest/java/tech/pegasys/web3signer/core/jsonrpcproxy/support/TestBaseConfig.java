@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.logging.log4j.Level;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 public class TestBaseConfig implements BaseConfig {
@@ -38,11 +37,6 @@ public class TestBaseConfig implements BaseConfig {
     this.dataPath = dataPath;
     this.keyConfigPath = keyConfigPath;
     this.allowedCorsOrigin = allowedCorsOrigin;
-  }
-
-  @Override
-  public Level getLogLevel() {
-    return Level.INFO;
   }
 
   @Override

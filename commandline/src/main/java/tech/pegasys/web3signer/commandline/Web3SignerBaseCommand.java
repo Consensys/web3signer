@@ -24,6 +24,7 @@ import tech.pegasys.web3signer.commandline.config.PicoCliMetricsPushOptions;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptions;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptionsValidator;
 import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
+import tech.pegasys.web3signer.commandline.logging.LoggingFormat;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.common.config.SignerLoaderConfig;
 import tech.pegasys.web3signer.core.config.BaseConfig;
@@ -33,7 +34,10 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import java.io.File;
 import java.net.InetAddress;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -105,9 +109,15 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   @Option(
       names = {"--logging", "-l"},
       paramLabel = "<LOG VERBOSITY LEVEL>",
-      description =
-          "Logging verbosity levels: OFF, FATAL, WARN, INFO, DEBUG, TRACE, ALL (default: INFO)")
-  private final Level logLevel = null;
+      converter = LoggingLevelConverter.class,
+      completionCandidates = LoggingLevelCompletionCandidates.class,
+      description = "Logging verbosity levels: ${COMPLETION-CANDIDATES} (default: INFO)")
+  private final Level logLevel = Level.INFO;
+
+  @Option(
+      names = {"--logging-format"},
+      description = "Logging format: ${COMPLETION-CANDIDATES} (default: PLAIN)")
+  private LoggingFormat loggingFormat = LoggingFormat.PLAIN;
 
   @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
   @Option(
@@ -261,9 +271,12 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
 
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
-  @Override
   public Level getLogLevel() {
     return logLevel;
+  }
+
+  public LoggingFormat getLoggingFormat() {
+    return loggingFormat;
   }
 
   @Override
@@ -456,6 +469,23 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
     public Web3signerMetricCategoryConverter() {
       addCategories(Web3SignerMetricCategory.class);
       addCategories(StandardMetricCategory.class);
+    }
+  }
+
+  static class LoggingLevelConverter implements CommandLine.ITypeConverter<Level> {
+    @Override
+    public Level convert(final String value) {
+      return Level.valueOf(value);
+    }
+  }
+
+  static class LoggingLevelCompletionCandidates extends ArrayList<String> {
+    LoggingLevelCompletionCandidates() {
+      super(
+          Arrays.stream(Level.values())
+              .sorted(Comparator.comparingInt(Level::intLevel).reversed())
+              .map(Level::name)
+              .toList());
     }
   }
 }

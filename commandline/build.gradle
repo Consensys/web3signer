@@ -22,6 +22,7 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.logging.log4j:log4j-core'
+  implementation 'org.apache.logging.log4j:log4j-layout-template-json'
   implementation 'org.hyperledger.besu:besu-plugin-api'
   implementation 'org.hyperledger.besu.internal:besu-metrics-core'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
