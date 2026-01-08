@@ -118,6 +118,17 @@ class LoggingConfiguratorTest {
     assertThat(output).contains("\"message\":").contains("Test message");
   }
 
+  @Test
+  void configureGelfFormatProducesJson() throws IOException {
+    LoggingConfigurator.configureLogging(Level.INFO, LoggingFormat.GELF, testWriter);
+
+    final Logger testLogger = LogManager.getLogger("TestLogger");
+    testLogger.info("Test message");
+
+    final String output = readLogFile();
+    assertThat(output).contains("\"short_message\":\"Test message\"").contains("\"level\":");
+  }
+
   @ParameterizedTest
   @EnumSource(LoggingFormat.class)
   void configureLoggingWithAllFormats(final LoggingFormat format) throws IOException {
