@@ -652,9 +652,10 @@ class CommandlineParserTest {
         // Check logger name
         .contains("Web3SignerInit")
         // Check message
-        .contains("Starting Web3Signer version")
-        // Ensure it's a single line
-        .doesNotContain("\n");
+        .contains("Starting Web3Signer version");
+
+    // Ensure it's a single line i.e. not polluted with unnecessary logging statements
+    assertThat(output.lines().count()).isEqualTo(1);
   }
 
   public static class MockEth2SubCommand extends Eth2SubCommand {
