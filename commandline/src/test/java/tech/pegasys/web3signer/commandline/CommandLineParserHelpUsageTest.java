@@ -66,9 +66,9 @@ public class CommandLineParserHelpUsageTest {
   @MethodSource("provideMainCommandHelpVariations")
   void mainCommandHelpIsDisplayed(String[] args, String description) {
     final int result = parser.parseCommandLine(args);
-    assertThat(result).isZero();
-    assertThat(commandOutput.toString()).isEqualTo(EXPECTED_USAGE);
-    assertThat(commandError.toString()).isEmpty();
+    assertThat(result).as(description + " - result code").isZero();
+    assertThat(commandOutput.toString()).as(description + " - std out").isEqualTo(EXPECTED_USAGE);
+    assertThat(commandError.toString()).as(description + " - std err").isEmpty();
   }
 
   private static Stream<Arguments> provideMainCommandHelpVariations() {
@@ -81,8 +81,10 @@ public class CommandLineParserHelpUsageTest {
   @MethodSource("provideHelpCommandVariations")
   void helpCommandDisplaysSubcommandUsage(String[] args, String description) {
     parser.parseCommandLine(args);
-    assertThat(commandOutput.toString()).isEqualTo(EXPECTED_SUBCOMMAND_USAGE);
-    assertThat(commandError.toString()).isEmpty();
+    assertThat(commandOutput.toString())
+        .as(description + " - std out")
+        .isEqualTo(EXPECTED_SUBCOMMAND_USAGE);
+    assertThat(commandError.toString()).as(description + " - std err").isEmpty();
   }
 
   private static Stream<Arguments> provideHelpCommandVariations() {
