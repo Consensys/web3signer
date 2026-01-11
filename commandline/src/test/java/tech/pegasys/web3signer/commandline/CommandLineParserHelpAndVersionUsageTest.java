@@ -31,6 +31,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import picocli.CommandLine;
 
 public class CommandLineParserHelpAndVersionUsageTest {
+  private static final String EXPECTED_VERSION = ApplicationInfo.version();
   private static final String EXPECTED_USAGE = getCommandUsageMessage(false);
   private static final String EXPECTED_SUBCOMMAND_USAGE = getCommandUsageMessage(true);
 
@@ -98,13 +99,11 @@ public class CommandLineParserHelpAndVersionUsageTest {
   @ParameterizedTest(name = "{index}: {1}")
   @MethodSource("provideVersionCommandVariations")
   void versionArgDisplaysVersion(final String[] args, final String description) {
-    final String expectedVersion = ApplicationInfo.version();
-
     parser.parseCommandLine(args);
 
     assertThat(commandOutput.toString().trim())
         .as(description + " - std out")
-        .isEqualTo(expectedVersion);
+        .isEqualTo(EXPECTED_VERSION);
   }
 
   private static Stream<Arguments> provideVersionCommandVariations() {
