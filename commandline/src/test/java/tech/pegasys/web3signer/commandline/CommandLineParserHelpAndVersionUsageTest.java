@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.commandline.subcommands.Eth1SubCommand;
 import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
+import tech.pegasys.web3signer.common.ApplicationInfo;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -29,7 +30,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import picocli.CommandLine;
 
-public class CommandLineParserHelpUsageTest {
+public class CommandLineParserHelpAndVersionUsageTest {
   private static final String EXPECTED_USAGE = getCommandUsageMessage(false);
   private static final String EXPECTED_SUBCOMMAND_USAGE = getCommandUsageMessage(true);
 
@@ -92,6 +93,25 @@ public class CommandLineParserHelpUsageTest {
         Arguments.of(new String[] {"help", "eth2"}, "help subcommand with subcommand"),
         Arguments.of(new String[] {"eth2", "--help"}, "subcommand with --help flag"),
         Arguments.of(new String[] {"eth2", "help"}, "subcommand with help subcommand"));
+  }
+
+  @ParameterizedTest(name = "{index}: {1}")
+  @MethodSource("provideVersionCommandVariations")
+  void versionArgDisplaysVersion(final String[] args, final String description) {
+    final String expectedVersion = ApplicationInfo.version();
+
+    parser.parseCommandLine(args);
+
+    assertThat(commandOutput.toString().trim())
+        .as(description + " - std out")
+        .isEqualTo(expectedVersion);
+  }
+
+  private static Stream<Arguments> provideVersionCommandVariations() {
+    return Stream.of(
+        Arguments.of(new String[] {"--version"}, "--version flag with main command"),
+        Arguments.of(new String[] {"eth1", "--version"}, "eth1 subcommand with --version flag"),
+        Arguments.of(new String[] {"eth2", "--version"}, "eth2 subcommand with --version flag"));
   }
 
   private static String getCommandUsageMessage(final boolean isSubCommand) {
