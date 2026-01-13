@@ -2,11 +2,13 @@
 
 ## Upcoming Release
 ### Features Added
+- Add Docker build for hardened security environments
 - Update Netty to 4.2.9.Final
 - New `--logging-format` CLI option to select structured logging formats (PLAIN, ECS, GCP, LOGSTASH, GELF) without requiring custom Log4j2 configuration files. Issue [#1144][issue_1144] via PR [#1146][PR_1146].
 
 ### Bugs Fixed
 
+[issue_1151]: https://github.com/Consensys/web3signer/issues/1151
 [issue_1144]: https://github.com/Consensys/web3signer/issues/1144
 [PR_1146]: https://github.com/Consensys/web3signer/pull/1146
 
