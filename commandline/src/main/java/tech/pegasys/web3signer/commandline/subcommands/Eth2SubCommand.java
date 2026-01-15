@@ -29,6 +29,7 @@ import tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliGcpSecretManagerParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
+import tech.pegasys.web3signer.commandline.VersionProvider;
 import tech.pegasys.web3signer.commandline.config.KeyManagerApiParameters;
 import tech.pegasys.web3signer.commandline.config.PicoCommitBoostApiParameters;
 import tech.pegasys.web3signer.commandline.config.PicoKeystoresParameters;
@@ -65,6 +66,7 @@ import picocli.CommandLine.Spec;
       Eth2ImportSubCommand.class,
       Eth2WatermarkRepairSubCommand.class
     },
+    versionProvider = VersionProvider.class,
     mixinStandardHelpOptions = true)
 public class Eth2SubCommand extends ModeSubCommand {
   private static final Logger LOG = LogManager.getLogger();
