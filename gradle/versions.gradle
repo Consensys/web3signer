@@ -42,7 +42,7 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.7.7'
 
-    dependencySet(group: 'io.vertx', version: '4.5.22') {
+    dependencySet(group: 'io.vertx', version: '4.5.24') {
       entry 'vertx-codegen'
       entry ('vertx-core') {
         exclude group: 'io.netty', name: 'netty-handler'
