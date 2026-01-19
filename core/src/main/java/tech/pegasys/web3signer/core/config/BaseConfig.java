@@ -20,12 +20,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.logging.log4j.Level;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 public interface BaseConfig {
-
-  Level getLogLevel();
 
   String getHttpListenHost();
 

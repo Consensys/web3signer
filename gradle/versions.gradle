@@ -15,12 +15,13 @@
 dependencyManagement {
   imports {
     // Import log4j BOM first with higher priority
-    mavenBom "org.apache.logging.log4j:log4j-bom:2.25.2"
+    mavenBom "org.apache.logging.log4j:log4j-bom:2.25.3"
     mavenBom 'org.junit:junit-bom:5.14.0'
     mavenBom 'io.netty:netty-bom:4.2.9.Final'
   }
 
   dependencies {
+    dependency 'com.google.code.findbugs:jsr305:3.0.2'
     dependency 'com.fasterxml.jackson.core:jackson-databind:2.20.0'
     dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.20.0'
 

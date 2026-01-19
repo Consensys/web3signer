@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import tech.pegasys.web3signer.commandline.VersionProvider;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContext;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContextFactory;
 import tech.pegasys.web3signer.slashingprotection.dao.HighWatermark;
@@ -40,6 +41,7 @@ import picocli.CommandLine.Option;
             + "This will not move the low watermark lower, the low watermark can only be increased."
             + "If setting the high watermark, care should be taken to set this to a future epoch and slot.",
     subcommands = {HelpCommand.class},
+    versionProvider = VersionProvider.class,
     mixinStandardHelpOptions = true)
 public class Eth2WatermarkRepairSubCommand implements Runnable {
   private static final Logger LOG = LogManager.getLogger();

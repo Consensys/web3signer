@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import tech.pegasys.web3signer.commandline.VersionProvider;
 import tech.pegasys.web3signer.core.InitializationException;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContext;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContextFactory;
@@ -35,6 +36,7 @@ import picocli.CommandLine.Spec;
     name = "export",
     description = "Exports the slashing protection database",
     subcommands = {HelpCommand.class},
+    versionProvider = VersionProvider.class,
     mixinStandardHelpOptions = true)
 public class Eth2ExportSubCommand implements Runnable {
 
