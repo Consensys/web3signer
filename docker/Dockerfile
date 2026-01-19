@@ -32,8 +32,9 @@ ENV JAVA_HOME="/opt/java/openjdk" \
     WEB3SIGNER_HTTP_LISTEN_HOST="0.0.0.0" \
     WEB3SIGNER_METRICS_HOST="0.0.0.0"
 
-# Install dependencies and create user
+# Apply all security updates, install dependencies and create user
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
         curl && \
