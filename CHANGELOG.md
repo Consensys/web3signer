@@ -1,6 +1,10 @@
 # Changelog
 
 ## Upcoming Release
+### Security
+- Updated base Docker image packages to address CVE-2025-68973 (HIGH severity) in gpgv package
+- Docker images now apply all available security updates during build
+
 ### Features Added
 - Update Netty to 4.2.9.Final
 - New `--logging-format` CLI option to select structured logging formats (PLAIN, ECS, GCP, LOGSTASH, GELF) without requiring custom Log4j2 configuration files. Issue [#1144][issue_1144] via PR [#1146][PR_1146].
