@@ -43,7 +43,7 @@ public class PendingPartialWithdrawal {
   public PendingPartialWithdrawal(
       final tech.pegasys.teku.spec.datastructures.state.versions.electra.PendingPartialWithdrawal
           pendingPartialWithdrawal) {
-    this.validatorIndex = pendingPartialWithdrawal.getValidatorIndex();
+    this.validatorIndex = pendingPartialWithdrawal.getValidatorIndex().intValue();
     this.amount = pendingPartialWithdrawal.getAmount();
     this.withdrawableEpoch = pendingPartialWithdrawal.getWithdrawableEpoch();
   }

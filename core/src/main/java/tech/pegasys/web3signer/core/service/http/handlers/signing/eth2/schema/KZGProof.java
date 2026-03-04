@@ -17,6 +17,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes48;
 
 public class KZGProof {
   /** The number of bytes in this value - i.e. 48 */
@@ -35,7 +36,7 @@ public class KZGProof {
   }
 
   public KZGProof(final tech.pegasys.teku.kzg.KZGProof kzgProof) {
-    this(kzgProof.toSSZBytes());
+    this(kzgProof.getBytesCompressed());
   }
 
   @Override
@@ -81,6 +82,6 @@ public class KZGProof {
   }
 
   public tech.pegasys.teku.kzg.KZGProof asInternalKZGProof() {
-    return tech.pegasys.teku.kzg.KZGProof.fromSSZBytes(bytes);
+    return tech.pegasys.teku.kzg.KZGProof.fromBytesCompressed(Bytes48.wrap(bytes));
   }
 }
