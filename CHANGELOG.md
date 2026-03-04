@@ -1,6 +1,6 @@
 # Changelog
 
-## Upcoming Release
+## 26.3.0
 ### Security
 - Updated base Docker image packages to address CVE-2025-68973 (HIGH severity) in gpgv package
 - Docker images now apply all available security updates during build

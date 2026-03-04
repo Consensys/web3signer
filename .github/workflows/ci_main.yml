@@ -160,7 +160,7 @@ jobs:
           echo -e "$SUMMARY_CONTENT" >> $GITHUB_STEP_SUMMARY  
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.29.0
+        uses: aquasecurity/trivy-action@0.34.2
         with:
           image-ref: 'consensys/web3signer:test'
           format: 'sarif'
