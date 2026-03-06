@@ -22,8 +22,8 @@ dependencyManagement {
 
   dependencies {
     dependency 'com.google.code.findbugs:jsr305:3.0.2'
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.20.0'
-    dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.20.0'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.21.1'
+    dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.21.1'
 
     dependencySet(group: 'com.google.errorprone', version: '2.42.0') {
       entry 'error_prone_annotation'
