@@ -4,6 +4,7 @@
 ### Security
 - Updated base Docker image packages to address CVE-2025-68973 (HIGH severity) in gpgv package
 - Docker images now apply all available security updates during build
+- Updated jackson dependencies to 2.21.1
 
 ### Features Added
 - Update Netty to 4.2.9.Final
