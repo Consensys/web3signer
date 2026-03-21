@@ -22,7 +22,7 @@ jobs:
       publish-version: ${{ steps.project-version.outputs.publish-version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           fetch-depth: 0
@@ -36,15 +36,16 @@ jobs:
         id: project-version
         uses: ConsenSys/github-actions/java-get-project-version@main
 
+      # v0.3.0
       - name: Start LocalStack (AWS)
         id: localstack
-        uses: LocalStack/setup-localstack@v0.2.4
+        uses: LocalStack/setup-localstack@2e0e14048ddaf0db551b45fdaa39d3553f2c6399
         with:
           image-tag: 'latest'
           configuration: LOCALSTACK_DEBUG=1
-
+      # v3
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2.1.8
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         if: (github.ref == 'refs/heads/master' && github.event_name != 'pull_request') || startsWith(github.ref, 'refs/tags/')
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS_JSON }}
@@ -75,7 +76,7 @@ jobs:
         run: ./gradlew distTar distZip
 
       - name: Upload distribution artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: distribution
           path: build/distributions/
@@ -88,18 +89,20 @@ jobs:
     environment: docker
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
 
+      # v4.0.0
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
 
+      # v4.0.0
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: distribution
           path: build/distributions/
@@ -125,8 +128,9 @@ jobs:
           echo "build-date=$(date --utc --rfc-3339=seconds)" >> $GITHUB_OUTPUT
           echo "vcs-ref=${{ github.sha }}" >> $GITHUB_OUTPUT
 
+      # v7.0.0
       - name: Build and export to docker
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
         env:
           DOCKER_BUILD_SUMMARY: false
         with:
@@ -159,8 +163,9 @@ jobs:
           SUMMARY_CONTENT+="\n</code></pre></details>\n"
           echo -e "$SUMMARY_CONTENT" >> $GITHUB_STEP_SUMMARY  
 
+      # 0.35.0
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.34.2
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           image-ref: 'consensys/web3signer:test'
           format: 'sarif'
@@ -168,21 +173,24 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
 
+      # 4
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@914d7a8ee403759976378e9102c842b0059e5163
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
 
+      # v4.0.0
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2
         if: steps.docker-metadata.outputs.push == 'true'
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # v7.0.0
       - name: Build and push to registry
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
         with:
           platforms: linux/amd64,linux/arm64
           file: docker/Dockerfile
@@ -206,12 +214,12 @@ jobs:
         contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: distribution
           path: build/distributions/
@@ -315,9 +323,10 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       # Create release tag and attach the distribution
+      # v2.6.1
       - name: Web3Signer Release
         id: release
-        uses: softprops/action-gh-release@v2.2.1
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe
         with:
           files: |
             build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
