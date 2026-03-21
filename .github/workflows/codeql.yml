@@ -24,11 +24,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
+      # v4.33.0
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@b3c7f9182d3c4a2b5675e076628b603b7971775f
         with:
           languages: java-kotlin
           # If you wish to specify custom queries, you can do so here or in a config file.
@@ -39,10 +40,11 @@ jobs:
           queries: security-extended,security-and-quality
 
 
+      # v4.33.0
       # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
       # If this step fails, then you should remove it and run the build manually (see below)
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
+        uses: github/codeql-action/autobuild@b3c7f9182d3c4a2b5675e076628b603b7971775f
 
       # ℹ️ Command-line programs to run using the OS shell.
       # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
@@ -55,5 +57,6 @@ jobs:
       #   make bootstrap
       #   make release
 
+      # v4.33.0
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@b3c7f9182d3c4a2b5675e076628b603b7971775f
