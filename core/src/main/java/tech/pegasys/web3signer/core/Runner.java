@@ -42,6 +42,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Handler;
@@ -79,11 +81,15 @@ public abstract class Runner implements Runnable, AutoCloseable {
   public static final String UPCHECK_PATH = "/upcheck";
 
   private static final Logger LOG = LogManager.getLogger();
+  private static final long HTTP_SHUTDOWN_TIMEOUT_SECONDS = 20;
 
   protected final BaseConfig baseConfig;
 
   private HealthCheckHandler healthCheckHandler;
   private final List<Closeable> closeables = new ArrayList<>();
+  private final Object httpShutdownMonitor = new Object();
+  private final AtomicInteger inFlightHttpRequests = new AtomicInteger();
+  private volatile HttpServer httpServer;
 
   protected Runner(final BaseConfig baseConfig) {
     this.baseConfig = baseConfig;
@@ -179,7 +185,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
       populateRouter(context);
 
-      final HttpServer httpServer = createServerAndWait(vertx, router);
+      httpServer = createServerAndWait(vertx, router);
       final String tlsStatus = baseConfig.getTlsOptions().isPresent() ? "enabled" : "disabled";
       LOG.info(
           "Web3Signer has started with TLS {}, and ready to handle signing requests on {}:{}",
@@ -202,6 +208,79 @@ public abstract class Runner implements Runnable, AutoCloseable {
       LOG.error("Failed to initialise application", e);
       throw new InitializationException(e);
     }
+  }
+
+  private void gracefulHttpShutdown() {
+    waitForInFlightRequestsToComplete();
+
+    final CountDownLatch latch = new CountDownLatch(1);
+    httpServer.close(res -> latch.countDown());
+    try {
+      latch.await(HTTP_SHUTDOWN_TIMEOUT_SECONDS + 5, TimeUnit.SECONDS);
+    } catch (final InterruptedException e) {
+      Thread.currentThread().interrupt();
+      LOG.warn("Interrupted while waiting for HTTP server to drain connections");
+    }
+  }
+
+  private void waitForInFlightRequestsToComplete() {
+    final long deadlineNanos =
+        System.nanoTime() + TimeUnit.SECONDS.toNanos(HTTP_SHUTDOWN_TIMEOUT_SECONDS);
+    synchronized (httpShutdownMonitor) {
+      while (inFlightHttpRequests.get() > 0) {
+        final long remainingNanos = deadlineNanos - System.nanoTime();
+        if (remainingNanos <= 0) {
+          LOG.warn(
+              "Timed out waiting for {} in-flight HTTP request(s) to complete before shutdown",
+              inFlightHttpRequests.get());
+          return;
+        }
+        try {
+          TimeUnit.NANOSECONDS.timedWait(httpShutdownMonitor, remainingNanos);
+        } catch (final InterruptedException e) {
+          Thread.currentThread().interrupt();
+          LOG.warn("Interrupted while waiting for in-flight HTTP requests to complete");
+          return;
+        }
+      }
+    }
+  }
+
+  private void decrementInFlightRequestCount() {
+    final int remainingRequests =
+        inFlightHttpRequests.updateAndGet(current -> Math.max(0, current - 1));
+    if (remainingRequests == 0) {
+      synchronized (httpShutdownMonitor) {
+        httpShutdownMonitor.notifyAll();
+      }
+    }
+  }
+
+  private Handler<HttpServerRequest> trackInFlightRequests(
+      final Handler<HttpServerRequest> requestHandler) {
+    return request -> {
+      inFlightHttpRequests.incrementAndGet();
+
+      final AtomicBoolean requestCompleted = new AtomicBoolean(false);
+      final Runnable completeRequest =
+          () -> {
+            if (requestCompleted.compareAndSet(false, true)) {
+              decrementInFlightRequestCount();
+            }
+          };
+
+      request.exceptionHandler(error -> completeRequest.run());
+      request.response().exceptionHandler(error -> completeRequest.run());
+      request.response().closeHandler(unused -> completeRequest.run());
+      request.response().endHandler(unused -> completeRequest.run());
+
+      try {
+        requestHandler.handle(request);
+      } catch (final RuntimeException | Error e) {
+        completeRequest.run();
+        throw e;
+      }
+    };
   }
 
   private void shutdownVertx(final Vertx vertx) {
@@ -286,7 +365,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
     final HttpServer httpServer = vertx.createHttpServer(tlsServerOptions);
     final CompletableFuture<Void> serverRunningFuture = new CompletableFuture<>();
     httpServer
-        .requestHandler(requestHandler)
+        .requestHandler(trackInFlightRequests(requestHandler))
         .listen(
             result -> {
               if (result.succeeded()) {
@@ -408,6 +487,13 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
   @Override
   public void close() throws Exception {
+    if (httpServer != null) {
+      try {
+        gracefulHttpShutdown();
+      } catch (final Exception e) {
+        LOG.error("Failed to gracefully shut down HTTP server", e);
+      }
+    }
     for (Closeable closeable : closeables) {
       try {
         closeable.close();
