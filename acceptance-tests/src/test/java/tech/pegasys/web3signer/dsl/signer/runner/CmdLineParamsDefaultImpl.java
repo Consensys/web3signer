@@ -321,6 +321,11 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(Long.toString(signerConfig.getFuluForkEpoch().get()));
     }
 
+    if (signerConfig.getHezeForkEpoch().isPresent()) {
+      params.add("--Xnetwork-heze-fork-epoch");
+      params.add(Long.toString(signerConfig.getHezeForkEpoch().get()));
+    }
+
     if (signerConfig.getNetwork().isPresent()) {
       params.add("--network");
       params.add(signerConfig.getNetwork().get());

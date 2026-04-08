@@ -1,5 +1,9 @@
 # Changelog
 
+## Upcoming Release
+### Features Added
+- Update Teku to 26.4.0 [Fulu upgrade for Gnosis chain]
+
 ## 26.3.0
 ### Security
 - Updated base Docker image packages to address CVE-2025-68973 (HIGH severity) in gpgv package
