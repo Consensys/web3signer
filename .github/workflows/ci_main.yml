@@ -36,13 +36,6 @@ jobs:
         id: project-version
         uses: ConsenSys/github-actions/java-get-project-version@main
 
-      # v0.3.0
-      - name: Start LocalStack (AWS)
-        id: localstack
-        uses: LocalStack/setup-localstack@2e0e14048ddaf0db551b45fdaa39d3553f2c6399
-        with:
-          image-tag: 'latest'
-          configuration: LOCALSTACK_DEBUG=1
       # v3
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
@@ -55,14 +48,6 @@ jobs:
         id: build-test
         uses: ./.github/actions/build-test
         env:
-          AWS_REGION: 'us-east-2'
-          AWS_ACCESS_KEY_ID: 'test'
-          AWS_SECRET_ACCESS_KEY: 'test'
-          RW_AWS_ACCESS_KEY_ID: 'test'
-          RW_AWS_SECRET_ACCESS_KEY: 'test'
-          AWS_ACCESS_KEY_ID_TEST2: 'test2'
-          AWS_SECRET_ACCESS_KEY_TEST2: 'test2'
-          AWS_ENDPOINT_OVERRIDE: 'http://127.0.0.1:4566'
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           AZURE_INVALID_KEY_VAULT_NAME: ${{ secrets.AZURE_INVALID_KEY_VAULT_NAME }}
