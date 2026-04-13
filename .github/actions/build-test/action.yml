@@ -29,16 +29,6 @@ runs:
       run: ./gradlew acceptanceTest
       shell: bash
 
-    - name: Build Step Output
-      if: always()
-      run: echo "<h2>Test Results</h2>" >> $GITHUB_STEP_SUMMARY
-      shell: bash
-
-    # v1.0.10
-    - name: Summarize tests results
-      uses: jeantessier/test-summary-action@1899972db6579bbc1678a74921a876e04c355180
-      if: always()
-
     - name: Upload build reports
       uses: actions/upload-artifact@v7
       if: always()
