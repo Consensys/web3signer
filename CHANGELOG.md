@@ -1,6 +1,6 @@
 # Changelog
 
-## Upcoming Release
+## 26.4.0
 ### Features Added
 - Update Teku to 26.4.0 [Fulu upgrade for Gnosis chain]
 
