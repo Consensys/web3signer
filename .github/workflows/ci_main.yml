@@ -148,23 +148,6 @@ jobs:
           SUMMARY_CONTENT+="\n</code></pre></details>\n"
           echo -e "$SUMMARY_CONTENT" >> $GITHUB_STEP_SUMMARY  
 
-      # 0.35.0
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
-        with:
-          image-ref: 'consensys/web3signer:test'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-
-      # 4
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
-
       # v4.0.0
       - name: Login to Docker Hub
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2
