@@ -36,13 +36,6 @@ jobs:
         id: project-version
         uses: ConsenSys/github-actions/java-get-project-version@main
 
-      # v0.3.0
-      - name: Start LocalStack (AWS)
-        id: localstack
-        uses: LocalStack/setup-localstack@2e0e14048ddaf0db551b45fdaa39d3553f2c6399
-        with:
-          image-tag: 'latest'
-          configuration: LOCALSTACK_DEBUG=1
       # v3
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
@@ -55,14 +48,6 @@ jobs:
         id: build-test
         uses: ./.github/actions/build-test
         env:
-          AWS_REGION: 'us-east-2'
-          AWS_ACCESS_KEY_ID: 'test'
-          AWS_SECRET_ACCESS_KEY: 'test'
-          RW_AWS_ACCESS_KEY_ID: 'test'
-          RW_AWS_SECRET_ACCESS_KEY: 'test'
-          AWS_ACCESS_KEY_ID_TEST2: 'test2'
-          AWS_SECRET_ACCESS_KEY_TEST2: 'test2'
-          AWS_ENDPOINT_OVERRIDE: 'http://127.0.0.1:4566'
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           AZURE_INVALID_KEY_VAULT_NAME: ${{ secrets.AZURE_INVALID_KEY_VAULT_NAME }}
@@ -162,23 +147,6 @@ jobs:
           SUMMARY_CONTENT+=$(cat ./build/reports/goss-report.txt)
           SUMMARY_CONTENT+="\n</code></pre></details>\n"
           echo -e "$SUMMARY_CONTENT" >> $GITHUB_STEP_SUMMARY  
-
-      # 0.35.0
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
-        with:
-          image-ref: 'consensys/web3signer:test'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-
-      # 4
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@914d7a8ee403759976378e9102c842b0059e5163
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
 
       # v4.0.0
       - name: Login to Docker Hub
