@@ -3,6 +3,7 @@
   "extends": [
     "config:recommended"
   ],
+  "enabledManagers": ["github-actions"],
   "dependencyDashboard": false,
   "packageRules": [
     {
