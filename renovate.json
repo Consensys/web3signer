@@ -9,7 +9,9 @@
     {
       "description": "Pin all GitHub Actions to SHA digests",
       "matchManagers": ["github-actions"],
-      "pinDigests": true
+      "pinDigests": true,
+      "minimumReleaseAge": "7 days",
+      "groupName": "Renovatebot GHA Updates"
     }
   ]
 }
