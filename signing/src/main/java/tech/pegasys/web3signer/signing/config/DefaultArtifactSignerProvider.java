@@ -208,15 +208,17 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
           // threads
           state = new SignerState(Map.copyOf(newSigners), Map.copyOf(newProxySigners));
 
-          // Compute delta between old and new signer state
-          final Set<String> addedKeys = new HashSet<>(state.signers.keySet());
-          addedKeys.removeAll(currentState.signers.keySet());
+          // Compute delta and invoke callback only when callback is configured
+          postLoadingCallback.ifPresent(
+              callback -> {
+                final Set<String> addedKeys = new HashSet<>(state.signers.keySet());
+                addedKeys.removeAll(currentState.signers.keySet());
 
-          final Set<String> removedKeys = new HashSet<>(currentState.signers.keySet());
-          removedKeys.removeAll(state.signers.keySet());
+                final Set<String> removedKeys = new HashSet<>(currentState.signers.keySet());
+                removedKeys.removeAll(state.signers.keySet());
 
-          // Callback with delta (only new/removed validators, not all)
-          postLoadingCallback.ifPresent(callback -> callback.accept(addedKeys, removedKeys));
+                callback.accept(addedKeys, removedKeys);
+              });
 
           LOG.info("Total signers (keys) currently loaded in memory: {}", state.signers.size());
           return errorCount;
