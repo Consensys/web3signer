@@ -18,10 +18,12 @@ import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -85,13 +87,58 @@ public class RegisteredValidators {
     return validatorId.get();
   }
 
+  public void disableAndRemoveValidators(final List<Bytes> validators) {
+    if (validators.isEmpty()) {
+      return;
+    }
+
+    // Collect validator IDs under read lock (skip unknown keys)
+    final Map<Bytes, Integer> knownValidators;
+    validatorsLock.readLock().lock();
+    try {
+      knownValidators =
+          validators.stream()
+              .filter(registeredValidators::containsKey)
+              .collect(Collectors.toMap(pubKey -> pubKey, registeredValidators::get));
+    } finally {
+      validatorsLock.readLock().unlock();
+    }
+
+    if (knownValidators.isEmpty()) {
+      return;
+    }
+
+    // Batch disable in DB
+    final List<Integer> ids = knownValidators.values().stream().toList();
+    jdbi.useTransaction(
+        READ_COMMITTED, handle -> validatorsDao.setEnabledBatch(handle, ids, false));
+
+    LOG.info("Disabled {} validators in database", knownValidators.size());
+
+    // Remove from BiMap under write lock
+    validatorsLock.writeLock().lock();
+    try {
+      knownValidators.keySet().forEach(registeredValidators::remove);
+    } finally {
+      validatorsLock.writeLock().unlock();
+    }
+  }
+
   public void registerValidators(final List<Bytes> validators) {
     if (validators.isEmpty()) {
       return;
     }
 
     final List<Validator> registeredValidatorsList =
-        jdbi.inTransaction(READ_COMMITTED, h -> validatorsDao.registerValidators(h, validators));
+        jdbi.inTransaction(
+            READ_COMMITTED,
+            h -> {
+              final List<Validator> result = validatorsDao.registerValidators(h, validators);
+              // Re-enable any previously-disabled validators being re-registered
+              validatorsDao.setEnabledBatch(
+                  h, result.stream().map(Validator::getId).toList(), true);
+              return result;
+            });
 
     LOG.info("Validators registered successfully in database:{}", registeredValidatorsList.size());
 

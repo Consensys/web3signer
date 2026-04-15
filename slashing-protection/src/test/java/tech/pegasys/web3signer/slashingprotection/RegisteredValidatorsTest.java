@@ -130,4 +130,77 @@ class RegisteredValidatorsTest {
     assertThat(registeredValidatorsMap)
         .isEqualTo(Map.of(PUBLIC_KEY1, 1, PUBLIC_KEY2, 2, PUBLIC_KEY3, 3));
   }
+
+  @Test
+  public void disableAndRemoveValidatorsRemovesFromBiMap() {
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    registeredValidatorsMap.put(PUBLIC_KEY1, 1);
+    registeredValidatorsMap.put(PUBLIC_KEY2, 2);
+    registeredValidatorsMap.put(PUBLIC_KEY3, 3);
+
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(mockJdbi, validatorsDao, registeredValidatorsMap);
+
+    registeredValidators.disableAndRemoveValidators(List.of(PUBLIC_KEY1, PUBLIC_KEY3));
+
+    assertThat(registeredValidators.getValidatorIdForPublicKey(PUBLIC_KEY1)).isEmpty();
+    assertThat(registeredValidators.getValidatorIdForPublicKey(PUBLIC_KEY2)).hasValue(2);
+    assertThat(registeredValidators.getValidatorIdForPublicKey(PUBLIC_KEY3)).isEmpty();
+    assertThat(registeredValidators.validatorIds()).containsExactly(2);
+  }
+
+  @Test
+  public void disableAndRemoveValidatorsIsNoOpForEmptyList() {
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    registeredValidatorsMap.put(PUBLIC_KEY1, 1);
+
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(mockJdbi, validatorsDao, registeredValidatorsMap);
+
+    registeredValidators.disableAndRemoveValidators(List.of());
+
+    assertThat(registeredValidators.getValidatorIdForPublicKey(PUBLIC_KEY1)).hasValue(1);
+  }
+
+  @Test
+  public void disableAndRemoveValidatorsSkipsUnknownKeys() {
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    registeredValidatorsMap.put(PUBLIC_KEY1, 1);
+
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(mockJdbi, validatorsDao, registeredValidatorsMap);
+
+    // PUBLIC_KEY2 is not in the BiMap — should be skipped without error
+    registeredValidators.disableAndRemoveValidators(List.of(PUBLIC_KEY2));
+
+    assertThat(registeredValidators.getValidatorIdForPublicKey(PUBLIC_KEY1)).hasValue(1);
+  }
+
+  @Test
+  public void registerValidatorsReEnablesDisabledValidators(final Jdbi jdbi) {
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    final ValidatorsDao realValidatorsDao = new ValidatorsDao();
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(jdbi, realValidatorsDao, registeredValidatorsMap);
+
+    // Register and then disable
+    registeredValidators.registerValidators(List.of(PUBLIC_KEY1));
+    assertThat(registeredValidatorsMap).hasSize(1);
+    final int validatorId = registeredValidatorsMap.get(PUBLIC_KEY1);
+
+    // Disable via DAO
+    jdbi.useTransaction(h -> realValidatorsDao.setEnabled(h, validatorId, false));
+
+    // Verify disabled
+    final boolean isDisabled =
+        jdbi.inTransaction(h -> !realValidatorsDao.isEnabled(h, validatorId));
+    assertThat(isDisabled).isTrue();
+
+    // Re-register should re-enable
+    registeredValidators.registerValidators(List.of(PUBLIC_KEY1));
+
+    final boolean isReEnabled =
+        jdbi.inTransaction(h -> realValidatorsDao.isEnabled(h, validatorId));
+    assertThat(isReEnabled).isTrue();
+  }
 }

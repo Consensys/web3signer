@@ -1,5 +1,10 @@
 # Changelog
 
+## 26.4.1
+### Bugs Fixed
+- Fix reload endpoint not offloading removed validators from slashing protection database and in-memory cache. Reload now computes a delta (added/removed keys), disables removed validators in the DB, removes them from the BiMap, and re-enables previously disabled validators when their keys are re-added. Also eliminates unnecessary re-registration of all validators on every reload, reducing old gen heap pressure.
+
+---
 ## 26.4.0
 ### Features Added
 - Update Teku to 26.4.0 [Fulu upgrade for Gnosis chain]

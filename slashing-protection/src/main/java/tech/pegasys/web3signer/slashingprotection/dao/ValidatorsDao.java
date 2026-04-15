@@ -74,6 +74,18 @@ public class ValidatorsDao {
         .execute();
   }
 
+  public void setEnabledBatch(
+      final Handle handle, final List<Integer> validatorIds, final boolean enabled) {
+    if (validatorIds.isEmpty()) {
+      return;
+    }
+    handle
+        .createUpdate("UPDATE validators SET enabled = :enabled WHERE id IN (<validatorIds>)")
+        .bind("enabled", enabled)
+        .bindList("validatorIds", validatorIds)
+        .execute();
+  }
+
   public boolean hasSigned(final Handle handle, final int validatorId) {
     return handle
         .createQuery(

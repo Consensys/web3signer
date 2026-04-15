@@ -66,9 +66,11 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
@@ -165,7 +167,8 @@ public class Eth2Runner extends Runner {
     return List.of(
         new DefaultArtifactSignerProvider(
             createArtifactSignerSupplier(signerLoader, metricsSystem),
-            slashingProtectionContext.map(PostLoadingValidatorsProcessor::new),
+            slashingProtectionContext
+                .<BiConsumer<Set<String>, Set<String>>>map(PostLoadingValidatorsProcessor::new),
             Optional.of(commitBoostApiParameters)));
   }
 
