@@ -167,8 +167,8 @@ public class Eth2Runner extends Runner {
     return List.of(
         new DefaultArtifactSignerProvider(
             createArtifactSignerSupplier(signerLoader, metricsSystem),
-            slashingProtectionContext
-                .<BiConsumer<Set<String>, Set<String>>>map(PostLoadingValidatorsProcessor::new),
+            slashingProtectionContext.<BiConsumer<Set<String>, Set<String>>>map(
+                PostLoadingValidatorsProcessor::new),
             Optional.of(commitBoostApiParameters)));
   }
 

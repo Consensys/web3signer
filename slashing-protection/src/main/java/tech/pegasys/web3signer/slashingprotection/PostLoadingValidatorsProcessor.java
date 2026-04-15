@@ -43,8 +43,6 @@ public record PostLoadingValidatorsProcessor(SlashingProtectionContext slashingP
 
     final List<Bytes> validatorsList =
         removedValidators.stream().map(Bytes::fromHexString).toList();
-    slashingProtectionContext
-        .getRegisteredValidators()
-        .disableAndRemoveValidators(validatorsList);
+    slashingProtectionContext.getRegisteredValidators().disableAndRemoveValidators(validatorsList);
   }
 }
