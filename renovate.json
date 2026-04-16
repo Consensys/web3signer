@@ -3,7 +3,7 @@
   "extends": [
     "config:recommended"
   ],
-  "enabledManagers": ["github-actions", "gradle", "dockerfile"],
+  "enabledManagers": ["github-actions", "gradle"],
   "dependencyDashboard": false,
   "packageRules": [
     {
