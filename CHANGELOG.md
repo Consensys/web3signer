@@ -2,7 +2,7 @@
 
 ## 26.4.1
 ### Bugs Fixed
-- Fix reload endpoint not offloading removed validators from slashing protection database and in-memory cache. Reload now computes a delta (added/removed keys), disables removed validators in the DB, removes them from the BiMap, and re-enables previously disabled validators when their keys are re-added. Also eliminates unnecessary re-registration of all validators on every reload, reducing old gen heap pressure. PR [#1167][PR_1167].
+- Fix memory leak in the reload endpoint: removed validators were not being offloaded from the slashing-protection in-memory cache, and every reload unnecessarily re-registered all validators, causing old-gen heap pressure. Reload now processes only the delta of added/removed keys. PR [#1167][PR_1167].
 
 [PR_1167]: https://github.com/Consensys/web3signer/pull/1167
 
