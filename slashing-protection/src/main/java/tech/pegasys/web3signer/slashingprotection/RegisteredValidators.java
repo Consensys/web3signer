@@ -36,6 +36,9 @@ public class RegisteredValidators {
   private static final Logger LOG = LogManager.getLogger();
   private final BiMap<Bytes, Integer> registeredValidators;
   private final ReadWriteLock validatorsLock = new ReentrantReadWriteLock();
+  // Serialises structural mutations (register + disable) against each other without
+  // blocking BiMap readers during DB I/O.
+  private final Object mutationLock = new Object();
   private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;
 
@@ -92,35 +95,37 @@ public class RegisteredValidators {
       return;
     }
 
-    // Collect validator IDs under read lock (skip unknown keys)
-    final Map<Bytes, Integer> knownValidators;
-    validatorsLock.readLock().lock();
-    try {
-      knownValidators =
-          validators.stream()
-              .filter(registeredValidators::containsKey)
-              .collect(Collectors.toMap(pubKey -> pubKey, registeredValidators::get));
-    } finally {
-      validatorsLock.readLock().unlock();
-    }
+    synchronized (mutationLock) {
+      // Collect validator IDs under read lock (skip unknown keys)
+      final Map<Bytes, Integer> knownValidators;
+      validatorsLock.readLock().lock();
+      try {
+        knownValidators =
+            validators.stream()
+                .filter(registeredValidators::containsKey)
+                .collect(Collectors.toMap(pubKey -> pubKey, registeredValidators::get));
+      } finally {
+        validatorsLock.readLock().unlock();
+      }
 
-    if (knownValidators.isEmpty()) {
-      return;
-    }
+      if (knownValidators.isEmpty()) {
+        return;
+      }
 
-    // Batch disable in DB
-    final List<Integer> ids = knownValidators.values().stream().toList();
-    jdbi.useTransaction(
-        READ_COMMITTED, handle -> validatorsDao.setEnabledBatch(handle, ids, false));
+      // Batch disable in DB
+      final List<Integer> ids = knownValidators.values().stream().toList();
+      jdbi.useTransaction(
+          READ_COMMITTED, handle -> validatorsDao.setEnabledBatch(handle, ids, false));
 
-    LOG.info("Disabled {} validators in database", knownValidators.size());
+      LOG.info("Disabled {} validators in database", knownValidators.size());
 
-    // Remove from BiMap under write lock
-    validatorsLock.writeLock().lock();
-    try {
-      knownValidators.keySet().forEach(registeredValidators::remove);
-    } finally {
-      validatorsLock.writeLock().unlock();
+      // Remove from BiMap under write lock
+      validatorsLock.writeLock().lock();
+      try {
+        knownValidators.keySet().forEach(registeredValidators::remove);
+      } finally {
+        validatorsLock.writeLock().unlock();
+      }
     }
   }
 
@@ -129,25 +134,28 @@ public class RegisteredValidators {
       return;
     }
 
-    final List<Validator> registeredValidatorsList =
-        jdbi.inTransaction(
-            READ_COMMITTED,
-            h -> {
-              final List<Validator> result = validatorsDao.registerValidators(h, validators);
-              // Re-enable any previously-disabled validators being re-registered
-              validatorsDao.setEnabledBatch(
-                  h, result.stream().map(Validator::getId).toList(), true);
-              return result;
-            });
+    synchronized (mutationLock) {
+      final List<Validator> registeredValidatorsList =
+          jdbi.inTransaction(
+              READ_COMMITTED,
+              h -> {
+                final List<Validator> result = validatorsDao.registerValidators(h, validators);
+                // Re-enable any previously-disabled validators being re-registered
+                validatorsDao.setEnabledBatch(
+                    h, result.stream().map(Validator::getId).toList(), true);
+                return result;
+              });
 
-    LOG.info("Validators registered successfully in database:{}", registeredValidatorsList.size());
+      LOG.info(
+          "Validators registered successfully in database:{}", registeredValidatorsList.size());
 
-    validatorsLock.writeLock().lock();
-    try {
-      registeredValidatorsList.forEach(
-          validator -> registeredValidators.put(validator.getPublicKey(), validator.getId()));
-    } finally {
-      validatorsLock.writeLock().unlock();
+      validatorsLock.writeLock().lock();
+      try {
+        registeredValidatorsList.forEach(
+            validator -> registeredValidators.put(validator.getPublicKey(), validator.getId()));
+      } finally {
+        validatorsLock.writeLock().unlock();
+      }
     }
   }
 }
