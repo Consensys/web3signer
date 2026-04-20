@@ -176,6 +176,43 @@ public class ValidatorsDaoTest {
   }
 
   @Test
+  public void setEnabledBatchIsNoOpForEmptyList(final Handle handle) {
+    final ValidatorsDao validatorsDao = new ValidatorsDao();
+    insertValidator(handle, Bytes.of(1), true);
+
+    handle.useTransaction(h -> validatorsDao.setEnabledBatch(h, List.of(), false));
+    assertThat(validatorsDao.isEnabled(handle, 1)).isTrue();
+  }
+
+  @Test
+  public void setEnabledBatchDisablesMultipleValidators(final Handle handle) {
+    final ValidatorsDao validatorsDao = new ValidatorsDao();
+    insertValidator(handle, Bytes.of(1), true);
+    insertValidator(handle, Bytes.of(2), true);
+    insertValidator(handle, Bytes.of(3), true);
+
+    handle.useTransaction(h -> validatorsDao.setEnabledBatch(h, List.of(1, 2, 3), false));
+
+    assertThat(validatorsDao.isEnabled(handle, 1)).isFalse();
+    assertThat(validatorsDao.isEnabled(handle, 2)).isFalse();
+    assertThat(validatorsDao.isEnabled(handle, 3)).isFalse();
+  }
+
+  @Test
+  public void setEnabledBatchEnablesMultipleValidators(final Handle handle) {
+    final ValidatorsDao validatorsDao = new ValidatorsDao();
+    insertValidator(handle, Bytes.of(1), false);
+    insertValidator(handle, Bytes.of(2), false);
+    insertValidator(handle, Bytes.of(3), false);
+
+    handle.useTransaction(h -> validatorsDao.setEnabledBatch(h, List.of(1, 2, 3), true));
+
+    assertThat(validatorsDao.isEnabled(handle, 1)).isTrue();
+    assertThat(validatorsDao.isEnabled(handle, 2)).isTrue();
+    assertThat(validatorsDao.isEnabled(handle, 3)).isTrue();
+  }
+
+  @Test
   public void hasSignedReturnsFalseWhenNoSignedBlocksOrAttestations(final Handle handle) {
     insertValidator(handle, 1, Bytes.of(9));
     assertThat(new ValidatorsDao().hasSigned(handle, 1)).isFalse();
