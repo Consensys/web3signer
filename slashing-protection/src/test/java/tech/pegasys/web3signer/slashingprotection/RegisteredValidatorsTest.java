@@ -177,7 +177,23 @@ class RegisteredValidatorsTest {
   }
 
   @Test
-  public void registerValidatorsReEnablesDisabledValidators(final Jdbi jdbi) {
+  public void registerValidatorsEnablesNewlyRegisteredValidator(final Jdbi jdbi) {
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    final ValidatorsDao realValidatorsDao = new ValidatorsDao();
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(jdbi, realValidatorsDao, registeredValidatorsMap);
+
+    // Freshly registered validators should have enabled = true (DB column default).
+    registeredValidators.registerValidators(List.of(PUBLIC_KEY1));
+    final int validatorId = registeredValidatorsMap.get(PUBLIC_KEY1);
+
+    final boolean isEnabled =
+        jdbi.inTransaction(h -> realValidatorsDao.isEnabled(h, validatorId));
+    assertThat(isEnabled).isTrue();
+  }
+
+  @Test
+  public void registerValidatorsDoesNotReEnablePreviouslyDisabledValidator(final Jdbi jdbi) {
     final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
     final ValidatorsDao realValidatorsDao = new ValidatorsDao();
     final RegisteredValidators registeredValidators =
@@ -191,16 +207,19 @@ class RegisteredValidatorsTest {
     // Disable via DAO
     jdbi.useTransaction(h -> realValidatorsDao.setEnabled(h, validatorId, false));
 
-    // Verify disabled
     final boolean isDisabled =
         jdbi.inTransaction(h -> !realValidatorsDao.isEnabled(h, validatorId));
     assertThat(isDisabled).isTrue();
 
-    // Re-register should re-enable
+    // Re-registering via the reload path must not silently re-enable the row.
+    // The reload endpoint has no mechanism to supply fresh slashing-protection
+    // data, so re-enabling here could permit signing against stale history.
+    // Explicit re-enable is the responsibility of the keystore ADD path
+    // (DbValidatorManager.addValidator), which can import slashing data.
     registeredValidators.registerValidators(List.of(PUBLIC_KEY1));
 
-    final boolean isReEnabled =
-        jdbi.inTransaction(h -> realValidatorsDao.isEnabled(h, validatorId));
-    assertThat(isReEnabled).isTrue();
+    final boolean stillDisabled =
+        jdbi.inTransaction(h -> !realValidatorsDao.isEnabled(h, validatorId));
+    assertThat(stillDisabled).isTrue();
   }
 }

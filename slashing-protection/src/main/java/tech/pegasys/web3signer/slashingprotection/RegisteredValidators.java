@@ -137,14 +137,7 @@ public class RegisteredValidators {
     synchronized (mutationLock) {
       final List<Validator> registeredValidatorsList =
           jdbi.inTransaction(
-              READ_COMMITTED,
-              h -> {
-                final List<Validator> result = validatorsDao.registerValidators(h, validators);
-                // Re-enable any previously-disabled validators being re-registered
-                validatorsDao.setEnabledBatch(
-                    h, result.stream().map(Validator::getId).toList(), true);
-                return result;
-              });
+              READ_COMMITTED, h -> validatorsDao.registerValidators(h, validators));
 
       LOG.info(
           "Validators registered successfully in database:{}", registeredValidatorsList.size());
