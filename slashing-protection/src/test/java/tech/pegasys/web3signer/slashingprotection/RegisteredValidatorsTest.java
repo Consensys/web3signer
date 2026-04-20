@@ -187,8 +187,7 @@ class RegisteredValidatorsTest {
     registeredValidators.registerValidators(List.of(PUBLIC_KEY1));
     final int validatorId = registeredValidatorsMap.get(PUBLIC_KEY1);
 
-    final boolean isEnabled =
-        jdbi.inTransaction(h -> realValidatorsDao.isEnabled(h, validatorId));
+    final boolean isEnabled = jdbi.inTransaction(h -> realValidatorsDao.isEnabled(h, validatorId));
     assertThat(isEnabled).isTrue();
   }
 
