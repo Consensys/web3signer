@@ -15,16 +15,13 @@
 import com.github.jk1.license.filter.LicenseBundleNormalizer
 import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
-import tech.pegasys.internal.license.reporter.GroupedLicenseHtmlRenderer
+import io.consensys.protocols.license.reporter.GroupedLicenseHtmlRenderer
 
 import java.text.SimpleDateFormat
 
 buildscript {
-  repositories {
-    maven { url = "https://artifacts.consensys.net/public/maven/maven/" }
-  }
   dependencies {
-    classpath 'tech.pegasys.internal.license.reporter:license-reporter:1.1.1'
+    classpath 'io.consensys.protocols:license-reporter:1.2.0'
   }
 }
 
@@ -33,7 +30,7 @@ plugins {
   id 'java-test-fixtures'
   id 'com.diffplug.spotless' version '8.0.0'
   id 'com.github.ben-manes.versions' version '0.53.0' //`./gradlew dependencyUpdates --no-parallel` to report outdated dependencies
-  id 'com.github.jk1.dependency-license-report' version '2.9'
+  id 'com.github.jk1.dependency-license-report' version '3.1.2'
   id 'io.spring.dependency-management' version '1.1.7'
   id 'me.champeau.jmh' version '0.7.3' apply false
   id 'net.ltgt.errorprone' version '4.3.0'
@@ -251,7 +248,7 @@ allprojects {
 }
 
 licenseReport {
-  outputDir = "${buildDir}/reports/licenses"
+  outputDir = layout.buildDirectory.dir("reports/licenses").get().asFile.absolutePath
   excludes = [
     'com.fasterxml.jackson:jackson-bom'
   ]
@@ -347,7 +344,7 @@ subprojects {
       iterations = _intCmdArg('i')
       benchmarkMode = _strListCmdArg('bm')
       include = _strListCmdArg('include', [''])
-      humanOutputFile = project.file("${project.buildDir}/reports/jmh/results.txt")
+      humanOutputFile = layout.buildDirectory.file("reports/jmh/results.txt").get().asFile
       resultFormat = 'JSON'
     }
 
@@ -380,9 +377,16 @@ application {
 }
 
 run {
-  args project.hasProperty("web3signer.run.args") ? project.property("web3signer.run.args").toString().split("\\s+") : []
+  args project.hasProperty("web3signer.run.args") ?
+          project.property("web3signer.run.args").toString().split("\\s+") : []
+
   doFirst {
-    applicationDefaultJvmArgs = applicationDefaultJvmArgs.collect{it.replace('WEB3SIGNER_HOME', "$buildDir/web3signer")}
+    // Resolve the path string from the lazy provider
+    def web3signerPath = layout.buildDirectory.dir("web3signer").get().asFile.absolutePath
+
+    applicationDefaultJvmArgs = applicationDefaultJvmArgs.collect {
+      it.replace('WEB3SIGNER_HOME', web3signerPath)
+    }
   }
 }
 
