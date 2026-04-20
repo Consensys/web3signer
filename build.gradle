@@ -376,7 +376,6 @@ application {
   ]
 }
 
-
 run {
   args project.hasProperty("web3signer.run.args") ?
           project.property("web3signer.run.args").toString().split("\\s+") : []
@@ -390,7 +389,6 @@ run {
     }
   }
 }
-
 
 startScripts {
 
