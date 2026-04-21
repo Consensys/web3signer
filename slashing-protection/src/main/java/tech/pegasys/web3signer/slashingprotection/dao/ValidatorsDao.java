@@ -13,31 +13,30 @@
 package tech.pegasys.web3signer.slashingprotection.dao;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.argument.Argument;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 
 public class ValidatorsDao {
 
   public List<Validator> registerValidators(final Handle handle, final List<Bytes> validators) {
-    // adapted from https://stackoverflow.com/a/66704110/535610
+    // Postgres JDBC's createArrayOf("bytea", ...) requires a byte[][]; jdbi's
+    // bindArray wraps elements into Object[] which breaks for bytea. Bind the
+    // array via an Argument lambda so the byte[][] reaches the driver intact.
+    final byte[][] byteArrays =
+        validators.stream().map(Bytes::toArrayUnsafe).toArray(byte[][]::new);
+    final Argument keysArg =
+        (position, statement, ctx) ->
+            statement.setArray(
+                position, statement.getConnection().createArrayOf("bytea", byteArrays));
     return handle
-        .createQuery(
-            String.format(
-                "SELECT v_id as id, v_public_key as public_key FROM upsert_validators(array[%s])",
-                buildArrayArgument(validators)))
+        .createQuery("SELECT v_id as id, v_public_key as public_key FROM upsert_validators(:keys)")
+        .bind("keys", keysArg)
         .mapToBean(Validator.class)
         .list();
-  }
-
-  private String buildArrayArgument(final List<Bytes> validators) {
-    return validators.stream()
-        .map(Bytes::toUnprefixedHexString)
-        .map(hex -> String.format("decode('%s','hex')", hex))
-        .collect(Collectors.joining(","));
   }
 
   public List<Validator> retrieveValidators(
@@ -80,9 +79,9 @@ public class ValidatorsDao {
       return;
     }
     handle
-        .createUpdate("UPDATE validators SET enabled = :enabled WHERE id IN (<validatorIds>)")
+        .createUpdate("UPDATE validators SET enabled = :enabled WHERE id = ANY(:ids)")
         .bind("enabled", enabled)
-        .bindList("validatorIds", validatorIds)
+        .bindArray("ids", Integer.class, validatorIds)
         .execute();
   }
 

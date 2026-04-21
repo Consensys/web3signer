@@ -133,7 +133,7 @@ dependencyManagement {
     dependency 'com.zaxxer:HikariCP:7.0.2'
     dependency 'org.postgresql:postgresql:42.7.8'
 
-    dependencySet(group: 'org.jdbi', version: '3.49.6') {
+    dependencySet(group: 'org.jdbi', version: '3.52.1') {
       entry 'jdbi3-core'
       entry 'jdbi3-sqlobject'
       entry 'jdbi3-testing'
