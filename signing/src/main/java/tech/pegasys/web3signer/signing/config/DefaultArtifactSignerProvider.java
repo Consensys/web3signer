@@ -32,8 +32,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -78,7 +78,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   // MappedResults = Collection + Error count
   private final Supplier<MappedResults<ArtifactSigner>> artifactSignerResultsSupplier;
-  private final Optional<Consumer<Set<String>>> postLoadingCallback;
+  private final Optional<BiConsumer<Set<String>, Set<String>>> postLoadingCallback;
   private final Optional<KeystoresParameters> commitBoostKeystoresParameters;
 
   // Volatile references to immutable maps - readers see atomic snapshots
@@ -97,7 +97,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   public DefaultArtifactSignerProvider(
       final Supplier<MappedResults<ArtifactSigner>> artifactSignerResultsSupplier,
-      final Optional<Consumer<Set<String>>> postLoadingCallback,
+      final Optional<BiConsumer<Set<String>, Set<String>>> postLoadingCallback,
       final Optional<KeystoresParameters> commitBoostKeystoresParameters) {
     this.artifactSignerResultsSupplier = artifactSignerResultsSupplier;
     this.postLoadingCallback = postLoadingCallback;
@@ -208,8 +208,17 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
           // threads
           state = new SignerState(Map.copyOf(newSigners), Map.copyOf(newProxySigners));
 
-          // Callback after swap
-          postLoadingCallback.ifPresent(callback -> callback.accept(state.signers.keySet()));
+          // Compute delta and invoke callback only when callback is configured
+          postLoadingCallback.ifPresent(
+              callback -> {
+                final Set<String> addedKeys = new HashSet<>(state.signers.keySet());
+                addedKeys.removeAll(currentState.signers.keySet());
+
+                final Set<String> removedKeys = new HashSet<>(currentState.signers.keySet());
+                removedKeys.removeAll(state.signers.keySet());
+
+                callback.accept(addedKeys, removedKeys);
+              });
 
           LOG.info("Total signers (keys) currently loaded in memory: {}", state.signers.size());
           return errorCount;

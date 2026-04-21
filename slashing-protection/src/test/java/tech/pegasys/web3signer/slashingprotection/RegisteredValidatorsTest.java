@@ -130,4 +130,95 @@ class RegisteredValidatorsTest {
     assertThat(registeredValidatorsMap)
         .isEqualTo(Map.of(PUBLIC_KEY1, 1, PUBLIC_KEY2, 2, PUBLIC_KEY3, 3));
   }
+
+  @Test
+  public void disableAndRemoveValidatorsRemovesFromBiMap() {
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    registeredValidatorsMap.put(PUBLIC_KEY1, 1);
+    registeredValidatorsMap.put(PUBLIC_KEY2, 2);
+    registeredValidatorsMap.put(PUBLIC_KEY3, 3);
+
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(mockJdbi, validatorsDao, registeredValidatorsMap);
+
+    registeredValidators.disableAndRemoveValidators(List.of(PUBLIC_KEY1, PUBLIC_KEY3));
+
+    assertThat(registeredValidators.getValidatorIdForPublicKey(PUBLIC_KEY1)).isEmpty();
+    assertThat(registeredValidators.getValidatorIdForPublicKey(PUBLIC_KEY2)).hasValue(2);
+    assertThat(registeredValidators.getValidatorIdForPublicKey(PUBLIC_KEY3)).isEmpty();
+    assertThat(registeredValidators.validatorIds()).containsExactly(2);
+  }
+
+  @Test
+  public void disableAndRemoveValidatorsIsNoOpForEmptyList() {
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    registeredValidatorsMap.put(PUBLIC_KEY1, 1);
+
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(mockJdbi, validatorsDao, registeredValidatorsMap);
+
+    registeredValidators.disableAndRemoveValidators(List.of());
+
+    assertThat(registeredValidators.getValidatorIdForPublicKey(PUBLIC_KEY1)).hasValue(1);
+  }
+
+  @Test
+  public void disableAndRemoveValidatorsSkipsUnknownKeys() {
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    registeredValidatorsMap.put(PUBLIC_KEY1, 1);
+
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(mockJdbi, validatorsDao, registeredValidatorsMap);
+
+    // PUBLIC_KEY2 is not in the BiMap — should be skipped without error
+    registeredValidators.disableAndRemoveValidators(List.of(PUBLIC_KEY2));
+
+    assertThat(registeredValidators.getValidatorIdForPublicKey(PUBLIC_KEY1)).hasValue(1);
+  }
+
+  @Test
+  public void registerValidatorsEnablesNewlyRegisteredValidator(final Jdbi jdbi) {
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    final ValidatorsDao realValidatorsDao = new ValidatorsDao();
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(jdbi, realValidatorsDao, registeredValidatorsMap);
+
+    // Freshly registered validators should have enabled = true (DB column default).
+    registeredValidators.registerValidators(List.of(PUBLIC_KEY1));
+    final int validatorId = registeredValidatorsMap.get(PUBLIC_KEY1);
+
+    final boolean isEnabled = jdbi.inTransaction(h -> realValidatorsDao.isEnabled(h, validatorId));
+    assertThat(isEnabled).isTrue();
+  }
+
+  @Test
+  public void registerValidatorsDoesNotReEnablePreviouslyDisabledValidator(final Jdbi jdbi) {
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    final ValidatorsDao realValidatorsDao = new ValidatorsDao();
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(jdbi, realValidatorsDao, registeredValidatorsMap);
+
+    // Register and then disable
+    registeredValidators.registerValidators(List.of(PUBLIC_KEY1));
+    assertThat(registeredValidatorsMap).hasSize(1);
+    final int validatorId = registeredValidatorsMap.get(PUBLIC_KEY1);
+
+    // Disable via DAO
+    jdbi.useTransaction(h -> realValidatorsDao.setEnabled(h, validatorId, false));
+
+    final boolean isDisabled =
+        jdbi.inTransaction(h -> !realValidatorsDao.isEnabled(h, validatorId));
+    assertThat(isDisabled).isTrue();
+
+    // Re-registering via the reload path must not silently re-enable the row.
+    // The reload endpoint has no mechanism to supply fresh slashing-protection
+    // data, so re-enabling here could permit signing against stale history.
+    // Explicit re-enable is the responsibility of the keystore ADD path
+    // (DbValidatorManager.addValidator), which can import slashing data.
+    registeredValidators.registerValidators(List.of(PUBLIC_KEY1));
+
+    final boolean stillDisabled =
+        jdbi.inTransaction(h -> !realValidatorsDao.isEnabled(h, validatorId));
+    assertThat(stillDisabled).isTrue();
+  }
 }

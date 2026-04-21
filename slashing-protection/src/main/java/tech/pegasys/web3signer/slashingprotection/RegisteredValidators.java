@@ -18,10 +18,12 @@ import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -34,6 +36,9 @@ public class RegisteredValidators {
   private static final Logger LOG = LogManager.getLogger();
   private final BiMap<Bytes, Integer> registeredValidators;
   private final ReadWriteLock validatorsLock = new ReentrantReadWriteLock();
+  // Serialises structural mutations (register + disable) against each other without
+  // blocking BiMap readers during DB I/O.
+  private final Object mutationLock = new Object();
   private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;
 
@@ -85,22 +90,64 @@ public class RegisteredValidators {
     return validatorId.get();
   }
 
+  public void disableAndRemoveValidators(final List<Bytes> validators) {
+    if (validators.isEmpty()) {
+      return;
+    }
+
+    synchronized (mutationLock) {
+      // Collect validator IDs under read lock (skip unknown keys)
+      final Map<Bytes, Integer> knownValidators;
+      validatorsLock.readLock().lock();
+      try {
+        knownValidators =
+            validators.stream()
+                .filter(registeredValidators::containsKey)
+                .collect(Collectors.toMap(pubKey -> pubKey, registeredValidators::get));
+      } finally {
+        validatorsLock.readLock().unlock();
+      }
+
+      if (knownValidators.isEmpty()) {
+        return;
+      }
+
+      // Batch disable in DB
+      final List<Integer> ids = knownValidators.values().stream().toList();
+      jdbi.useTransaction(
+          READ_COMMITTED, handle -> validatorsDao.setEnabledBatch(handle, ids, false));
+
+      LOG.info("Disabled {} validators in database", knownValidators.size());
+
+      // Remove from BiMap under write lock
+      validatorsLock.writeLock().lock();
+      try {
+        knownValidators.keySet().forEach(registeredValidators::remove);
+      } finally {
+        validatorsLock.writeLock().unlock();
+      }
+    }
+  }
+
   public void registerValidators(final List<Bytes> validators) {
     if (validators.isEmpty()) {
       return;
     }
 
-    final List<Validator> registeredValidatorsList =
-        jdbi.inTransaction(READ_COMMITTED, h -> validatorsDao.registerValidators(h, validators));
+    synchronized (mutationLock) {
+      final List<Validator> registeredValidatorsList =
+          jdbi.inTransaction(READ_COMMITTED, h -> validatorsDao.registerValidators(h, validators));
 
-    LOG.info("Validators registered successfully in database:{}", registeredValidatorsList.size());
+      LOG.info(
+          "Validators registered successfully in database:{}", registeredValidatorsList.size());
 
-    validatorsLock.writeLock().lock();
-    try {
-      registeredValidatorsList.forEach(
-          validator -> registeredValidators.put(validator.getPublicKey(), validator.getId()));
-    } finally {
-      validatorsLock.writeLock().unlock();
+      validatorsLock.writeLock().lock();
+      try {
+        registeredValidatorsList.forEach(
+            validator -> registeredValidators.put(validator.getPublicKey(), validator.getId()));
+      } finally {
+        validatorsLock.writeLock().unlock();
+      }
     }
   }
 }

@@ -30,10 +30,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -190,6 +193,135 @@ class DefaultArtifactSignerProviderTest {
           signerProvider.getProxyIdentifiers(identifier);
       assertThat(keyProxyPublicKeys).isEmpty();
     }
+  }
+
+  @Test
+  void callbackReceivesOnlyAddedKeysOnFirstLoad() throws Exception {
+    final ArtifactSigner mockSigner1 = mock(ArtifactSigner.class);
+    when(mockSigner1.getIdentifier()).thenReturn(PUBLIC_KEY1);
+    final ArtifactSigner mockSigner2 = mock(ArtifactSigner.class);
+    when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY2);
+
+    final AtomicReference<Set<String>> capturedAdded = new AtomicReference<>();
+    final AtomicReference<Set<String>> capturedRemoved = new AtomicReference<>();
+    final BiConsumer<Set<String>, Set<String>> callback =
+        (added, removed) -> {
+          capturedAdded.set(added);
+          capturedRemoved.set(removed);
+        };
+
+    signerProvider =
+        new DefaultArtifactSignerProvider(
+            () -> MappedResults.newInstance(List.of(mockSigner1, mockSigner2), 0),
+            Optional.of(callback),
+            Optional.empty());
+    signerProvider.load().get();
+
+    assertThat(capturedAdded.get()).containsExactlyInAnyOrder(PUBLIC_KEY1, PUBLIC_KEY2);
+    assertThat(capturedRemoved.get()).isEmpty();
+  }
+
+  @Test
+  void callbackReceivesDeltaOnReload() throws Exception {
+    final ArtifactSigner mockSigner1 = mock(ArtifactSigner.class);
+    when(mockSigner1.getIdentifier()).thenReturn(PUBLIC_KEY1);
+    final ArtifactSigner mockSigner2 = mock(ArtifactSigner.class);
+    when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY2);
+
+    final String publicKey3 =
+        "0xb53d21a4cfd562c469cc81514d4ce5a6b577d8403d32a394dc265dd190b47fa9f829ffd7847571dd1164a4328cb4a738";
+
+    final ArtifactSigner mockSigner3 = mock(ArtifactSigner.class);
+    when(mockSigner3.getIdentifier()).thenReturn(publicKey3);
+
+    final List<Set<String>> addedCaptures = new ArrayList<>();
+    final List<Set<String>> removedCaptures = new ArrayList<>();
+    final BiConsumer<Set<String>, Set<String>> callback =
+        (added, removed) -> {
+          addedCaptures.add(Set.copyOf(added));
+          removedCaptures.add(Set.copyOf(removed));
+        };
+
+    // First load with keys 1 and 2
+    final AtomicReference<List<ArtifactSigner>> signersRef =
+        new AtomicReference<>(List.of(mockSigner1, mockSigner2));
+    signerProvider =
+        new DefaultArtifactSignerProvider(
+            () -> MappedResults.newInstance(signersRef.get(), 0),
+            Optional.of(callback),
+            Optional.empty());
+    signerProvider.load().get();
+
+    // Reload with keys 2 and 3 (key1 removed, key3 added)
+    signersRef.set(List.of(mockSigner2, mockSigner3));
+    signerProvider.load().get();
+
+    // First load: all keys are added
+    assertThat(addedCaptures.get(0)).containsExactlyInAnyOrder(PUBLIC_KEY1, PUBLIC_KEY2);
+    assertThat(removedCaptures.get(0)).isEmpty();
+
+    // Second load: delta only
+    assertThat(addedCaptures.get(1)).containsExactly(publicKey3);
+    assertThat(removedCaptures.get(1)).containsExactly(PUBLIC_KEY1);
+  }
+
+  @Test
+  void callbackReceivesEmptyDeltaWhenKeysUnchanged() throws Exception {
+    final ArtifactSigner mockSigner1 = mock(ArtifactSigner.class);
+    when(mockSigner1.getIdentifier()).thenReturn(PUBLIC_KEY1);
+
+    final List<Set<String>> addedCaptures = new ArrayList<>();
+    final List<Set<String>> removedCaptures = new ArrayList<>();
+    final BiConsumer<Set<String>, Set<String>> callback =
+        (added, removed) -> {
+          addedCaptures.add(Set.copyOf(added));
+          removedCaptures.add(Set.copyOf(removed));
+        };
+
+    signerProvider =
+        new DefaultArtifactSignerProvider(
+            () -> MappedResults.newInstance(List.of(mockSigner1), 0),
+            Optional.of(callback),
+            Optional.empty());
+    signerProvider.load().get();
+    signerProvider.load().get();
+
+    // Second load: no changes
+    assertThat(addedCaptures.get(1)).isEmpty();
+    assertThat(removedCaptures.get(1)).isEmpty();
+  }
+
+  @Test
+  void callbackReceivesAllKeysAsRemovedWhenReloadedWithEmpty() throws Exception {
+    final ArtifactSigner mockSigner1 = mock(ArtifactSigner.class);
+    when(mockSigner1.getIdentifier()).thenReturn(PUBLIC_KEY1);
+    final ArtifactSigner mockSigner2 = mock(ArtifactSigner.class);
+    when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY2);
+
+    final List<Set<String>> addedCaptures = new ArrayList<>();
+    final List<Set<String>> removedCaptures = new ArrayList<>();
+    final BiConsumer<Set<String>, Set<String>> callback =
+        (added, removed) -> {
+          addedCaptures.add(Set.copyOf(added));
+          removedCaptures.add(Set.copyOf(removed));
+        };
+
+    final AtomicReference<List<ArtifactSigner>> signersRef =
+        new AtomicReference<>(List.of(mockSigner1, mockSigner2));
+    signerProvider =
+        new DefaultArtifactSignerProvider(
+            () -> MappedResults.newInstance(signersRef.get(), 0),
+            Optional.of(callback),
+            Optional.empty());
+    signerProvider.load().get();
+
+    // Reload with no keys
+    signersRef.set(List.of());
+    signerProvider.load().get();
+
+    // Second load: all removed
+    assertThat(addedCaptures.get(1)).isEmpty();
+    assertThat(removedCaptures.get(1)).containsExactlyInAnyOrder(PUBLIC_KEY1, PUBLIC_KEY2);
   }
 
   private List<BLSKeyPair> randomBLSV4Keystores(final String identifier) throws IOException {

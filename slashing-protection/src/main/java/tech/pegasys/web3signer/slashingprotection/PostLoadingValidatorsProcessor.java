@@ -14,24 +14,35 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import org.apache.tuweni.bytes.Bytes;
 
-/** Process new validators by registering them with slashing database. */
+/** Process validator changes by registering new validators and disabling removed validators. */
 public record PostLoadingValidatorsProcessor(SlashingProtectionContext slashingProtectionContext)
-    implements Consumer<Set<String>> {
+    implements BiConsumer<Set<String>, Set<String>> {
   @Override
-  public void accept(final Set<String> newValidators) {
-    registerNewValidators(newValidators);
+  public void accept(final Set<String> addedValidators, final Set<String> removedValidators) {
+    registerNewValidators(addedValidators);
+    disableRemovedValidators(removedValidators);
   }
 
-  private void registerNewValidators(final Set<String> newValidators) {
-    if (newValidators == null || newValidators.isEmpty()) {
+  private void registerNewValidators(final Set<String> addedValidators) {
+    if (addedValidators == null || addedValidators.isEmpty()) {
       return;
     }
 
-    final List<Bytes> validatorsList = newValidators.stream().map(Bytes::fromHexString).toList();
+    final List<Bytes> validatorsList = addedValidators.stream().map(Bytes::fromHexString).toList();
     slashingProtectionContext.getRegisteredValidators().registerValidators(validatorsList);
+  }
+
+  private void disableRemovedValidators(final Set<String> removedValidators) {
+    if (removedValidators == null || removedValidators.isEmpty()) {
+      return;
+    }
+
+    final List<Bytes> validatorsList =
+        removedValidators.stream().map(Bytes::fromHexString).toList();
+    slashingProtectionContext.getRegisteredValidators().disableAndRemoveValidators(validatorsList);
   }
 }
