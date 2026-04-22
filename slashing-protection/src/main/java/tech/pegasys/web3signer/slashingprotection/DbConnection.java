@@ -89,6 +89,7 @@ public class DbConnection {
         .register(new BytesColumnMapper())
         .register(new Bytes32ColumnMapper())
         .register(new UInt64ColumnMapper());
+    jdbi.registerArrayType(Integer.class, "integer");
     jdbi.setTransactionHandler(new SerializableTransactionRunner());
   }
 
