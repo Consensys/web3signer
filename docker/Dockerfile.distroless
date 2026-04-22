@@ -57,13 +57,21 @@ WORKDIR /opt/web3signer
 
 EXPOSE 9000 9001
 
-# JVM flags below must stay in sync with application { applicationDefaultJvmArgs }
-# in build.gradle. The default docker/Dockerfile inherits those flags via the
-# gradle-generated bin/web3signer launcher; this distroless image has no shell,
-# so the flags are hardcoded here and must be updated manually.
+# JVM flags below split into two groups:
 #
-# -XX:-UsePerfData disables the JVM's hsperfdata writes to /tmp, which would
-# otherwise break `docker run --read-only`.
+# 1. Application flags mirrored from `application { applicationDefaultJvmArgs }`
+#    in build.gradle. The default docker/Dockerfile picks these up automatically
+#    because it runs the gradle-generated bin/web3signer launcher, which bakes
+#    them in. Distroless has no shell so the launcher is not used; we reproduce
+#    the same flags here. Keep them in sync when build.gradle changes.
+#
+# 2. Distroless-only hardening flags (not in the gradle launcher). Needed to
+#    keep startup clean under `docker run --read-only`:
+#      -XX:-UsePerfData             disable JVM hsperfdata_* writes to /tmp
+#      -Dlog4j.skipJansi=true       no TTY; skip Jansi native lib load
+#      -Djava.library.path=...      libblst.so is pre-extracted at build time,
+#      -Djna.library.path=...       so the JVM/JNA do not need to unpack it
+#      -Djna.noclasspath=true       to /tmp at runtime
 ENTRYPOINT [ \
   "java", \
   "-XX:-UsePerfData", \
