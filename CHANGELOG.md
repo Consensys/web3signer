@@ -1,10 +1,15 @@
 # Changelog
 
 ## 26.4.1
+### Features Added
+- Publish an additional hardened Docker image under the `-distroless` tag suffix (e.g. `consensys/web3signer:26.4.1-distroless`). Built from `gcr.io/distroless/java25-debian13:nonroot` — no shell, runs as non-root by default, and is compatible with `docker run --read-only`. See issue [#1151][issue_1151].
+- Docker image labels migrated from the deprecated `org.label-schema.*` schema to the OCI Image Spec `org.opencontainers.image.*` annotations, which are consumed by modern registries and image-scanning tooling.
+
 ### Bugs Fixed
 - Fix memory leak in the reload endpoint: removed validators were not being offloaded from the slashing-protection in-memory cache, and every reload unnecessarily re-registered all validators, causing old-gen heap pressure. Reload now processes only the delta of added/removed keys. PR [#1167][PR_1167].
 - Fix jdbi parsed-SQL cache growth in `ValidatorsDao` by replacing inlined values and bindList expansions with parameterized array bindings. PR [#1170][PR_1170].
 
+[issue_1151]: https://github.com/Consensys/web3signer/issues/1151
 [PR_1167]: https://github.com/Consensys/web3signer/pull/1167
 [PR_1170]: https://github.com/Consensys/web3signer/pull/1170
 

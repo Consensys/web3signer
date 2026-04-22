@@ -72,6 +72,10 @@ jobs:
     runs-on: ubuntu-24.04
     needs: build
     environment: docker
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [default, distroless]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -94,23 +98,38 @@ jobs:
 
       - name: Docker Metadata
         id: docker-metadata
+        env:
+          VARIANT: ${{ matrix.variant }}
+          PUBLISH_VERSION: ${{ needs.build.outputs.publish-version }}
         run: |
+          # Resolve variant-specific settings
+          if [ "$VARIANT" = "distroless" ]; then
+            DOCKERFILE="docker/Dockerfile.distroless"
+            SUFFIX="-distroless"
+          else
+            DOCKERFILE="docker/Dockerfile"
+            SUFFIX=""
+          fi
+          echo "dockerfile=$DOCKERFILE" >> $GITHUB_OUTPUT
+          echo "tag-suffix=$SUFFIX" >> $GITHUB_OUTPUT
+          echo "test-tag=consensys/web3signer:test${SUFFIX}" >> $GITHUB_OUTPUT
+
           # Calculate Docker Tags
-          TAGS="consensys/web3signer:${{ needs.build.outputs.publish-version }}"
-          if [ "${{ needs.build.outputs.publish-version }}" != "develop" ]; then
-            TAGS="$TAGS,consensys/web3signer:latest"
+          TAGS="consensys/web3signer:${PUBLISH_VERSION}${SUFFIX}"
+          if [ "$PUBLISH_VERSION" != "develop" ]; then
+            TAGS="$TAGS,consensys/web3signer:latest${SUFFIX}"
           fi
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
-          
+
           # Determine Push Flag
           if [ "${{ github.event_name }}" == "pull_request" ] || [ "${{ github.event_name }}" == "schedule" ]; then
             echo "push=false" >> $GITHUB_OUTPUT
           else
             echo "push=true" >> $GITHUB_OUTPUT
           fi
-          
+
           # Set Build Args
-          echo "build-date=$(date --utc --rfc-3339=seconds)" >> $GITHUB_OUTPUT
+          echo "build-date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
           echo "vcs-ref=${{ github.sha }}" >> $GITHUB_OUTPUT
 
       # v7.0.0
@@ -119,7 +138,7 @@ jobs:
         env:
           DOCKER_BUILD_SUMMARY: false
         with:
-          file: docker/Dockerfile
+          file: ${{ steps.docker-metadata.outputs.dockerfile }}
           context: .
           build-args: |
             TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
@@ -129,24 +148,40 @@ jobs:
           no-cache: true
           load: true
           pull: true
-          tags: consensys/web3signer:test
+          tags: ${{ steps.docker-metadata.outputs.test-tag }}
 
       - name: Get absolute path of reports directory
         id: get-reports-dir
         run: echo "path=$(realpath ./build/reports)" >> $GITHUB_OUTPUT
 
-      - name: Run Docker tests
-        run: ./docker/test.sh 'consensys/web3signer:test' '${{ steps.get-reports-dir.outputs.path }}'
+      - name: Run Docker tests (default variant)
+        if: matrix.variant == 'default'
+        run: ./docker/test.sh '${{ steps.docker-metadata.outputs.test-tag }}' '${{ steps.get-reports-dir.outputs.path }}'
+
+      - name: Run Docker smoke test (distroless variant)
+        if: matrix.variant == 'distroless'
+        run: ./docker/test-distroless.sh '${{ steps.docker-metadata.outputs.test-tag }}' '${{ steps.get-reports-dir.outputs.path }}'
 
       - name: Test Summary
         if: always()
+        env:
+          VARIANT: ${{ matrix.variant }}
         run: |
-          SUMMARY_CONTENT="<h2>Docker Test Summary</h2>\n"
+          if [ "$VARIANT" = "distroless" ]; then
+            REPORT_FILE="./build/reports/smoke-report.txt"
+          else
+            REPORT_FILE="./build/reports/goss-report.txt"
+          fi
+          SUMMARY_CONTENT="<h2>Docker Test Summary (${VARIANT})</h2>\n"
           SUMMARY_CONTENT+="<details><summary><strong>Details</strong></summary>\n"
           SUMMARY_CONTENT+="<pre><code>\n"
-          SUMMARY_CONTENT+=$(cat ./build/reports/goss-report.txt)
+          if [ -f "$REPORT_FILE" ]; then
+            SUMMARY_CONTENT+=$(cat "$REPORT_FILE")
+          else
+            SUMMARY_CONTENT+="(no report produced)"
+          fi
           SUMMARY_CONTENT+="\n</code></pre></details>\n"
-          echo -e "$SUMMARY_CONTENT" >> $GITHUB_STEP_SUMMARY  
+          echo -e "$SUMMARY_CONTENT" >> $GITHUB_STEP_SUMMARY
 
       # v4.0.0
       - name: Login to Docker Hub
@@ -161,7 +196,7 @@ jobs:
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
         with:
           platforms: linux/amd64,linux/arm64
-          file: docker/Dockerfile
+          file: ${{ steps.docker-metadata.outputs.dockerfile }}
           context: .
           build-args: |
             TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
@@ -283,7 +318,11 @@ jobs:
             echo "| [web3signer.zip](https://github.com/Consensys/web3signer/releases/download/${TAG}/web3signer-${TAG}.zip)    | [Checksum](https://github.com/Consensys/web3signer/releases/download/${TAG}/web3signer-${TAG}.zip.sha256) |"
             echo ""
             echo "### Docker"
+            echo "Default image (Ubuntu + Eclipse Temurin JRE 25):"
             echo "\`docker pull consensys/web3signer:${TAG}\`"
+            echo ""
+            echo "Hardened image (Google Distroless, read-only-filesystem compatible):"
+            echo "\`docker pull consensys/web3signer:${TAG}-distroless\`"
             echo ""
             echo "---"
             echo "**Full Changelog**: https://github.com/Consensys/web3signer/compare/${PREV_TAG}...${TAG}"
