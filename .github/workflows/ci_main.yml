@@ -129,7 +129,7 @@ jobs:
           fi
 
           # Set Build Args
-          echo "build-date=$(date --utc --rfc-3339=seconds)" >> $GITHUB_OUTPUT
+          echo "build-date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
           echo "vcs-ref=${{ github.sha }}" >> $GITHUB_OUTPUT
 
       # v7.0.0

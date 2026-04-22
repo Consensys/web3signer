@@ -2,7 +2,7 @@
 
 ## 26.4.1
 ### Features Added
-- Publish an additional hardened Docker image under the `-distroless` tag suffix (e.g. `consensys/web3signer:${version}-distroless`). Built from `gcr.io/distroless/java25-debian13:nonroot` — no shell, runs as non-root by default, and is compatible with `docker run --read-only`. See issue [#1151][issue_1151].
+- Publish an additional hardened Docker image under the `-distroless` tag suffix (e.g. `consensys/web3signer:26.4.1-distroless`). Built from `gcr.io/distroless/java25-debian13:nonroot` — no shell, runs as non-root by default, and is compatible with `docker run --read-only`. See issue [#1151][issue_1151].
 - Docker image labels migrated from the deprecated `org.label-schema.*` schema to the OCI Image Spec `org.opencontainers.image.*` annotations, which are consumed by modern registries and image-scanning tooling.
 
 ### Bugs Fixed
