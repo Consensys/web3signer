@@ -355,6 +355,13 @@ subprojects {
 jar { enabled = false }
 
 apply plugin: 'application'
+// IMPORTANT: JVM flags declared in applicationDefaultJvmArgs below are baked
+// into the gradle-generated bin/web3signer launcher and picked up automatically
+// by docker/Dockerfile (which uses that launcher as its ENTRYPOINT). The
+// distroless image docker/Dockerfile.distroless has no shell, so it invokes
+// `java` directly and hardcodes its own copy of these flags in ENTRYPOINT.
+// When you add/remove/change any JVM flag here, make the matching change in
+// docker/Dockerfile.distroless.
 application {
   mainClass = "tech.pegasys.web3signer.Web3SignerApp"
   applicationDefaultJvmArgs = [
