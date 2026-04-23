@@ -16,6 +16,7 @@
     {
       "description": "Group all Dockerfile base image updates into a single PR",
       "matchManagers": ["dockerfile"],
+      "pinDigests": true,
       "minimumReleaseAge": "7 days",
       "groupName": "Renovatebot Dockerfile Updates"
     },
