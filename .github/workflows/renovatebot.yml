@@ -26,5 +26,4 @@ jobs:
           GH_APP_ID: ${{ secrets.GH_APP_ID }}
           GH_PRIVATE_KEY: ${{ secrets.GH_PRIVATE_KEY }}
           GH_REPOSITORY: ${{ github.repository }}
-        env:
-          LOG_LEVEL: debug
+
