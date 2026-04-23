@@ -40,6 +40,12 @@
       "id": "stat",
       "name": "Stat",
       "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
     }
   ],
   "annotations": {
@@ -77,7 +83,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 1,
@@ -90,7 +96,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${DS_PROMETHEUS}"
           },
           "refId": "A"
         }
@@ -128,7 +134,7 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 4,
+        "w": 8,
         "x": 0,
         "y": 1
       },
@@ -198,8 +204,8 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 4,
-        "x": 4,
+        "w": 8,
+        "x": 8,
         "y": 1
       },
       "id": 102,
@@ -260,8 +266,8 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 4,
-        "x": 8,
+        "w": 8,
+        "x": 16,
         "y": 1
       },
       "id": 120,
@@ -288,7 +294,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": false,
-          "expr": "jvm_memory_bytes_max{area=\"heap\", instance=~\"$system\", job=\"$job\"}",
+          "expr": "jvm_memory_max_bytes{area=\"heap\", instance=~\"$system\", job=\"$job\"}",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -329,7 +335,7 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 4,
+        "w": 8,
         "x": 0,
         "y": 4
       },
@@ -356,7 +362,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": false,
-          "expr": "http_bls_malformed_request_count{instance=~\"$system\"}",
+          "expr": "http_bls_malformed_request_count_total{instance=~\"$system\"}",
           "instant": true,
           "interval": "",
           "legendFormat": "",
@@ -396,8 +402,8 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 4,
-        "x": 4,
+        "w": 8,
+        "x": 8,
         "y": 4
       },
       "id": 96,
@@ -423,7 +429,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": false,
-          "expr": "eth2_slashingprotection_prevented_signings{instance=~\"$system\"}",
+          "expr": "eth2_slashingprotection_prevented_signings_total{instance=~\"$system\"}",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -464,8 +470,8 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 4,
-        "x": 8,
+        "w": 8,
+        "x": 16,
         "y": 4
       },
       "id": 104,
@@ -491,7 +497,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": false,
-          "expr": "signing_bls_missing_identifier_count{instance=~\"$system\"}",
+          "expr": "signing_bls_missing_identifier_count_total{instance=~\"$system\"}",
           "instant": true,
           "interval": "",
           "legendFormat": "",
@@ -505,7 +511,7 @@
       "collapsed": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 1,
@@ -519,7 +525,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${DS_PROMETHEUS}"
           },
           "refId": "A"
         }
@@ -692,7 +698,7 @@
       "collapsed": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 1,
@@ -700,13 +706,294 @@
         "x": 0,
         "y": 16
       },
+      "id": 122,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Signing Pipeline",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 17
+      },
+      "id": 123,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "eth2_slashingprotection_database_duration{instance=~\"$system\", job=\"$job\", quantile=~\"0.5|0.95|0.99\"}",
+          "legendFormat": "{{signingOperation}} p{{quantile}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Slashing DB Duration",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 17
+      },
+      "id": 124,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "http_vertx_worker_pool_usage{instance=~\"$system\", job=\"$job\", quantile=\"0.95\"}",
+          "legendFormat": "{{poolName}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Worker Pool Usage (p95)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 17
+      },
+      "id": 125,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "rate(http_vertx_worker_pool_rejected_total{instance=~\"$system\", job=\"$job\"}[1m])",
+          "legendFormat": "{{poolName}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Worker Pool Rejections",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
       "id": 14,
       "panels": [],
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${DS_PROMETHEUS}"
           },
           "refId": "A"
         }
@@ -737,7 +1024,7 @@
         "h": 9,
         "w": 8,
         "x": 0,
-        "y": 17
+        "y": 26
       },
       "hiddenSeries": false,
       "id": 110,
@@ -837,7 +1124,7 @@
         "h": 9,
         "w": 8,
         "x": 8,
-        "y": 17
+        "y": 26
       },
       "hiddenSeries": false,
       "id": 112,
@@ -883,7 +1170,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "jvm_memory_bytes_used{instance=~\"$system\", area=\"heap\", job=\"$job\"} + ignoring(area) jvm_memory_bytes_used{instance=~\"$system\", area=\"nonheap\"}",
+          "expr": "jvm_memory_used_bytes{instance=~\"$system\", area=\"heap\", job=\"$job\"} + ignoring(area) jvm_memory_used_bytes{instance=~\"$system\", area=\"nonheap\"}",
           "format": "time_series",
           "instant": false,
           "interval": "",
@@ -897,7 +1184,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "jvm_memory_bytes_max{instance=~\"$system\", area=\"heap\", job=\"$job\"} + ignoring(area) jvm_memory_bytes_max{instance=~\"$system\", area=\"nonheap\"}",
+          "expr": "jvm_memory_max_bytes{instance=~\"$system\", area=\"heap\", job=\"$job\"} + ignoring(area) jvm_memory_max_bytes{instance=~\"$system\", area=\"nonheap\"}",
           "format": "time_series",
           "instant": false,
           "interval": "",
@@ -959,7 +1246,7 @@
         "h": 9,
         "w": 8,
         "x": 16,
-        "y": 17
+        "y": 26
       },
       "hiddenSeries": false,
       "id": 114,
@@ -1060,7 +1347,7 @@
         "h": 9,
         "w": 8,
         "x": 0,
-        "y": 26
+        "y": 35
       },
       "hiddenSeries": false,
       "id": 116,
@@ -1168,7 +1455,7 @@
         "h": 9,
         "w": 8,
         "x": 8,
-        "y": 26
+        "y": 35
       },
       "hiddenSeries": false,
       "id": 118,
@@ -1410,6 +1697,6 @@
   "timezone": "",
   "title": "Web3Signer Overview",
   "uid": "dkIJoOVMk",
-  "version": 14,
+  "version": 15,
   "weekStart": ""
 }
