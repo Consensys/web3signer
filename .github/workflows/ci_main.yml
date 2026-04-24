@@ -309,8 +309,6 @@ jobs:
           DIGEST=$(docker buildx imagetools inspect "$PRIMARY_TAG" --format '{{json .Manifest.Digest}}' | jq -r .)
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
-      # v3.7.0 — devops-approved action, matches the version pinned in
-      # Consensys/teku's publish-docker workflow.
       - name: Install cosign
         uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22
 
