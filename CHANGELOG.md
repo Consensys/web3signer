@@ -1,5 +1,13 @@
 # Changelog
 
+## 26.4.2
+### Bugs Fixed
+- Fix distroless image failing to load BLS native library under `docker run --read-only`. Issue [#1175][issue_1175], PR [#1176][PR_1176].
+
+[issue_1175]: https://github.com/Consensys/web3signer/issues/1175
+[PR_1176]: https://github.com/Consensys/web3signer/pull/1176
+
+---
 ## 26.4.1
 ### Features Added
 - Publish an additional hardened Docker image under the `-distroless` tag suffix (e.g. `consensys/web3signer:26.4.1-distroless`). Built from `gcr.io/distroless/java25-debian13:nonroot` — no shell, runs as non-root by default, and is compatible with `docker run --read-only`. See issue [#1151][issue_1151].

@@ -10,14 +10,19 @@ RUN gzip -t /tmp/web3signer.tar.gz || (echo "ERROR: TAR_FILE is not a valid gzip
     tar -xzf /tmp/web3signer.tar.gz -C /opt/web3signer --strip-components=1 && \
     rm /tmp/web3signer.tar.gz
 
-# Stage 2: Extract the per-arch libblst.so from jblst-*.jar so the JVM does not
-# have to unpack it to /tmp at runtime. This is the one native library that
-# web3signer itself loads on startup; the other shaded natives in the classpath
-# (Netty transports, netty-tcnative, jffi, conscrypt) are not exercised at
-# runtime because Vert.x uses its NIO transport by default.
+# Stage 2: Extract the per-arch libblst.so from jblst-*.jar and then strip it
+# from the jar so the jblst static initializer (supranational.blst.blstJNI)
+# cannot find it as a classpath resource. When the resource is absent, jblst
+# falls through to System.loadLibrary("blst"), which honours the
+# -Djava.library.path set on the runtime ENTRYPOINT. If the resource is left
+# in place, jblst unconditionally copies it into Files.createTempDirectory
+# ("blst@..."), i.e. /tmp — which breaks under `docker run --read-only`.
+# The other shaded natives in the classpath (Netty transports, netty-tcnative,
+# jffi, conscrypt) are not exercised at runtime because Vert.x uses its NIO
+# transport by default.
 FROM ubuntu:24.04@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b AS prep
 ARG TARGETARCH
-RUN apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends unzip zip && rm -rf /var/lib/apt/lists/*
 COPY --from=app-extract /opt/web3signer /opt/web3signer
 RUN set -eu; \
     case "$TARGETARCH" in \
@@ -27,7 +32,8 @@ RUN set -eu; \
     esac; \
     mkdir -p /opt/web3signer/native-libs; \
     JBLST_JAR=$(ls /opt/web3signer/lib/jblst-*.jar); \
-    unzip -j "$JBLST_JAR" "supranational/blst/Linux/${BLST_ARCH}/libblst.so" -d /opt/web3signer/native-libs/
+    unzip -j "$JBLST_JAR" "supranational/blst/Linux/${BLST_ARCH}/libblst.so" -d /opt/web3signer/native-libs/; \
+    zip -d "$JBLST_JAR" "supranational/blst/Linux/${BLST_ARCH}/libblst.so"
 
 # Stage 3: Runtime on Google Distroless (nonroot by default, no shell, no package manager).
 FROM gcr.io/distroless/java25-debian13:nonroot@sha256:efb9a5000ce8ff56745d56c88c8e61017e674ed053b67e0c44af25ddabf1faa8
@@ -72,6 +78,13 @@ EXPOSE 9000 9001
 #      -Djava.library.path=...      libblst.so is pre-extracted at build time,
 #      -Djna.library.path=...       so the JVM/JNA do not need to unpack it
 #      -Djna.noclasspath=true       to /tmp at runtime
+#      -Dsupranational.blst.jniResource=/__stripped__
+#                                   Belt-and-braces with the jar-strip in
+#                                   stage 2 (prep). If the native resource is
+#                                   ever reintroduced into jblst-*.jar, this
+#                                   still forces supranational.blst.blstJNI to
+#                                   skip its classpath-extract-to-/tmp branch
+#                                   and fall through to System.loadLibrary.
 ENTRYPOINT [ \
   "java", \
   "-XX:-UsePerfData", \
@@ -82,6 +95,7 @@ ENTRYPOINT [ \
   "-Djava.library.path=/opt/web3signer/native-libs", \
   "-Djna.library.path=/opt/web3signer/native-libs", \
   "-Djna.noclasspath=true", \
+  "-Dsupranational.blst.jniResource=/__stripped__", \
   "-Dio.netty.tryReflectionSetAccessible=true", \
   "--enable-native-access=ALL-UNNAMED", \
   "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED", \
