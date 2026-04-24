@@ -68,24 +68,26 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
-  docker:
-    runs-on: ubuntu-24.04
+  docker-build:
+    name: docker-build (${{ matrix.variant }}, ${{ matrix.platform.arch }})
     needs: build
     environment: docker
     strategy:
       fail-fast: false
       matrix:
         variant: [default, distroless]
+        platform:
+          - runner: ubuntu-24.04
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.platform.runner }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
           fetch-tags: true
-
-      # v4.0.0
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
 
       # v4.0.0
       - name: Set up Docker Buildx
@@ -112,20 +114,17 @@ jobs:
           fi
           echo "dockerfile=$DOCKERFILE" >> $GITHUB_OUTPUT
           echo "tag-suffix=$SUFFIX" >> $GITHUB_OUTPUT
+          echo "image-name=consensys/web3signer" >> $GITHUB_OUTPUT
           echo "test-tag=consensys/web3signer:test${SUFFIX}" >> $GITHUB_OUTPUT
 
-          # Calculate Docker Tags
-          TAGS="consensys/web3signer:${PUBLISH_VERSION}${SUFFIX}"
-          if [ "$PUBLISH_VERSION" != "develop" ]; then
-            TAGS="$TAGS,consensys/web3signer:latest${SUFFIX}"
-          fi
-          echo "tags=$TAGS" >> $GITHUB_OUTPUT
-
-          # Determine Push Flag
-          if [ "${{ github.event_name }}" == "pull_request" ] || [ "${{ github.event_name }}" == "schedule" ]; then
-            echo "push=false" >> $GITHUB_OUTPUT
-          else
+          # Push only on push to master or annotated tags. The workflow `on:`
+          # filter already blocks side-branch pushes, but making the gate
+          # explicit here is belt-and-braces against future trigger changes.
+          if [ "${{ github.event_name }}" = "push" ] \
+             && { [ "${{ github.ref }}" = "refs/heads/master" ] || [[ "${{ github.ref }}" == refs/tags/* ]]; }; then
             echo "push=true" >> $GITHUB_OUTPUT
+          else
+            echo "push=false" >> $GITHUB_OUTPUT
           fi
 
           # Set Build Args
@@ -133,19 +132,21 @@ jobs:
           echo "vcs-ref=${{ github.sha }}" >> $GITHUB_OUTPUT
 
       # v7.0.0
-      - name: Build and export to docker
+      - name: Build and export to docker (smoke-test image)
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
         env:
           DOCKER_BUILD_SUMMARY: false
         with:
           file: ${{ steps.docker-metadata.outputs.dockerfile }}
           context: .
+          platforms: linux/${{ matrix.platform.arch }}
           build-args: |
             TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
             BUILD_DATE=${{ steps.docker-metadata.outputs.build-date }}
             VCS_REF=${{ steps.docker-metadata.outputs.vcs-ref }}
             VERSION=${{ needs.build.outputs.publish-version }}
-          no-cache: true
+          cache-from: type=gha,scope=${{ matrix.variant }}-${{ matrix.platform.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.variant }}-${{ matrix.platform.arch }}
           load: true
           pull: true
           tags: ${{ steps.docker-metadata.outputs.test-tag }}
@@ -166,13 +167,14 @@ jobs:
         if: always()
         env:
           VARIANT: ${{ matrix.variant }}
+          ARCH: ${{ matrix.platform.arch }}
         run: |
           if [ "$VARIANT" = "distroless" ]; then
             REPORT_FILE="./build/reports/smoke-report.txt"
           else
             REPORT_FILE="./build/reports/goss-report.txt"
           fi
-          SUMMARY_CONTENT="<h2>Docker Test Summary (${VARIANT})</h2>\n"
+          SUMMARY_CONTENT="<h2>Docker Test Summary (${VARIANT} / linux-${ARCH})</h2>\n"
           SUMMARY_CONTENT+="<details><summary><strong>Details</strong></summary>\n"
           SUMMARY_CONTENT+="<pre><code>\n"
           if [ -f "$REPORT_FILE" ]; then
@@ -192,25 +194,135 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # v7.0.0
-      - name: Build and push to registry
+      - name: Build and push by digest
+        id: push
+        if: steps.docker-metadata.outputs.push == 'true'
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
         with:
-          platforms: linux/amd64,linux/arm64
           file: ${{ steps.docker-metadata.outputs.dockerfile }}
           context: .
+          platforms: linux/${{ matrix.platform.arch }}
           build-args: |
             TAR_FILE=./build/distributions/web3signer-${{ needs.build.outputs.publish-version }}.tar.gz
             BUILD_DATE=${{ steps.docker-metadata.outputs.build-date }}
             VCS_REF=${{ steps.docker-metadata.outputs.vcs-ref }}
             VERSION=${{ needs.build.outputs.publish-version }}
-          push: ${{ steps.docker-metadata.outputs.push }}
-          no-cache: true
-          pull: true
-          tags: ${{ steps.docker-metadata.outputs.tags }}
+          cache-from: type=gha,scope=${{ matrix.variant }}-${{ matrix.platform.arch }}
+          provenance: mode=max
+          sbom: true
+          outputs: type=image,name=${{ steps.docker-metadata.outputs.image-name }},push-by-digest=true,name-canonical=true,push=true
+
+      - name: Export digest
+        if: steps.docker-metadata.outputs.push == 'true'
+        run: |
+          mkdir -p "${{ runner.temp }}/digests/${{ matrix.variant }}"
+          digest="${{ steps.push.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${{ matrix.variant }}/${digest#sha256:}"
+
+      - name: Upload digest
+        if: steps.docker-metadata.outputs.push == 'true'
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: digests-${{ matrix.variant }}-${{ matrix.platform.arch }}
+          path: ${{ runner.temp }}/digests/${{ matrix.variant }}/*
+          if-no-files-found: error
+          retention-days: 1
+
+  docker-merge:
+    name: docker-merge (${{ matrix.variant }})
+    needs: [build, docker-build]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/'))
+    environment: docker
+    permissions:
+      contents: read
+      id-token: write   # keyless cosign via GitHub OIDC
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [default, distroless]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Docker Metadata
+        id: docker-metadata
+        env:
+          VARIANT: ${{ matrix.variant }}
+          PUBLISH_VERSION: ${{ needs.build.outputs.publish-version }}
+        run: |
+          if [ "$VARIANT" = "distroless" ]; then
+            SUFFIX="-distroless"
+          else
+            SUFFIX=""
+          fi
+          IMAGE_NAME="consensys/web3signer"
+          echo "image-name=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "tag-suffix=$SUFFIX" >> $GITHUB_OUTPUT
+
+          PRIMARY_TAG="${IMAGE_NAME}:${PUBLISH_VERSION}${SUFFIX}"
+          TAGS="$PRIMARY_TAG"
+          if [ "$PUBLISH_VERSION" != "develop" ]; then
+            TAGS="$TAGS,${IMAGE_NAME}:latest${SUFFIX}"
+          fi
+          echo "primary-tag=$PRIMARY_TAG" >> $GITHUB_OUTPUT
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+
+      - name: Download per-arch digests
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: digests-${{ matrix.variant }}-*
+          path: ${{ runner.temp }}/digests
+          merge-multiple: true
+
+      # v4.0.0
+      - name: Login to Docker Hub
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # v4.0.0
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd
+
+      - name: Create manifest list
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          IMAGE_NAME: ${{ steps.docker-metadata.outputs.image-name }}
+          TAGS: ${{ steps.docker-metadata.outputs.tags }}
+        run: |
+          TAG_ARGS=""
+          IFS=',' read -ra TAG_ARR <<< "$TAGS"
+          for t in "${TAG_ARR[@]}"; do TAG_ARGS+=" -t $t"; done
+          # shellcheck disable=SC2046
+          docker buildx imagetools create $TAG_ARGS \
+            $(printf "${IMAGE_NAME}@sha256:%s " *)
+
+      - name: Inspect manifest
+        env:
+          PRIMARY_TAG: ${{ steps.docker-metadata.outputs.primary-tag }}
+        run: docker buildx imagetools inspect "$PRIMARY_TAG"
+
+      - name: Capture manifest-list digest
+        id: manifest
+        env:
+          PRIMARY_TAG: ${{ steps.docker-metadata.outputs.primary-tag }}
+        run: |
+          DIGEST=$(docker buildx imagetools inspect "$PRIMARY_TAG" --format '{{json .Manifest.Digest}}' | jq -r .)
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+
+      # v3.7.0 — devops-approved action, matches the version pinned in
+      # Consensys/teku's publish-docker workflow.
+      - name: Install cosign
+        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22
+
+      - name: Sign manifest with keyless cosign (Sigstore OIDC)
+        env:
+          IMAGE_NAME: ${{ steps.docker-metadata.outputs.image-name }}
+          DIGEST: ${{ steps.manifest.outputs.digest }}
+        run: cosign sign --yes "${IMAGE_NAME}@${DIGEST}"
 
   release:
     runs-on: ubuntu-24.04
-    needs: [build, docker]
+    needs: [build, docker-merge]
     if: startsWith(github.ref, 'refs/tags/')
     environment: release
     permissions:

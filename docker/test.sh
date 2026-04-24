@@ -5,7 +5,12 @@ set -e
 # Set the base directory to the script's location
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-export GOSS_PATH="$BASE_DIR/tests/goss-linux-amd64"
+case "$(uname -m)" in
+  x86_64)  GOSS_ARCH=amd64 ;;
+  aarch64) GOSS_ARCH=arm64 ;;
+  *)       echo "Error: unsupported host arch $(uname -m)"; exit 1 ;;
+esac
+export GOSS_PATH="$BASE_DIR/tests/goss-linux-$GOSS_ARCH"
 export GOSS_OPTS="${GOSS_OPTS} --format documentation"
 export GOSS_FILES_STRATEGY="cp"
 
