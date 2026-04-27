@@ -324,6 +324,21 @@ components:
           required:
             - type
             - contribution_and_proof
+    PayloadAttestationMessageSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              enum:
+                - 'PAYLOAD_ATTESTATION_MESSAGE'
+            payload_attestation_message:
+              $ref: "#/components/schemas/PayloadAttestationData"
+          required:
+            - type
+            - payload_attestation_message
     ValidatorRegistrationSigning:
       allOf:
         - type: object
@@ -571,6 +586,26 @@ components:
         selection_proof:
           type: string
           description: Bytes96 hexadecimal
+    PayloadAttestationData:
+      type: object
+      description: >-
+        The data component of a PayloadAttestationMessage, signed by a PTC
+        validator using DOMAIN_PTC_ATTESTER (0x0C000000).
+      properties:
+        beacon_block_root:
+          type: string
+          description: Bytes32 hexadecimal
+          example: '0xcf8e0d4e9587369b2301d0790347320302cc0943d5a1884560367e8208d920f2'
+        slot:
+          type: string
+          format: uint64
+          example: '1'
+        payload_present:
+          type: boolean
+          description: Whether the execution payload for this slot is present
+        blob_data_available:
+          type: boolean
+          description: Whether blob data is available for this slot
     SyncCommitteeMessage:
       type: object
       properties:
