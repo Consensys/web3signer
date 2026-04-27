@@ -92,3 +92,28 @@ Note: quoting rules differ from shell — values containing spaces need backslas
 ### Writable mounts for application data
 
 As with the default image, a writable mount is still required for any on-disk data path (file-based slashing-protection DB, file logs). Mount those paths as volumes; only the container's root filesystem is read-only.
+
+## Verifying image signatures and attestations
+
+Published images (both variants, both `linux/amd64` and `linux/arm64`) are:
+
+- **Signed** with [cosign](https://docs.sigstore.dev/) using keyless signing (GitHub Actions OIDC + Sigstore transparency log — no private keys involved).
+- Shipped with **SLSA provenance** and an **SPDX SBOM** attached as OCI referrers.
+
+Verify a signature:
+
+```sh
+cosign verify consensys/web3signer:<tag> \
+  --certificate-identity-regexp '^https://github\.com/Consensys/web3signer/\.github/workflows/ci_main\.yml@refs/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+Inspect the attestations:
+
+```sh
+# SLSA provenance (includes source repo, commit, build invocation)
+docker buildx imagetools inspect consensys/web3signer:<tag> --format '{{json .Provenance}}'
+
+# SPDX SBOM (consumable by Docker Scout, Trivy, Grype, etc.)
+docker buildx imagetools inspect consensys/web3signer:<tag> --format '{{json .SBOM}}'
+```

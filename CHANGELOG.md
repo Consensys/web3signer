@@ -1,6 +1,12 @@
 # Changelog
 
 ## 26.4.2
+### Features Added
+- Published Docker images are now signed (keyless cosign via Sigstore) and ship with SLSA provenance + SPDX SBOM attestations. See `docker/README.md` for verification commands.
+
+### Infrastructure / CI
+- Multi-arch Docker images (`linux/amd64`, `linux/arm64`) are now built on native GitHub-hosted runners instead of QEMU emulation, with a smoke test running per arch before push.
+
 ### Bugs Fixed
 - Fix distroless image failing to load BLS native library under `docker run --read-only`. Issue [#1175][issue_1175], PR [#1176][PR_1176].
 
