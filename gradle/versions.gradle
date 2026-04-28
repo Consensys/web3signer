@@ -152,7 +152,7 @@ dependencyManagement {
     dependency 'com.github.ipld:java-cid:1.4.0'
     dependency 'net.jodah:failsafe:2.4.4'
 
-    dependencySet(group: 'software.amazon.awssdk', version: '2.42.36') {
+    dependencySet(group: 'software.amazon.awssdk', version: '2.42.37') {
       entry 'bom'
       entry 'auth'
       entry 'secretsmanager'
