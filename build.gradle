@@ -37,11 +37,6 @@ plugins {
   id 'org.ajoberstar.grgit' version '5.3.3'
 }
 
-if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
-  throw new GradleException("Java 21 or later is required to build Web3Signer.\n" +
-  "  Detected version ${JavaVersion.current()}")
-}
-
 rootProject.version = calculatePublishVersion()
 def specificVersion = calculateVersion()
 
@@ -108,8 +103,9 @@ allprojects {
   }
 
   java {
-    sourceCompatibility = 21
-    targetCompatibility = 21
+    toolchain {
+      languageVersion = JavaLanguageVersion.of(25)
+    }
   }
 
   repositories {
@@ -136,7 +132,7 @@ allprojects {
         exclude '**/build/**'
       }
       // See gradle.properties for exports/opens flags required by JDK 16 and Google Java Format plugin
-      googleJavaFormat('1.22.0')
+      googleJavaFormat('1.35.0')
       importOrder 'tech.pegasys', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
@@ -225,7 +221,10 @@ allprojects {
       '--add-opens',
       'java.base/java.util=ALL-UNNAMED',
       '--add-opens',
-      'java.base/java.util.concurrent=ALL-UNNAMED'
+      'java.base/java.util.concurrent=ALL-UNNAMED',
+      // Suppress JDK 24+ restricted-method warning emitted by jblst's
+      // System.loadLibrary call. Mirrors applicationDefaultJvmArgs.
+      '--enable-native-access=ALL-UNNAMED'
     ]
     Set toImport = [
       'root.log.level',
@@ -325,7 +324,7 @@ subprojects {
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
     outputs.upToDateWhen { false }
-    jvmArgs = ['-Xms512m', '-Xmx1g']
+    jvmArgs = ['-Xms512m', '-Xmx1g', '--enable-native-access=ALL-UNNAMED']
     useJUnitPlatform()
   }
 

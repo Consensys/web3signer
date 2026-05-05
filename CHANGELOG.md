@@ -1,5 +1,13 @@
 # Changelog
 
+## Upcoming Release
+### Breaking Changes
+- Java 25 is now required to build Web3Signer (previously Java 21).
+- The `.tar.gz` and `.zip` binary distributions now require Java 25 on the host machine to run Web3Signer (previously Java 21).
+- Docker images are unchanged — they have shipped Java 25 since 25.12.0.
+- Contributors no longer need to install JDK 25 manually. The build now uses a Gradle toolchain (`JavaLanguageVersion.of(25)`) with the foojay resolver, so Gradle will auto-detect a locally installed JDK 25 and download Temurin 25 if none is found. The Gradle daemon itself can run on any JDK supported by Gradle 9 (17+).
+
+---
 ## 26.4.2
 ### Features Added
 - Published Docker images are now signed (keyless cosign via Sigstore) and ship with SLSA provenance + SPDX SBOM attestations. See `docker/README.md` for verification commands.
