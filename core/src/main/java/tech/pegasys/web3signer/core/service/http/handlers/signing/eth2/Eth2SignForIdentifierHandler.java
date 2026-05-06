@@ -30,6 +30,10 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdent
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.AttestationData;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.altair.ContributionAndProof;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.altair.SyncCommitteeContribution;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ExecutionPayloadBid;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ExecutionPayloadEnvelope;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.PayloadAttestationData;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ProposerPreferences;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
@@ -320,27 +324,21 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
             validatorRegistration.asInternalValidatorRegistration());
       }
       case EXECUTION_PAYLOAD_BID -> {
-        final tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas
-                .ExecutionPayloadBid
-            bid = body.executionPayloadBid();
+        final ExecutionPayloadBid bid = body.executionPayloadBid();
         checkArgument(bid != null, "executionPayloadBid is required");
         return signingRootUtil.signingRootForSignExecutionPayloadBid(
             bid.asInternalExecutionPayloadBid(eth2Spec.atSlot(bid.getSlot())),
             body.forkInfo().asInternalForkInfo());
       }
       case EXECUTION_PAYLOAD_ENVELOPE -> {
-        final tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas
-                .ExecutionPayloadEnvelope
-            envelope = body.executionPayloadEnvelope();
+        final ExecutionPayloadEnvelope envelope = body.executionPayloadEnvelope();
         checkArgument(envelope != null, "executionPayloadEnvelope is required");
         return signingRootUtil.signingRootForSignExecutionPayloadEnvelope(
             envelope.asInternalExecutionPayloadEnvelope(eth2Spec.atSlot(envelope.getSlot())),
             body.forkInfo().asInternalForkInfo());
       }
       case PAYLOAD_ATTESTATION_MESSAGE -> {
-        final tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas
-                .PayloadAttestationData
-            payloadAttestationData = body.payloadAttestationMessage();
+        final PayloadAttestationData payloadAttestationData = body.payloadAttestationMessage();
         checkArgument(payloadAttestationData != null, "payloadAttestationMessage is required");
         return signingRootUtil.signingRootForSignPayloadAttestationData(
             payloadAttestationData.asInternalPayloadAttestationData(
@@ -348,9 +346,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
             body.forkInfo().asInternalForkInfo());
       }
       case PROPOSER_PREFERENCES -> {
-        final tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas
-                .ProposerPreferences
-            proposerPreferences = body.proposerPreferences();
+        final ProposerPreferences proposerPreferences = body.proposerPreferences();
         checkArgument(proposerPreferences != null, "proposerPreferences is required");
         return signingRootUtil.signingRootForSignProposerPreferences(
             proposerPreferences.asInternalProposerPreferences(

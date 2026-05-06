@@ -16,6 +16,7 @@ import static java.util.Collections.emptyList;
 import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.computeDomain;
 
 import tech.pegasys.teku.infrastructure.async.SafeFuture;
+import tech.pegasys.teku.infrastructure.bytes.Bytes20;
 import tech.pegasys.teku.infrastructure.bytes.Bytes4;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.Spec;
@@ -458,8 +459,7 @@ public class Eth2RequestUtils {
             randomBid.getParentBlockRoot(),
             randomBid.getBlockHash(),
             randomBid.getPrevRandao(),
-            new tech.pegasys.teku.infrastructure.bytes.Bytes20(
-                randomBid.getFeeRecipient().getWrappedBytes()),
+            new Bytes20(randomBid.getFeeRecipient().getWrappedBytes()),
             randomBid.getGasLimit(),
             randomBid.getBuilderIndex(),
             randomBid.getSlot(),
