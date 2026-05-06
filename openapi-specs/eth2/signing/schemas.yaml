@@ -807,8 +807,22 @@ components:
             description: variable-length bytes (RLP-encoded transaction)
         withdrawals:
           type: array
+          description: List of validator withdrawals (Capella+).
           items:
             type: object
+            properties:
+              index:
+                type: string
+                format: uint64
+              validator_index:
+                type: string
+                format: uint64
+              address:
+                type: string
+                description: Bytes20 hexadecimal
+              amount:
+                type: string
+                format: uint64
         blob_gas_used:
           type: string
           format: uint64
