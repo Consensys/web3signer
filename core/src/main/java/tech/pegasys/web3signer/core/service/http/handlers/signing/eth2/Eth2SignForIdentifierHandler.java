@@ -205,12 +205,12 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       blockSlot = UInt64.valueOf(eth2SigningRequestBody.block().slot.bigIntegerValue());
     } else {
       final BlockRequest blockRequest = eth2SigningRequestBody.blockRequest();
-      switch (blockRequest.getVersion()) {
-        case PHASE0, ALTAIR ->
-            blockSlot = UInt64.valueOf(blockRequest.getBeaconBlock().slot.bigIntegerValue());
-        default ->
-            blockSlot = UInt64.valueOf(blockRequest.getBeaconBlockHeader().slot.bigIntegerValue());
-      }
+      blockSlot =
+          switch (blockRequest.getVersion()) {
+            case PHASE0, ALTAIR ->
+                UInt64.valueOf(blockRequest.getBeaconBlock().slot.bigIntegerValue());
+            default -> UInt64.valueOf(blockRequest.getBeaconBlockHeader().slot.bigIntegerValue());
+          };
     }
 
     return blockSlot;
