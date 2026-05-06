@@ -341,6 +341,66 @@ components:
           required:
             - type
             - validator_registration
+    ExecutionPayloadBidSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              enum:
+                - 'EXECUTION_PAYLOAD_BID'
+            execution_payload_bid:
+              "$ref": "#/components/schemas/ExecutionPayloadBid"
+          required:
+            - type
+            - execution_payload_bid
+    ExecutionPayloadEnvelopeSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              enum:
+                - 'EXECUTION_PAYLOAD_ENVELOPE'
+            execution_payload_envelope:
+              "$ref": "#/components/schemas/ExecutionPayloadEnvelope"
+          required:
+            - type
+            - execution_payload_envelope
+    PayloadAttestationMessageSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              enum:
+                - 'PAYLOAD_ATTESTATION_MESSAGE'
+            payload_attestation_message:
+              "$ref": "#/components/schemas/PayloadAttestationData"
+          required:
+            - type
+            - payload_attestation_message
+    ProposerPreferencesSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              enum:
+                - 'PROPOSER_PREFERENCES'
+            proposer_preferences:
+              "$ref": "#/components/schemas/ProposerPreferences"
+          required:
+            - type
+            - proposer_preferences
     RandaoReveal:
       type: "object"
       properties:
@@ -632,6 +692,188 @@ components:
           format: uint64
         pubkey:
           type: string
+    ExecutionPayloadBid:
+      type: object
+      description: >-
+        SSZ container signed by a builder using DOMAIN_BEACON_BUILDER (0x0B000000)
+        in Glamsterdam (ePBS) for proposing an execution payload bid.
+      properties:
+        parent_block_hash:
+          type: string
+          description: Bytes32 hexadecimal
+        parent_block_root:
+          type: string
+          description: Bytes32 hexadecimal
+        block_hash:
+          type: string
+          description: Bytes32 hexadecimal
+        prev_randao:
+          type: string
+          description: Bytes32 hexadecimal
+        fee_recipient:
+          type: string
+          description: Bytes20 hexadecimal
+        gas_limit:
+          type: string
+          format: uint64
+        builder_index:
+          type: string
+          format: uint64
+        slot:
+          type: string
+          format: uint64
+        value:
+          type: string
+          format: uint64
+        execution_payment:
+          type: string
+          format: uint64
+        blob_kzg_commitments:
+          type: array
+          items:
+            type: string
+            description: Bytes48 hexadecimal KZG commitment
+        execution_requests_root:
+          type: string
+          description: Bytes32 hash-tree-root of the execution requests
+    ExecutionPayloadEnvelope:
+      type: object
+      description: >-
+        SSZ container signed by a builder using DOMAIN_BEACON_BUILDER (0x0B000000)
+        in Glamsterdam (ePBS) when revealing the actual execution payload.
+      properties:
+        payload:
+          description: 'Execution payload (Glamsterdam shape, see ExecutionPayloadGloas)'
+          $ref: '#/components/schemas/ExecutionPayloadGloas'
+        execution_requests:
+          description: 'Execution requests (deposits, withdrawals, consolidations)'
+          type: object
+        builder_index:
+          type: string
+          format: uint64
+        beacon_block_root:
+          type: string
+          description: Bytes32 hexadecimal
+    ExecutionPayloadGloas:
+      type: object
+      description: >-
+        Glamsterdam execution payload. Extends the Deneb execution payload with
+        block_access_list and slot_number fields (slot moved from envelope into
+        the payload in ePBS).
+      properties:
+        parent_hash:
+          type: string
+          description: Bytes32 hexadecimal
+        fee_recipient:
+          type: string
+          description: Bytes20 hexadecimal
+        state_root:
+          type: string
+          description: Bytes32 hexadecimal
+        receipts_root:
+          type: string
+          description: Bytes32 hexadecimal
+        logs_bloom:
+          type: string
+          description: Bytes256 hexadecimal
+        prev_randao:
+          type: string
+          description: Bytes32 hexadecimal
+        block_number:
+          type: string
+          format: uint64
+        gas_limit:
+          type: string
+          format: uint64
+        gas_used:
+          type: string
+          format: uint64
+        timestamp:
+          type: string
+          format: uint64
+        extra_data:
+          type: string
+          description: variable-length bytes
+        base_fee_per_gas:
+          type: string
+          description: UInt256 decimal
+        block_hash:
+          type: string
+          description: Bytes32 hexadecimal
+        transactions:
+          type: array
+          items:
+            type: string
+            description: variable-length bytes (RLP-encoded transaction)
+        withdrawals:
+          type: array
+          description: List of validator withdrawals (Capella+).
+          items:
+            type: object
+            properties:
+              index:
+                type: string
+                format: uint64
+              validator_index:
+                type: string
+                format: uint64
+              address:
+                type: string
+                description: Bytes20 hexadecimal
+              amount:
+                type: string
+                format: uint64
+        blob_gas_used:
+          type: string
+          format: uint64
+        excess_blob_gas:
+          type: string
+          format: uint64
+        block_access_list:
+          type: string
+          description: variable-length bytes (block access list)
+        slot_number:
+          type: string
+          format: uint64
+    PayloadAttestationData:
+      type: object
+      description: >-
+        The data component of a PayloadAttestationMessage, signed by a PTC
+        validator using DOMAIN_PTC_ATTESTER (0x0C000000).
+      properties:
+        beacon_block_root:
+          type: string
+          description: Bytes32 hexadecimal
+          example: '0xcf8e0d4e9587369b2301d0790347320302cc0943d5a1884560367e8208d920f2'
+        slot:
+          type: string
+          format: uint64
+          example: '1'
+        payload_present:
+          type: boolean
+          description: Whether the execution payload for this slot is present
+        blob_data_available:
+          type: boolean
+          description: Whether blob data is available for this slot
+    ProposerPreferences:
+      type: object
+      description: >-
+        Container signed by a proposer using DOMAIN_PROPOSER_PREFERENCES
+        (0x0D000000) to advertise their preferences (fee_recipient, gas_limit)
+        for an upcoming proposal slot.
+      properties:
+        proposal_slot:
+          type: string
+          format: uint64
+        validator_index:
+          type: string
+          format: uint64
+        fee_recipient:
+          type: string
+          description: Bytes20 hexadecimal
+        gas_limit:
+          type: string
+          format: uint64
     BeaconBlockSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'
