@@ -36,7 +36,7 @@ jobs:
 
       - name: Determine Web3Signer version
         id: project-version
-        uses: ConsenSys/github-actions/java-get-project-version@b7f698d0ad4db965700c920de5a2c243f0ce0f8c # main
+        uses: ConsenSys/github-actions/java-get-project-version@6b2259b3261b3fd364c32917b75943fce6473c1c # main
 
       # v3
       - name: Authenticate to Google Cloud
