@@ -319,6 +319,44 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
         return signingRootUtil.signingRootForValidatorRegistration(
             validatorRegistration.asInternalValidatorRegistration());
       }
+      case EXECUTION_PAYLOAD_BID -> {
+        final tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas
+                .ExecutionPayloadBid
+            bid = body.executionPayloadBid();
+        checkArgument(bid != null, "executionPayloadBid is required");
+        return signingRootUtil.signingRootForSignExecutionPayloadBid(
+            bid.asInternalExecutionPayloadBid(eth2Spec.atSlot(bid.getSlot())),
+            body.forkInfo().asInternalForkInfo());
+      }
+      case EXECUTION_PAYLOAD_ENVELOPE -> {
+        final tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas
+                .ExecutionPayloadEnvelope
+            envelope = body.executionPayloadEnvelope();
+        checkArgument(envelope != null, "executionPayloadEnvelope is required");
+        return signingRootUtil.signingRootForSignExecutionPayloadEnvelope(
+            envelope.asInternalExecutionPayloadEnvelope(eth2Spec.atSlot(envelope.getSlot())),
+            body.forkInfo().asInternalForkInfo());
+      }
+      case PAYLOAD_ATTESTATION_MESSAGE -> {
+        final tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas
+                .PayloadAttestationData
+            payloadAttestationData = body.payloadAttestationMessage();
+        checkArgument(payloadAttestationData != null, "payloadAttestationMessage is required");
+        return signingRootUtil.signingRootForSignPayloadAttestationData(
+            payloadAttestationData.asInternalPayloadAttestationData(
+                eth2Spec.atSlot(payloadAttestationData.getSlot())),
+            body.forkInfo().asInternalForkInfo());
+      }
+      case PROPOSER_PREFERENCES -> {
+        final tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas
+                .ProposerPreferences
+            proposerPreferences = body.proposerPreferences();
+        checkArgument(proposerPreferences != null, "proposerPreferences is required");
+        return signingRootUtil.signingRootForSignProposerPreferences(
+            proposerPreferences.asInternalProposerPreferences(
+                eth2Spec.atSlot(proposerPreferences.getProposalSlot())),
+            body.forkInfo().asInternalForkInfo());
+      }
       default ->
           throw new IllegalStateException("Signing root unimplemented for type " + body.type());
     }

@@ -27,6 +27,10 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.At
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.BeaconBlock;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.VoluntaryExit;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.altair.ContributionAndProof;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ExecutionPayloadBid;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ExecutionPayloadEnvelope;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.PayloadAttestationData;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ProposerPreferences;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -46,6 +50,10 @@ public final class Eth2SigningRequestBodyBuilder {
   private SyncAggregatorSelectionData syncAggregatorSelectionData;
   private ContributionAndProof contributionAndProof;
   private ValidatorRegistration validatorRegistration;
+  private ExecutionPayloadBid executionPayloadBid;
+  private ExecutionPayloadEnvelope executionPayloadEnvelope;
+  private PayloadAttestationData payloadAttestationMessage;
+  private ProposerPreferences proposerPreferences;
 
   private Eth2SigningRequestBodyBuilder() {}
 
@@ -133,6 +141,30 @@ public final class Eth2SigningRequestBodyBuilder {
     return this;
   }
 
+  public Eth2SigningRequestBodyBuilder withExecutionPayloadBid(
+      ExecutionPayloadBid executionPayloadBid) {
+    this.executionPayloadBid = executionPayloadBid;
+    return this;
+  }
+
+  public Eth2SigningRequestBodyBuilder withExecutionPayloadEnvelope(
+      ExecutionPayloadEnvelope executionPayloadEnvelope) {
+    this.executionPayloadEnvelope = executionPayloadEnvelope;
+    return this;
+  }
+
+  public Eth2SigningRequestBodyBuilder withPayloadAttestationMessage(
+      PayloadAttestationData payloadAttestationMessage) {
+    this.payloadAttestationMessage = payloadAttestationMessage;
+    return this;
+  }
+
+  public Eth2SigningRequestBodyBuilder withProposerPreferences(
+      ProposerPreferences proposerPreferences) {
+    this.proposerPreferences = proposerPreferences;
+    return this;
+  }
+
   public Eth2SigningRequestBody build() {
     return new Eth2SigningRequestBody(
         type,
@@ -149,6 +181,10 @@ public final class Eth2SigningRequestBodyBuilder {
         syncCommitteeMessage,
         syncAggregatorSelectionData,
         contributionAndProof,
-        validatorRegistration);
+        validatorRegistration,
+        executionPayloadBid,
+        executionPayloadEnvelope,
+        payloadAttestationMessage,
+        proposerPreferences);
   }
 }
