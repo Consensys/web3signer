@@ -7,6 +7,9 @@
 - Docker images are unchanged — they have shipped Java 25 since 25.12.0.
 - Contributors no longer need to install JDK 25 manually. The build now uses a Gradle toolchain (`JavaLanguageVersion.of(25)`) with the foojay resolver, so Gradle will auto-detect a locally installed JDK 25 and download Temurin 25 if none is found. The Gradle daemon itself can run on any JDK supported by Gradle 9 (17+).
 
+### Features Added
+- Initial signing support for the upcoming Glamsterdam (GLOAS / ePBS) fork. Adds four new sign types — `EXECUTION_PAYLOAD_BID`, `EXECUTION_PAYLOAD_ENVELOPE`, `PAYLOAD_ATTESTATION_MESSAGE`, `PROPOSER_PREFERENCES` — together with the corresponding OpenAPI schemas (eth2 spec bumped to `2.1.0`). Field shapes track Teku `develop` and are subject to change until the next Teku release pins the schemas.
+
 ---
 ## 26.4.2
 ### Features Added
