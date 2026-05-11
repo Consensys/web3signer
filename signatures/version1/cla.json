@@ -71,6 +71,14 @@
       "created_at": "2026-04-08T14:34:20Z",
       "repoId": 241277774,
       "pullRequestNo": 1161
+    },
+    {
+      "name": "vitali-zevako",
+      "id": 11630328,
+      "comment_id": 4419438357,
+      "created_at": "2026-05-11T09:51:40Z",
+      "repoId": 241277774,
+      "pullRequestNo": 1195
     }
   ]
 }
