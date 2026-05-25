@@ -23,10 +23,12 @@ import static tech.pegasys.web3signer.bls.keystore.model.Pbkdf2PseudoRandomFunct
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.bls.keystore.KeyStore;
+import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
 import tech.pegasys.web3signer.bls.keystore.model.Cipher;
 import tech.pegasys.web3signer.bls.keystore.model.CipherFunction;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.bls.keystore.model.Pbkdf2Param;
+import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SigningMetadataModule;
 
 import java.util.concurrent.ExecutionException;
@@ -55,24 +57,23 @@ class InMemoryValidatorManagerTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  void addsValidatorToMemory()
-      throws JsonProcessingException, ExecutionException, InterruptedException {
+  void addsValidatorToMemory() throws ExecutionException, InterruptedException {
     final Future<Void> futureAddSigner = Mockito.mock(Future.class);
     when(artifactSignerProvider.addSigner(any())).thenReturn(futureAddSigner);
 
-    final String keystoreJson = createKeystoreString();
+    final BlsArtifactSigner signer =
+        new BlsArtifactSigner(BLS_KEY_PAIR, SignerOrigin.FILE_KEYSTORE);
 
     final InMemoryValidatorManager inMemoryValidatorManager =
         new InMemoryValidatorManager(artifactSignerProvider, OBJECT_MAPPER);
-    inMemoryValidatorManager.addValidator(
-        BLS_KEY_PAIR.getPublicKey().toBytesCompressed(), keystoreJson, "password");
+    inMemoryValidatorManager.addValidator(signer);
 
     verify(artifactSignerProvider)
         .addSigner(
             argThat(
-                signer ->
-                    signer instanceof BlsArtifactSigner blsSigner
-                        && signer.getIdentifier().equals(BLS_KEY_PAIR.getPublicKey().toString())
+                s ->
+                    s instanceof BlsArtifactSigner blsSigner
+                        && s.getIdentifier().equals(BLS_KEY_PAIR.getPublicKey().toString())
                         && !blsSigner.isReadOnlyKey()));
     verify(futureAddSigner).get();
   }
@@ -94,21 +95,18 @@ class InMemoryValidatorManagerTest {
   @Test
   @SuppressWarnings("unchecked")
   void addValidatorThrowsExceptionWhenFutureGetFails()
-      throws ExecutionException, InterruptedException, JsonProcessingException {
+      throws ExecutionException, InterruptedException {
     final Future<Void> futureAddSigner = Mockito.mock(Future.class);
     when(artifactSignerProvider.addSigner(any())).thenReturn(futureAddSigner);
     when(futureAddSigner.get())
         .thenThrow(new ExecutionException(new RuntimeException("Test exception")));
 
-    final String keystoreJson = createKeystoreString();
-
+    final BlsArtifactSigner signer =
+        new BlsArtifactSigner(BLS_KEY_PAIR, SignerOrigin.FILE_KEYSTORE);
     final InMemoryValidatorManager inMemoryValidatorManager =
         new InMemoryValidatorManager(artifactSignerProvider, OBJECT_MAPPER);
 
-    assertThatThrownBy(
-            () ->
-                inMemoryValidatorManager.addValidator(
-                    BLS_KEY_PAIR.getPublicKey().toBytesCompressed(), keystoreJson, "password"))
+    assertThatThrownBy(() -> inMemoryValidatorManager.addValidator(signer))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("Unable to add validator to memory");
   }
@@ -133,31 +131,25 @@ class InMemoryValidatorManagerTest {
   }
 
   @Test
-  void addValidatorThrowsExceptionForInvalidKeystoreJson() {
+  void decryptKeystoreThrowsExceptionForInvalidKeystoreJson() {
     final InMemoryValidatorManager inMemoryValidatorManager =
         new InMemoryValidatorManager(artifactSignerProvider, OBJECT_MAPPER);
 
-    assertThatThrownBy(
-            () ->
-                inMemoryValidatorManager.addValidator(
-                    BLS_KEY_PAIR.getPublicKey().toBytesCompressed(), "invalid json", "password"))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Unable to add validator to memory");
+    assertThatThrownBy(() -> inMemoryValidatorManager.decryptKeystore("invalid json", "password"))
+        .isInstanceOf(KeyStoreValidationException.class)
+        .hasMessageContaining("Failed to parse keystore JSON");
   }
 
   @Test
-  void addValidatorThrowsExceptionForIncorrectPassword() throws JsonProcessingException {
+  void decryptKeystoreThrowsExceptionForIncorrectPassword() throws JsonProcessingException {
     final String keystoreJson = createKeystoreString();
 
     final InMemoryValidatorManager inMemoryValidatorManager =
         new InMemoryValidatorManager(artifactSignerProvider, OBJECT_MAPPER);
 
     assertThatThrownBy(
-            () ->
-                inMemoryValidatorManager.addValidator(
-                    BLS_KEY_PAIR.getPublicKey().toBytesCompressed(), keystoreJson, "wrongpassword"))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Unable to add validator to memory");
+            () -> inMemoryValidatorManager.decryptKeystore(keystoreJson, "wrongpassword"))
+        .isInstanceOf(KeyStoreValidationException.class);
   }
 
   private String createKeystoreString() throws JsonProcessingException {

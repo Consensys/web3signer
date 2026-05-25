@@ -21,6 +21,7 @@ import static tech.pegasys.web3signer.signing.KeystoreFileManager.KEYSTORE_PASSW
 import static tech.pegasys.web3signer.signing.KeystoreFileManager.METADATA_YAML_EXTENSION;
 
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
@@ -47,7 +48,6 @@ import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
 
 public class ImportKeystoresHandler implements Handler<RoutingContext> {
 
@@ -157,8 +157,9 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
         .forEach(
             data -> {
               try {
-                final Bytes pubKeyBytes = Bytes.fromHexString(data.pubKey());
-                validatorManager.addValidator(pubKeyBytes, data.keystoreJson(), data.password());
+                validatorManager.addValidator(data.signer());
+                validatorManager.postAddValidator(
+                    data.signer(), data.keystoreJson(), data.password());
               } catch (final Exception e) {
                 // modify the result to error status
                 data.importKeystoreResult().setStatus(ImportKeystoreStatus.ERROR);
@@ -186,22 +187,42 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
             i -> {
               final String jsonKeystoreData = requestBody.getKeystores().get(i);
               final String password = requestBody.getPasswords().get(i);
-              final String pubkey;
+
+              // Decrypt first — the derived pubkey is authoritative
+              final BlsArtifactSigner signer;
               try {
-                pubkey = parseAndNormalizePubKey(jsonKeystoreData);
+                signer = validatorManager.decryptKeystore(jsonKeystoreData, password);
               } catch (final Exception e) {
-                final ImportKeystoreResult errorResult =
-                    new ImportKeystoreResult(
-                        ImportKeystoreStatus.ERROR, "Error parsing pubkey: " + e.getMessage());
-                return new ImportKeystoreData(i, null, null, null, errorResult);
-              }
-              if (activePubKeys.contains(pubkey)) {
                 return new ImportKeystoreData(
-                    i, pubkey, null, null, new ImportKeystoreResult(DUPLICATE, null));
+                    i,
+                    null,
+                    null,
+                    null,
+                    new ImportKeystoreResult(
+                        ImportKeystoreStatus.ERROR,
+                        "Failed to decrypt keystore: " + e.getMessage()));
+              }
+
+              // Validate: JSON "pubkey" hint must match derived key (if present)
+              final String claimedPubKey = parseAndNormalizePubKey(jsonKeystoreData);
+              if (claimedPubKey != null && !signer.getIdentifier().equals(claimedPubKey)) {
+                return new ImportKeystoreData(
+                    i,
+                    null,
+                    null,
+                    null,
+                    new ImportKeystoreResult(
+                        ImportKeystoreStatus.ERROR,
+                        "Keystore pubkey does not match decrypted key"));
+              }
+
+              if (activePubKeys.contains(signer.getIdentifier())) {
+                return new ImportKeystoreData(
+                    i, signer, null, null, new ImportKeystoreResult(DUPLICATE, null));
               }
 
               return new ImportKeystoreData(
-                  i, pubkey, jsonKeystoreData, password, new ImportKeystoreResult(IMPORTED, null));
+                  i, signer, jsonKeystoreData, password, new ImportKeystoreResult(IMPORTED, null));
             })
         .toList();
   }
@@ -210,14 +231,14 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
       final List<ImportKeystoreData> importKeystoreDataList) {
     return importKeystoreDataList.stream()
         .filter(ImportKeystoresHandler::imported)
-        .map(ImportKeystoreData::pubKey)
+        .map(data -> data.signer().getIdentifier())
         .toList();
   }
 
   private static List<String> getFailedValidators(List<ImportKeystoreData> importKeystoreDataList) {
     return importKeystoreDataList.stream()
         .filter(ImportKeystoresHandler::failed)
-        .map(ImportKeystoreData::pubKey)
+        .map(data -> data.signer().getIdentifier())
         .toList();
   }
 
@@ -226,12 +247,18 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   }
 
   private static boolean failed(ImportKeystoreData data) {
+    // signer is null when decryption itself failed — nothing to clean up in that case
     return data.importKeystoreResult().getStatus() == ImportKeystoreStatus.ERROR
-        && data.pubKey() != null;
+        && data.signer() != null;
   }
 
   private static String parseAndNormalizePubKey(final String json) {
-    return IdentifierUtils.normaliseIdentifier(new JsonObject(json).getString("pubkey"));
+    try {
+      final String raw = new JsonObject(json).getString("pubkey");
+      return raw != null ? IdentifierUtils.normaliseIdentifier(raw) : null;
+    } catch (final Exception e) {
+      return null;
+    }
   }
 
   private ImportKeystoresRequestBody parseRequestBody(final RequestBody requestBody)

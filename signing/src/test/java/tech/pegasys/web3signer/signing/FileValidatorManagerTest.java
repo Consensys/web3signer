@@ -25,6 +25,7 @@ import tech.pegasys.web3signer.bls.keystore.model.Cipher;
 import tech.pegasys.web3signer.bls.keystore.model.CipherFunction;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.bls.keystore.model.Pbkdf2Param;
+import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SigningMetadataModule;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 
@@ -64,12 +65,15 @@ class FileValidatorManagerTest {
     when(artifactSignerProvider.addSigner(any())).thenReturn(futureAddSigner);
 
     final String keystoreJson = createKeystoreString();
+    final BlsArtifactSigner signer =
+        new BlsArtifactSigner(BLS_KEY_PAIR, SignerOrigin.FILE_KEYSTORE);
 
     final FileValidatorManager fileValidatorManager =
         new FileValidatorManager(artifactSignerProvider, keystoreFileManager, YAML_MAPPER);
-    fileValidatorManager.addValidator(
-        BLS_KEY_PAIR.getPublicKey().toBytesCompressed(), keystoreJson, "password");
+    fileValidatorManager.addValidator(signer);
+    fileValidatorManager.postAddValidator(signer, keystoreJson, "password");
 
+    verify(artifactSignerProvider).addSigner(eq(signer));
     verify(keystoreFileManager)
         .createKeystoreFiles(
             eq(BLS_KEY_PAIR.getPublicKey().toString()), eq(keystoreJson), eq("password"));

@@ -12,21 +12,13 @@
  */
 package tech.pegasys.web3signer.signing;
 
-import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.BLSSecretKey;
-import tech.pegasys.web3signer.bls.keystore.KeyStore;
 import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
-import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
-import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class FileValidatorManager implements ValidatorManager {
 
@@ -56,30 +48,26 @@ public class FileValidatorManager implements ValidatorManager {
   }
 
   @Override
-  public void addValidator(final Bytes publicKey, final String keystore, final String password) {
+  public void addValidator(final BlsArtifactSigner signer) {
     try {
-      // new keystore to import
-      // 1. validate and decrypt the keystore
-      final BlsArtifactSigner signer = decryptKeystoreAndCreateSigner(keystore, password);
-      // 2. write keystore file to disk
-      keystoreFileManager.createKeystoreFiles(signer.getIdentifier(), keystore, password);
-      // 3. add the new signer to the provider to make it available for signing
       signerProvider.addSigner(signer).get();
-    } catch (IOException
-        | InterruptedException
-        | ExecutionException
-        | KeyStoreValidationException e) {
+    } catch (InterruptedException | ExecutionException e) {
       throw new IllegalStateException("Unable to add validator", e);
     }
   }
 
-  private BlsArtifactSigner decryptKeystoreAndCreateSigner(
-      final String jsonKeystoreData, final String password)
-      throws JsonProcessingException, KeyStoreValidationException {
-    final KeyStoreData keyStoreData = objectMapper.readValue(jsonKeystoreData, KeyStoreData.class);
-    final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
-    final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
-    return new BlsArtifactSigner(
-        keyPair, SignerOrigin.FILE_KEYSTORE, Optional.ofNullable(keyStoreData.getPath()));
+  @Override
+  public void postAddValidator(
+      final BlsArtifactSigner signer, final String jsonKeystoreData, final String password) {
+    try {
+      keystoreFileManager.createKeystoreFiles(signer.getIdentifier(), jsonKeystoreData, password);
+    } catch (IOException | RuntimeException e) {
+      throw new KeyStoreValidationException("Unable to create keystore file", e);
+    }
+  }
+
+  @Override
+  public ObjectMapper getJsonMapper() {
+    return this.objectMapper;
   }
 }

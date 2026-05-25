@@ -12,11 +12,13 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
 import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Jdbi;
 
@@ -50,14 +52,30 @@ public class DbValidatorManager implements ValidatorManager {
   }
 
   @Override
-  public void addValidator(final Bytes publicKey, final String keystore, final String password) {
+  public void addValidator(final BlsArtifactSigner signer) {
+    final Bytes publicKey = Bytes.fromHexString(signer.getIdentifier());
     jdbi.useTransaction(
         handle -> {
-          validatorManager.addValidator(publicKey, keystore, password);
+          validatorManager.addValidator(signer); // filemanager|inmemory
           registeredValidators.registerValidators(List.of(publicKey));
           final int validatorId = registeredValidators.mustGetValidatorIdForPublicKey(publicKey);
           DbLocker.lockAllForValidator(handle, validatorId);
           validatorsDao.setEnabled(handle, validatorId, true);
         });
+  }
+
+  @Override
+  public void postAddValidator(BlsArtifactSigner signer, String jsonKeystoreData, String password) {
+    validatorManager.postAddValidator(signer, jsonKeystoreData, password);
+  }
+
+  @Override
+  public BlsArtifactSigner decryptKeystore(String jsonKeystoreData, String password) {
+    return validatorManager.decryptKeystore(jsonKeystoreData, password);
+  }
+
+  @Override
+  public ObjectMapper getJsonMapper() {
+    return validatorManager.getJsonMapper();
   }
 }

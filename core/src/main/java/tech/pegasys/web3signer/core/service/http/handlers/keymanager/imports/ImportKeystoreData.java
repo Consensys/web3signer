@@ -12,9 +12,11 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports;
 
+import tech.pegasys.web3signer.signing.BlsArtifactSigner;
+
 public record ImportKeystoreData(
     int index,
-    String pubKey,
+    BlsArtifactSigner signer,
     String keystoreJson,
     String password,
     ImportKeystoreResult importKeystoreResult)
