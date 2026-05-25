@@ -48,7 +48,10 @@ public class InMemoryValidatorManager implements ValidatorManager {
       LOG.info(
           "Validator removed from memory (no files deleted): {}",
           publicKey.toHexString().toLowerCase(Locale.ROOT));
-    } catch (InterruptedException | ExecutionException e) {
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IllegalStateException("Unable to delete validator from memory", e);
+    } catch (ExecutionException e) {
       throw new IllegalStateException("Unable to delete validator from memory", e);
     }
   }
@@ -60,7 +63,10 @@ public class InMemoryValidatorManager implements ValidatorManager {
       LOG.info(
           "Validator added to memory only (no files written): {}",
           signer.getIdentifier().toLowerCase(Locale.ROOT));
-    } catch (InterruptedException | ExecutionException e) {
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IllegalStateException("Unable to add validator to memory", e);
+    } catch (ExecutionException e) {
       throw new IllegalStateException("Unable to add validator to memory", e);
     }
   }

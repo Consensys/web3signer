@@ -42,7 +42,10 @@ public class FileValidatorManager implements ValidatorManager {
       signerProvider.removeSigner(publicKey.toHexString()).get();
       // Then, delete the corresponding keystore files
       keystoreFileManager.deleteKeystoreFiles(publicKey.toHexString());
-    } catch (IOException | InterruptedException | ExecutionException e) {
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IllegalStateException("Unable to delete validator", e);
+    } catch (IOException | ExecutionException e) {
       throw new IllegalStateException("Unable to delete validator", e);
     }
   }
@@ -51,7 +54,10 @@ public class FileValidatorManager implements ValidatorManager {
   public void addValidator(final BlsArtifactSigner signer) {
     try {
       signerProvider.addSigner(signer).get();
-    } catch (InterruptedException | ExecutionException e) {
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IllegalStateException("Unable to add validator", e);
+    } catch (ExecutionException e) {
       throw new IllegalStateException("Unable to add validator", e);
     }
   }

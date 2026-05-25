@@ -256,7 +256,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
     try {
       final String raw = new JsonObject(json).getString("pubkey");
       return raw != null ? IdentifierUtils.normaliseIdentifier(raw) : null;
-    } catch (final Exception e) {
+    } catch (final Exception _) {
       return null;
     }
   }
