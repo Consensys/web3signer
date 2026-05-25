@@ -70,8 +70,8 @@ class FileValidatorManagerTest {
 
     final FileValidatorManager fileValidatorManager =
         new FileValidatorManager(artifactSignerProvider, keystoreFileManager, YAML_MAPPER);
-    fileValidatorManager.addValidator(signer);
     fileValidatorManager.preAddValidator(signer, keystoreJson, "password");
+    fileValidatorManager.addValidator(signer);
 
     verify(artifactSignerProvider).addSigner(eq(signer));
     verify(keystoreFileManager)
