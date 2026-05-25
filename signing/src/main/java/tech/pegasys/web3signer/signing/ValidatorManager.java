@@ -19,6 +19,8 @@ import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 
+import java.util.Optional;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
@@ -31,7 +33,7 @@ public interface ValidatorManager {
 
   void addValidator(final BlsArtifactSigner signer);
 
-  void postAddValidator(
+  void preAddValidator(
       final BlsArtifactSigner signer, final String jsonKeystoreData, final String password);
 
   default BlsArtifactSigner decryptKeystore(final String jsonKeystoreData, final String password) {
@@ -41,7 +43,8 @@ public interface ValidatorManager {
       final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
 
-      return new BlsArtifactSigner(keyPair, SignerOrigin.FILE_KEYSTORE);
+      return new BlsArtifactSigner(
+          keyPair, SignerOrigin.FILE_KEYSTORE, Optional.ofNullable(keyStoreData.getPath()));
     } catch (final JsonProcessingException e) {
       throw new KeyStoreValidationException("Failed to parse keystore JSON", e);
     }

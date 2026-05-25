@@ -72,7 +72,7 @@ public class InMemoryValidatorManager implements ValidatorManager {
   }
 
   @Override
-  public void postAddValidator(
+  public void preAddValidator(
       final BlsArtifactSigner signer, final String jsonKeystoreData, final String password) {
     // do nothing
   }

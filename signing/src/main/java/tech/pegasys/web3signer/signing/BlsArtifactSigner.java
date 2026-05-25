@@ -27,19 +27,19 @@ public class BlsArtifactSigner implements ArtifactSigner {
 
   private final BLSKeyPair keyPair;
   private final SignerOrigin origin;
-  private final Optional<String> path;
+  private final Optional<String> derivationPath;
 
   public BlsArtifactSigner(
-      final BLSKeyPair keyPair, final SignerOrigin origin, final Optional<String> path) {
+      final BLSKeyPair keyPair, final SignerOrigin origin, final Optional<String> derivationPath) {
     this.keyPair = keyPair;
     this.origin = origin;
-    this.path = path;
+    this.derivationPath = derivationPath;
   }
 
   public BlsArtifactSigner(final BLSKeyPair keyPair, final SignerOrigin origin) {
     this.keyPair = keyPair;
     this.origin = origin;
-    this.path = Optional.empty();
+    this.derivationPath = Optional.empty();
   }
 
   @Override
@@ -57,8 +57,8 @@ public class BlsArtifactSigner implements ArtifactSigner {
     return KeyType.BLS;
   }
 
-  public Optional<String> getPath() {
-    return path;
+  public Optional<String> getDerivationPath() {
+    return derivationPath;
   }
 
   // only signers loaded from key store files are editable, everything else is read only

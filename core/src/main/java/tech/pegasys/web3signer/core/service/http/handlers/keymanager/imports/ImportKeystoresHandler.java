@@ -157,9 +157,9 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
         .forEach(
             data -> {
               try {
-                validatorManager.addValidator(data.signer());
-                validatorManager.postAddValidator(
+                validatorManager.preAddValidator(
                     data.signer(), data.keystoreJson(), data.password());
+                validatorManager.addValidator(data.signer());
               } catch (final Exception e) {
                 // modify the result to error status
                 data.importKeystoreResult().setStatus(ImportKeystoreStatus.ERROR);

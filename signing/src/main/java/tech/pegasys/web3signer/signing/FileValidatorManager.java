@@ -63,7 +63,7 @@ public class FileValidatorManager implements ValidatorManager {
   }
 
   @Override
-  public void postAddValidator(
+  public void preAddValidator(
       final BlsArtifactSigner signer, final String jsonKeystoreData, final String password) {
     try {
       keystoreFileManager.createKeystoreFiles(signer.getIdentifier(), jsonKeystoreData, password);

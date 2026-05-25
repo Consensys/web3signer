@@ -65,8 +65,8 @@ public class DbValidatorManager implements ValidatorManager {
   }
 
   @Override
-  public void postAddValidator(BlsArtifactSigner signer, String jsonKeystoreData, String password) {
-    validatorManager.postAddValidator(signer, jsonKeystoreData, password);
+  public void preAddValidator(BlsArtifactSigner signer, String jsonKeystoreData, String password) {
+    validatorManager.preAddValidator(signer, jsonKeystoreData, password);
   }
 
   @Override
