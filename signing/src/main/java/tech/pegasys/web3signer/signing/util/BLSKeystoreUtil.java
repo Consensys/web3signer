@@ -27,8 +27,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-/// Utility class to decrypt keystores
-public class BLSKeystoreUtil {
+/// Utility class for decrypting keystores
+public final class BLSKeystoreUtil {
+  private BLSKeystoreUtil() {}
+
   public static BlsArtifactSigner decryptKeystore(
       final ObjectMapper jsonMapper, final String jsonKeystoreData, final String password) {
     try {
@@ -36,16 +38,22 @@ public class BLSKeystoreUtil {
       final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
 
-      // validate pubKey (if not null) from keyStoreData matches with decrypted pubkey
-      if (keyStoreData.getPubkey() != null) {
-        if (keyPair.getPublicKey().toBytesCompressed().compareTo(keyStoreData.getPubkey()) != 0) {
-          throw new KeyStoreValidationException("Keystore pubkey does not match decrypted key");
-        }
+      // validate pubKey (if present) - both are Bytes, use compareTo directly
+      final Bytes claimedPubkey = keyStoreData.getPubkey();
+      if (claimedPubkey != null) {
+        throwIfPubkeyMismatch(keyPair.getPublicKey().toBytesCompressed(), claimedPubkey);
       }
       return new BlsArtifactSigner(
           keyPair, SignerOrigin.FILE_KEYSTORE, Optional.ofNullable(keyStoreData.getPath()));
     } catch (final JsonProcessingException e) {
       throw new KeyStoreValidationException("Failed to parse keystore JSON", e);
+    }
+  }
+
+  private static void throwIfPubkeyMismatch(
+      final Bytes decryptedPublicKey, final Bytes claimedPubkey) {
+    if (decryptedPublicKey.compareTo(claimedPubkey) != 0) {
+      throw new KeyStoreValidationException("Keystore pubkey does not match decrypted key");
     }
   }
 }
