@@ -33,27 +33,29 @@ public final class BLSKeystoreUtil {
 
   public static BlsArtifactSigner decryptKeystore(
       final ObjectMapper jsonMapper, final String jsonKeystoreData, final String password) {
-    try {
-      final KeyStoreData keyStoreData = jsonMapper.readValue(jsonKeystoreData, KeyStoreData.class);
-      final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
-      final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
+    final KeyStoreData keyStoreData = parseKeystoreJson(jsonMapper, jsonKeystoreData);
 
-      // validate pubKey (if present) - both are Bytes, use compareTo directly
-      final Bytes claimedPubkey = keyStoreData.getPubkey();
-      if (claimedPubkey != null) {
-        throwIfPubkeyMismatch(keyPair.getPublicKey().toBytesCompressed(), claimedPubkey);
-      }
-      return new BlsArtifactSigner(
-          keyPair, SignerOrigin.FILE_KEYSTORE, Optional.ofNullable(keyStoreData.getPath()));
-    } catch (final JsonProcessingException e) {
-      throw new KeyStoreValidationException("Failed to parse keystore JSON", e);
+    final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
+
+    final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
+
+    final Bytes claimedPubkey = keyStoreData.pubkey();
+    // Our keystore parser requires pubKey to be present in the file, however, it is only meant to
+    // act as a hint. `claimedPubkey != null` is just a defensive check.
+    if (claimedPubkey != null
+        && !claimedPubkey.equals(keyPair.getPublicKey().toBytesCompressed())) {
+      throw new KeyStoreValidationException("Keystore pubkey does not match decrypted key");
     }
+
+    return new BlsArtifactSigner(
+        keyPair, SignerOrigin.FILE_KEYSTORE, Optional.ofNullable(keyStoreData.path()));
   }
 
-  private static void throwIfPubkeyMismatch(
-      final Bytes decryptedPublicKey, final Bytes claimedPubkey) {
-    if (decryptedPublicKey.compareTo(claimedPubkey) != 0) {
-      throw new KeyStoreValidationException("Keystore pubkey does not match decrypted key");
+  private static KeyStoreData parseKeystoreJson(ObjectMapper jsonMapper, String jsonKeystoreData) {
+    try {
+      return jsonMapper.readValue(jsonKeystoreData, KeyStoreData.class);
+    } catch (final JsonProcessingException e) {
+      throw new KeyStoreValidationException("Failed to parse keystore JSON", e);
     }
   }
 }

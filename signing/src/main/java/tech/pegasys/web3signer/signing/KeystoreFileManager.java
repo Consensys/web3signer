@@ -108,12 +108,10 @@ public class KeystoreFileManager {
                         final Path passwordFile = info.getKeystorePasswordFile();
                         final KeyStoreData keyStoreData =
                             KeyStoreLoader.loadFromFile(keystoreFile.toUri());
+                        // TODO: decodedPubKey can be incorrect
                         final String decodedPubKey =
                             IdentifierUtils.normaliseIdentifier(
-                                keyStoreData
-                                    .getPubkey()
-                                    .appendHexTo(new StringBuilder())
-                                    .toString());
+                                keyStoreData.pubkey().appendHexTo(new StringBuilder()).toString());
                         return new AbstractMap.SimpleEntry<>(
                             decodedPubKey, List.of(path, keystoreFile, passwordFile));
                       } else {

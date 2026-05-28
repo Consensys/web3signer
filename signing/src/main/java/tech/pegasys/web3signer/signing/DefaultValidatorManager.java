@@ -18,10 +18,10 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.tuweni.bytes.Bytes;
 
-/// Default [`ValidatorManager`] implementation that supports both file-backed and in-memory-only
+/// Default `ValidatorManager` implementation that supports both file-backed and in-memory-only
 /// validator management.
 ///
-/// When a [`KeystoreFileManager`] is supplied, validators are persisted to disk before being
+/// When a `KeystoreFileManager` is supplied, validators are persisted to disk before being
 /// activated in memory, so they survive a restart. When no file manager is supplied (i.e.
 /// `skipKeystoreStorage` is enabled), validators exist only in memory and are lost when
 /// Web3Signer stops.

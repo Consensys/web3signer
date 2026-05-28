@@ -62,8 +62,7 @@ class KeyStoreTest {
   private static final String SCRYPT_KEYSTORE_RESOURCE = "scryptTestVector.json";
   private static final String SCRYPT_EXTRA_FIELD_KEYSTORE_RESOURCE =
       "scryptExtraFieldTestVector.json";
-  private static final String SCRYPT_MISSING_UUID_PATH_KEYSTORE_RESOURCE =
-      "scryptTestVectorWithMissingPathAndUUID.json";
+
   private static final String PBKDF2_KEYSTORE_RESOURCE = "pbkdf2TestVector.json";
   private static final String MISSING_SECTION_KEYSTORE_RESOURCE =
       "missingKdfSectionTestVector.json";
@@ -75,6 +74,11 @@ class KeyStoreTest {
   private static final String UNSUPPORTED_PBKDF2_PRF_FUNCTION_JSON = "unsupportedPBKDF2Prf.json";
   private static final String UNSUPPORTED_DKLEN_FUNCTION_JSON = "unsupportedDkLen.json";
   private static final Cipher CIPHER = new Cipher(AES_IV_PARAM);
+
+  private static final String MISSING_CRYPTO = "missingCrypto.json";
+  private static final String MISSING_PATH = "missingPath.json";
+  private static final String MISSING_UUID = "missingUUID.json";
+  private static final String MISSING_VERSION = "missingVersion.json";
 
   public static Stream<Arguments> encryptWithKdfAndCipherArguments() {
     // KdfParam, expected checksum, expected encrypted cipher message
@@ -100,7 +104,7 @@ class KeyStoreTest {
         Arguments.of(
             "Unsupported version",
             UNSUPPORTED_VERSION_JSON_RESOURCE,
-            "The KeyStore version 3 is not supported"),
+            "KeyStore version not supported: 3"),
         Arguments.of(
             "Unsupported checksum fn",
             UNSUPPORTED_CHECKSUM_FUNCTION_JSON,
@@ -120,7 +124,25 @@ class KeyStoreTest {
         Arguments.of(
             "Unsupported dklen fn",
             UNSUPPORTED_DKLEN_FUNCTION_JSON,
-            "Generated key length parameter dklen must be >= 32."));
+            "Generated key length parameter dklen must be >= 32."),
+
+        // required attributes
+        Arguments.of(
+            "Missing crypto",
+            MISSING_CRYPTO,
+            "Invalid KeyStore: Missing required creator property 'crypto'"),
+        Arguments.of(
+            "Missing path",
+            MISSING_PATH,
+            "Invalid KeyStore: Missing required creator property 'path'"),
+        Arguments.of(
+            "Missing uuid",
+            MISSING_UUID,
+            "Invalid KeyStore: Missing required creator property 'uuid'"),
+        Arguments.of(
+            "Missing version",
+            MISSING_VERSION,
+            "Invalid KeyStore: Missing required creator property 'version'"));
   }
 
   @ParameterizedTest(name = "{index} - Load And Decrypt Keystore with {0}")
@@ -128,8 +150,7 @@ class KeyStoreTest {
       strings = {
         SCRYPT_KEYSTORE_RESOURCE,
         PBKDF2_KEYSTORE_RESOURCE,
-        SCRYPT_EXTRA_FIELD_KEYSTORE_RESOURCE,
-        SCRYPT_MISSING_UUID_PATH_KEYSTORE_RESOURCE
+        SCRYPT_EXTRA_FIELD_KEYSTORE_RESOURCE
       })
   void loadAndDecryptKeystore(final String resourcePath) {
     final KeyStoreData keyStoreData = loadKeyStoreFromResource(resourcePath);
@@ -148,7 +169,7 @@ class KeyStoreTest {
   void shouldLoadKeystoreDataFromStringInput() throws IOException {
     assertThat(loadKeystoreFromString(SCRYPT_KEYSTORE_RESOURCE))
         .isNotNull()
-        .extracting(KeyStoreData::getPubkey)
+        .extracting(KeyStoreData::pubkey)
         .isEqualTo(BLS_PUB_KEY);
   }
 
@@ -158,11 +179,11 @@ class KeyStoreTest {
       final KdfParam kdfParam, final Bytes expectedChecksum, final Bytes encryptedCipherMessage) {
     final KeyStoreData keyStoreData =
         KeyStore.encrypt(BLS_PRIVATE_KEY, BLS_PUB_KEY, PASSWORD, "", kdfParam, CIPHER);
-    assertThat(keyStoreData.getCrypto().getChecksum().getMessage()).isEqualTo(expectedChecksum);
-    assertThat(keyStoreData.getCrypto().getCipher().getMessage()).isEqualTo(encryptedCipherMessage);
-    assertThat(keyStoreData.getVersion()).isEqualTo(KeyStoreData.KEYSTORE_VERSION);
-    assertThat(keyStoreData.getPubkey()).isEqualTo(BLS_PUB_KEY);
-    assertThat(keyStoreData.getUuid()).isNotNull();
+    assertThat(keyStoreData.crypto().getChecksum().getMessage()).isEqualTo(expectedChecksum);
+    assertThat(keyStoreData.crypto().getCipher().getMessage()).isEqualTo(encryptedCipherMessage);
+    assertThat(keyStoreData.version()).isEqualTo(KeyStoreData.KEYSTORE_VERSION);
+    assertThat(keyStoreData.pubkey()).isEqualTo(BLS_PUB_KEY);
+    assertThat(keyStoreData.uuid()).isNotNull();
   }
 
   @ParameterizedTest(name = "{index} - Encrypt and Reload with KdfParam {0}")
@@ -182,10 +203,9 @@ class KeyStoreTest {
 
     // reload it back
     final KeyStoreData loadedKeyStore = KeyStoreLoader.loadFromFile(tempKeyStoreFile.toUri());
-    assertThat(loadedKeyStore.getUuid()).isEqualByComparingTo(keyStoreData.getUuid());
-    assertThat(loadedKeyStore.getCrypto().getChecksum().getMessage()).isEqualTo(expectedChecksum);
-    assertThat(loadedKeyStore.getCrypto().getCipher().getMessage())
-        .isEqualTo(encryptedCipherMessage);
+    assertThat(loadedKeyStore.uuid()).isEqualByComparingTo(keyStoreData.uuid());
+    assertThat(loadedKeyStore.crypto().getChecksum().getMessage()).isEqualTo(expectedChecksum);
+    assertThat(loadedKeyStore.crypto().getCipher().getMessage()).isEqualTo(encryptedCipherMessage);
   }
 
   @ParameterizedTest(name = "{0} should result in an error")

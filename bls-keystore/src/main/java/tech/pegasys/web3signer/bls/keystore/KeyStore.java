@@ -104,7 +104,7 @@ public class KeyStore {
     checkNotNull(keyStoreData, "KeyStoreData cannot be null");
 
     final Bytes decryptionKey =
-        keyStoreData.getCrypto().getKdf().getParam().generateDecryptionKey(password);
+        keyStoreData.crypto().getKdf().getParam().generateDecryptionKey(password);
     return validateChecksum(decryptionKey, keyStoreData);
   }
 
@@ -120,14 +120,14 @@ public class KeyStore {
     checkNotNull(keyStoreData, "KeyStoreData cannot be null");
 
     final Bytes decryptionKey =
-        keyStoreData.getCrypto().getKdf().getParam().generateDecryptionKey(password);
+        keyStoreData.crypto().getKdf().getParam().generateDecryptionKey(password);
 
     if (!validateChecksum(decryptionKey, keyStoreData)) {
       throw new KeyStoreValidationException(
           "Failed to decrypt KeyStore, checksum validation failed.");
     }
 
-    final Cipher cipher = keyStoreData.getCrypto().getCipher();
+    final Cipher cipher = keyStoreData.crypto().getCipher();
     final byte[] encryptedMessage = cipher.getMessage().toArrayUnsafe();
     return applyCipherFunction(decryptionKey, cipher, false, encryptedMessage);
   }
@@ -135,8 +135,8 @@ public class KeyStore {
   private static boolean validateChecksum(
       final Bytes decryptionKey, final KeyStoreData keyStoreData) {
     final Bytes checksum =
-        calculateSHA256Checksum(decryptionKey, keyStoreData.getCrypto().getCipher().getMessage());
-    return Objects.equals(checksum, keyStoreData.getCrypto().getChecksum().getMessage());
+        calculateSHA256Checksum(decryptionKey, keyStoreData.crypto().getCipher().getMessage());
+    return Objects.equals(checksum, keyStoreData.crypto().getChecksum().getMessage());
   }
 
   private static Bytes calculateSHA256Checksum(
