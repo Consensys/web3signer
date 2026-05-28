@@ -24,15 +24,15 @@ public record KeystoreFileRecord(String json, String password, String fileNameId
 
   public KeystoreFileRecord {
     Objects.requireNonNull(json, "Keystore json must not be null");
-    Objects.requireNonNull(json, "Keystore password must not be null");
-    Objects.requireNonNull(json, "Keystore fileNameIdentifier must not be null");
+    Objects.requireNonNull(password, "Keystore password must not be null");
+    Objects.requireNonNull(fileNameIdentifier, "Keystore fileNameIdentifier must not be null");
   }
 
-  public String yamlFileName() {
+  public String metadataFileName() {
     return fileNameIdentifier + YAML_EXTENSION;
   }
 
-  public String jsonFileName() {
+  public String keystoreFileName() {
     return fileNameIdentifier + JSON_EXTENSION;
   }
 

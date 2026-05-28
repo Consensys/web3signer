@@ -84,4 +84,33 @@ class KeystoreFileManagerTest {
 
     assertThat(parentDir.resolve("filename.json")).hasContent(TEST_JSON);
   }
+
+  @Test
+  void deleteKeystoreFilesRemovesAllThreeFiles(@TempDir final Path parentDir) throws Exception {
+    final KeystoreFileManager manager = new KeystoreFileManager(parentDir, YAML_MAPPER);
+    manager.createKeystoreFiles(FILE_RECORD);
+
+    assertThat(parentDir.resolve("filename.yaml")).exists();
+    assertThat(parentDir.resolve("filename.json")).exists();
+    assertThat(parentDir.resolve("filename.password")).exists();
+
+    manager.deleteKeystoreFiles("filename");
+
+    assertThat(parentDir.resolve("filename.yaml")).doesNotExist();
+    assertThat(parentDir.resolve("filename.json")).doesNotExist();
+    assertThat(parentDir.resolve("filename.password")).doesNotExist();
+  }
+
+  @Test
+  void deleteKeystoreFilesWithUnknownPubkeyDoesNothing(@TempDir final Path parentDir)
+      throws Exception {
+    final KeystoreFileManager manager = new KeystoreFileManager(parentDir, YAML_MAPPER);
+    manager.createKeystoreFiles(FILE_RECORD);
+
+    manager.deleteKeystoreFiles("unknown");
+
+    assertThat(parentDir.resolve("filename.yaml")).exists();
+    assertThat(parentDir.resolve("filename.json")).exists();
+    assertThat(parentDir.resolve("filename.password")).exists();
+  }
 }

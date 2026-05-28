@@ -12,27 +12,16 @@
  */
 package tech.pegasys.web3signer.signing;
 
-import tech.pegasys.web3signer.bls.keystore.KeyStoreLoader;
-import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.signing.config.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
-import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -49,11 +38,12 @@ public class KeystoreFileManager {
   }
 
   public void deleteKeystoreFiles(final String pubkey) throws IOException {
-    final Optional<List<Path>> keystoreConfigFiles = findKeystoreConfigFiles(pubkey);
-    if (keystoreConfigFiles.isPresent()) {
-      for (final Path path : keystoreConfigFiles.get()) {
-        Files.deleteIfExists(path);
-      }
+    final Optional<KeystoreFiles> keystoreFiles = findKeystoreConfigFiles(pubkey);
+    if (keystoreFiles.isPresent()) {
+      final KeystoreFiles files = keystoreFiles.get();
+      Files.deleteIfExists(files.yamlFile());
+      Files.deleteIfExists(files.keystoreFile());
+      Files.deleteIfExists(files.passwordFile());
     }
   }
 
@@ -64,8 +54,8 @@ public class KeystoreFileManager {
    * @throws IOException In case file write operations fail
    */
   public void createKeystoreFiles(final KeystoreFileRecord fileRecord) throws IOException {
-    final Path metadataYamlFile = keystorePath.resolve(fileRecord.yamlFileName());
-    final Path keystoreJsonFile = keystorePath.resolve(fileRecord.jsonFileName());
+    final Path metadataYamlFile = keystorePath.resolve(fileRecord.metadataFileName());
+    final Path keystoreJsonFile = keystorePath.resolve(fileRecord.keystoreFileName());
     final Path keystorePasswordFile = keystorePath.resolve(fileRecord.passwordFileName());
 
     final FileKeyStoreMetadata data =
@@ -86,47 +76,23 @@ public class KeystoreFileManager {
     }
   }
 
-  private Optional<List<Path>> findKeystoreConfigFiles(final String pubkey) throws IOException {
-    // find keystore files and map them to their pubkeys
-    try (final Stream<Path> fileStream = Files.list(keystorePath)) {
-      Map<String, List<Path>> map =
-          fileStream
-              .filter(
-                  path ->
-                      FilenameUtils.getExtension(path.toString())
-                          .toLowerCase(Locale.ROOT)
-                          .endsWith("yaml"))
-              .map(
-                  path -> {
-                    try {
-                      final String fileContent = Files.readString(path, StandardCharsets.UTF_8);
-                      final SigningMetadata metaDataInfo =
-                          yamlMapper.readValue(fileContent, SigningMetadata.class);
-                      if (metaDataInfo.getKeyType() == KeyType.BLS
-                          && metaDataInfo instanceof FileKeyStoreMetadata info) {
-                        final Path keystoreFile = info.getKeystoreFile();
-                        final Path passwordFile = info.getKeystorePasswordFile();
-                        final KeyStoreData keyStoreData =
-                            KeyStoreLoader.loadFromFile(keystoreFile.toUri());
-                        // TODO: decodedPubKey can be incorrect
-                        final String decodedPubKey =
-                            IdentifierUtils.normaliseIdentifier(
-                                keyStoreData.pubkey().appendHexTo(new StringBuilder()).toString());
-                        return new AbstractMap.SimpleEntry<>(
-                            decodedPubKey, List.of(path, keystoreFile, passwordFile));
-                      } else {
-                        return null;
-                      }
-                    } catch (final Exception e) {
-                      LOG.error("Error reading config file: {}", path, e);
-                      return null;
-                    }
-                  })
-              .filter(Objects::nonNull)
-              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-      // return the matching file
-      return Optional.ofNullable(map.get(pubkey));
+  private Optional<KeystoreFiles> findKeystoreConfigFiles(final String pubkey) throws IOException {
+    final Path yamlFile = keystorePath.resolve(pubkey + ".yaml");
+    if (!Files.exists(yamlFile)) {
+      return Optional.empty();
     }
+    try {
+      final String fileContent = Files.readString(yamlFile, StandardCharsets.UTF_8);
+      final SigningMetadata metaDataInfo = yamlMapper.readValue(fileContent, SigningMetadata.class);
+      if (metaDataInfo.getKeyType() == KeyType.BLS
+          && metaDataInfo instanceof FileKeyStoreMetadata info) {
+        return Optional.of(
+            new KeystoreFiles(yamlFile, info.getKeystoreFile(), info.getKeystorePasswordFile()));
+      }
+    } catch (final Exception e) {
+      LOG.error("Error reading config file: {}", yamlFile, e);
+    }
+    return Optional.empty();
   }
 
   private void createYamlFile(final Path filePath, final FileKeyStoreMetadata signingMetadata)
@@ -142,4 +108,6 @@ public class KeystoreFileManager {
       LOG.warn("Unable to delete file due to {}", e.getMessage());
     }
   }
+
+  private record KeystoreFiles(Path yamlFile, Path keystoreFile, Path passwordFile) {}
 }
