@@ -21,6 +21,8 @@ public interface ValidatorManager {
   void deleteValidator(final Bytes publicKey);
 
   /// Add validator from a decrypted signer
-  /// @param signer instance of BLSArtifactSigner
+  /// @param signer instance of BlsArtifactSigner
+  /// @param keystoreFileRecord keystore file record associated with manager. May be `null` for
+  /// managers that manages validators only in-memory
   void addValidator(final BlsArtifactSigner signer, final KeystoreFileRecord keystoreFileRecord);
 }

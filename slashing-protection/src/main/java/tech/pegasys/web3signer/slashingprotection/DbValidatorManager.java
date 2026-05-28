@@ -57,7 +57,7 @@ public class DbValidatorManager implements ValidatorManager {
     final Bytes publicKey = Bytes.fromHexString(signer.getIdentifier());
     jdbi.useTransaction(
         handle -> {
-          validatorManager.addValidator(signer, keystoreFileRecord); // filemanager|inmemory
+          validatorManager.addValidator(signer, keystoreFileRecord);
           registeredValidators.registerValidators(List.of(publicKey));
           final int validatorId = registeredValidators.mustGetValidatorIdForPublicKey(publicKey);
           DbLocker.lockAllForValidator(handle, validatorId);
