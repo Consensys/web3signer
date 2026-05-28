@@ -27,29 +27,25 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class KeystoreFileManagerTest {
-  private static YAMLMapper YAML_MAPPER = YamlMapperFactory.createYamlMapper();
+  private static final YAMLMapper YAML_MAPPER = YamlMapperFactory.createYamlMapper();
+  private static final String TEST_JSON = "{\"test\":true}";
+  private static final KeystoreFileRecord FILE_RECORD =
+      new KeystoreFileRecord(TEST_JSON, "password", "filename");
 
   @Test
   void configurationFilesAreCreated(@TempDir final Path parentDir) throws Exception {
-    new KeystoreFileManager(parentDir, YAML_MAPPER)
-        .createKeystoreFiles("filename", "{\"test\":true}", "password");
+    new KeystoreFileManager(parentDir, YAML_MAPPER).createKeystoreFiles(FILE_RECORD);
 
-    final Path metadataYamlFile = parentDir.resolve("filename.yaml");
-    final Path keystoreJsonFile = parentDir.resolve("filename.json");
-    final Path keystorePasswordFile = parentDir.resolve("filename.password");
-
-    assertThat(metadataYamlFile).exists();
-    assertThat(keystoreJsonFile).exists();
-    assertThat(keystorePasswordFile).exists();
+    assertThat(parentDir.resolve("filename.yaml")).exists();
+    assertThat(parentDir.resolve("filename.json")).exists();
+    assertThat(parentDir.resolve("filename.password")).exists();
   }
 
   @Test
   void yamlContentIsValidFileKeyStoreMetadata(@TempDir final Path parentDir) throws Exception {
-    new KeystoreFileManager(parentDir, YAML_MAPPER)
-        .createKeystoreFiles("filename", "{\"test\":true}", "password");
+    new KeystoreFileManager(parentDir, YAML_MAPPER).createKeystoreFiles(FILE_RECORD);
 
     final Path metadataYamlFile = parentDir.resolve("filename.yaml");
-
     assertThat(metadataYamlFile).exists();
 
     SigningMetadata signingMetadata =
@@ -59,14 +55,12 @@ class KeystoreFileManagerTest {
 
   @Test
   void yamlContentIsNotConverted(@TempDir final Path parentDir) throws Exception {
-    new KeystoreFileManager(parentDir, YAML_MAPPER)
-        .createKeystoreFiles("filename", "{\"test\":true}", "password");
+    new KeystoreFileManager(parentDir, YAML_MAPPER).createKeystoreFiles(FILE_RECORD);
 
     final Path metadataYamlFile = parentDir.resolve("filename.yaml");
     final Path keystoreJsonFile = parentDir.resolve("filename.json");
     final Path keystorePasswordFile = parentDir.resolve("filename.password");
 
-    // read raw values from Yaml
     Map<String, String> deserializedYamlMap =
         YAML_MAPPER.readValue(metadataYamlFile.toFile(), new TypeReference<>() {});
 
@@ -79,21 +73,15 @@ class KeystoreFileManagerTest {
 
   @Test
   void passwordContentsAreWritten(@TempDir final Path parentDir) throws Exception {
-    new KeystoreFileManager(parentDir, YAML_MAPPER)
-        .createKeystoreFiles("filename", "{\"test\":true}", "password");
+    new KeystoreFileManager(parentDir, YAML_MAPPER).createKeystoreFiles(FILE_RECORD);
 
-    final Path keystorePasswordFile = parentDir.resolve("filename.password");
-
-    assertThat(keystorePasswordFile).hasContent("password");
+    assertThat(parentDir.resolve("filename.password")).hasContent("password");
   }
 
   @Test
   void jsonDataIsWritten(@TempDir final Path parentDir) throws Exception {
-    new KeystoreFileManager(parentDir, YAML_MAPPER)
-        .createKeystoreFiles("filename", "{\"test\":true}", "password");
+    new KeystoreFileManager(parentDir, YAML_MAPPER).createKeystoreFiles(FILE_RECORD);
 
-    final Path keystoreJsonFile = parentDir.resolve("filename.json");
-
-    assertThat(keystoreJsonFile).hasContent("{\"test\":true}");
+    assertThat(parentDir.resolve("filename.json")).hasContent(TEST_JSON);
   }
 }

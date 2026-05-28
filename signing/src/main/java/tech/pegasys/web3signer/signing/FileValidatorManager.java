@@ -12,27 +12,21 @@
  */
 package tech.pegasys.web3signer.signing;
 
-import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
-
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.concurrent.ExecutionException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
 
 public class FileValidatorManager implements ValidatorManager {
 
   private final ArtifactSignerProvider signerProvider;
   private final KeystoreFileManager keystoreFileManager;
-  private final ObjectMapper objectMapper;
 
   public FileValidatorManager(
-      final ArtifactSignerProvider signerProvider,
-      final KeystoreFileManager keystoreFileManager,
-      final ObjectMapper objectMapper) {
+      final ArtifactSignerProvider signerProvider, final KeystoreFileManager keystoreFileManager) {
     this.signerProvider = signerProvider;
     this.keystoreFileManager = keystoreFileManager;
-    this.objectMapper = objectMapper;
   }
 
   @Override
@@ -51,29 +45,20 @@ public class FileValidatorManager implements ValidatorManager {
   }
 
   @Override
-  public void addValidator(final BlsArtifactSigner signer) {
+  public void addValidator(
+      final BlsArtifactSigner signer, final KeystoreFileRecord keystoreFileRecord) {
     try {
+      // write keystore to file - allows to bail out in case of failure
+      keystoreFileManager.createKeystoreFiles(keystoreFileRecord);
+      // Then, add it in memory to make it available for signing ...
       signerProvider.addSigner(signer).get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IllegalStateException("Unable to add validator", e);
     } catch (ExecutionException e) {
       throw new IllegalStateException("Unable to add validator", e);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
-  }
-
-  @Override
-  public void preAddValidator(
-      final BlsArtifactSigner signer, final String jsonKeystoreData, final String password) {
-    try {
-      keystoreFileManager.createKeystoreFiles(signer.getIdentifier(), jsonKeystoreData, password);
-    } catch (IOException | RuntimeException e) {
-      throw new KeyStoreValidationException("Unable to create keystore file", e);
-    }
-  }
-
-  @Override
-  public ObjectMapper getJsonMapper() {
-    return this.objectMapper;
   }
 }

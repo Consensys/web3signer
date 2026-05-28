@@ -22,7 +22,9 @@ import static tech.pegasys.web3signer.signing.KeystoreFileManager.METADATA_YAML_
 
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.signing.KeystoreFileRecord;
 import tech.pegasys.web3signer.signing.ValidatorManager;
+import tech.pegasys.web3signer.signing.util.BLSKeystoreUtil;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
@@ -42,7 +44,6 @@ import java.util.stream.IntStream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
@@ -157,9 +158,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
         .forEach(
             data -> {
               try {
-                validatorManager.preAddValidator(
-                    data.signer(), data.keystoreJson(), data.password());
-                validatorManager.addValidator(data.signer());
+                validatorManager.addValidator(data.signer(), data.keystoreFileRecord());
               } catch (final Exception e) {
                 // modify the result to error status
                 data.importKeystoreResult().setStatus(ImportKeystoreStatus.ERROR);
@@ -191,11 +190,10 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
               // Decrypt first — the derived pubkey is authoritative
               final BlsArtifactSigner signer;
               try {
-                signer = validatorManager.decryptKeystore(jsonKeystoreData, password);
+                signer = BLSKeystoreUtil.decryptKeystore(objectMapper, jsonKeystoreData, password);
               } catch (final Exception e) {
                 return new ImportKeystoreData(
                     i,
-                    null,
                     null,
                     null,
                     new ImportKeystoreResult(
@@ -203,26 +201,15 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
                         "Failed to decrypt keystore: " + e.getMessage()));
               }
 
-              // Validate: JSON "pubkey" hint must match derived key (if present)
-              final String claimedPubKey = parseAndNormalizePubKey(jsonKeystoreData);
-              if (claimedPubKey != null && !signer.getIdentifier().equals(claimedPubKey)) {
-                return new ImportKeystoreData(
-                    i,
-                    null,
-                    null,
-                    null,
-                    new ImportKeystoreResult(
-                        ImportKeystoreStatus.ERROR,
-                        "Keystore pubkey does not match decrypted key"));
-              }
-
               if (activePubKeys.contains(signer.getIdentifier())) {
                 return new ImportKeystoreData(
-                    i, signer, null, null, new ImportKeystoreResult(DUPLICATE, null));
+                    i, signer, null, new ImportKeystoreResult(DUPLICATE, null));
               }
 
+              var keystoreFileRecord =
+                  new KeystoreFileRecord(jsonKeystoreData, password, signer.getIdentifier());
               return new ImportKeystoreData(
-                  i, signer, jsonKeystoreData, password, new ImportKeystoreResult(IMPORTED, null));
+                  i, signer, keystoreFileRecord, new ImportKeystoreResult(IMPORTED, null));
             })
         .toList();
   }
@@ -250,15 +237,6 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
     // signer is null when decryption itself failed — nothing to clean up in that case
     return data.importKeystoreResult().getStatus() == ImportKeystoreStatus.ERROR
         && data.signer() != null;
-  }
-
-  private static String parseAndNormalizePubKey(final String json) {
-    try {
-      final String raw = new JsonObject(json).getString("pubkey");
-      return raw != null ? IdentifierUtils.normaliseIdentifier(raw) : null;
-    } catch (final Exception _) {
-      return null;
-    }
   }
 
   private ImportKeystoresRequestBody parseRequestBody(final RequestBody requestBody)

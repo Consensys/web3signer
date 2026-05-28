@@ -63,22 +63,13 @@ public class KeystoreFileManager {
   /**
    * Create Keystore metadata, json and password files.
    *
-   * @param fileNameWithoutExtension File name, usually public key in hex string format, without
-   *     extension.
-   * @param jsonKeystoreData Keystore Json data which will be written to
-   *     fileNameWithoutExtension.json
-   * @param password password that will be written to fileNameWithoutExtension.password file.
+   * @param fileRecord KeystoreFileRecord with keystore file data
    * @throws IOException In case file write operations fail
    */
-  public void createKeystoreFiles(
-      final String fileNameWithoutExtension, final String jsonKeystoreData, final String password)
-      throws IOException {
-    final Path metadataYamlFile =
-        keystorePath.resolve(fileNameWithoutExtension + METADATA_YAML_EXTENSION);
-    final Path keystoreJsonFile =
-        keystorePath.resolve(fileNameWithoutExtension + KEYSTORE_JSON_EXTENSION);
-    final Path keystorePasswordFile =
-        keystorePath.resolve(fileNameWithoutExtension + KEYSTORE_PASSWORD_EXTENSION);
+  public void createKeystoreFiles(final KeystoreFileRecord fileRecord) throws IOException {
+    final Path metadataYamlFile = keystorePath.resolve(fileRecord.getYamlFileName());
+    final Path keystoreJsonFile = keystorePath.resolve(fileRecord.getJsonFileName());
+    final Path keystorePasswordFile = keystorePath.resolve(fileRecord.passwordFileName());
 
     final FileKeyStoreMetadata data =
         new FileKeyStoreMetadata(keystoreJsonFile, keystorePasswordFile, KeyType.BLS);
@@ -86,9 +77,9 @@ public class KeystoreFileManager {
       // keystore metadata yaml file
       createYamlFile(metadataYamlFile, data);
       // keystore data json file
-      Files.writeString(keystoreJsonFile, jsonKeystoreData, StandardCharsets.UTF_8);
+      Files.writeString(keystoreJsonFile, fileRecord.json(), StandardCharsets.UTF_8);
       // password file
-      Files.writeString(keystorePasswordFile, password, StandardCharsets.UTF_8);
+      Files.writeString(keystorePasswordFile, fileRecord.password(), StandardCharsets.UTF_8);
     } catch (final IOException e) {
       deleteFile(metadataYamlFile);
       deleteFile(keystoreJsonFile);

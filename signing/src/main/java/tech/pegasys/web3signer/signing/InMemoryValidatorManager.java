@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.signing;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -28,17 +27,9 @@ public class InMemoryValidatorManager implements ValidatorManager {
 
   private static final Logger LOG = LogManager.getLogger();
   private final ArtifactSignerProvider signerProvider;
-  private final ObjectMapper objectMapper;
 
-  public InMemoryValidatorManager(
-      final ArtifactSignerProvider signerProvider, final ObjectMapper objectMapper) {
+  public InMemoryValidatorManager(final ArtifactSignerProvider signerProvider) {
     this.signerProvider = signerProvider;
-    this.objectMapper = objectMapper;
-  }
-
-  @Override
-  public ObjectMapper getJsonMapper() {
-    return objectMapper;
   }
 
   @Override
@@ -57,7 +48,8 @@ public class InMemoryValidatorManager implements ValidatorManager {
   }
 
   @Override
-  public void addValidator(final BlsArtifactSigner signer) {
+  public void addValidator(
+      final BlsArtifactSigner signer, final KeystoreFileRecord keystoreFileRecord) {
     try {
       signerProvider.addSigner(signer).get();
       LOG.info(
@@ -69,11 +61,5 @@ public class InMemoryValidatorManager implements ValidatorManager {
     } catch (ExecutionException e) {
       throw new IllegalStateException("Unable to add validator to memory", e);
     }
-  }
-
-  @Override
-  public void preAddValidator(
-      final BlsArtifactSigner signer, final String jsonKeystoreData, final String password) {
-    // do nothing
   }
 }

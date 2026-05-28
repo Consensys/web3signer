@@ -27,7 +27,6 @@ import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SigningMetadataModule;
-import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -36,7 +35,6 @@ import java.util.concurrent.Future;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,27 +54,25 @@ class FileValidatorManagerTest {
   @Mock private ArtifactSignerProvider artifactSignerProvider;
   @Mock private KeystoreFileManager keystoreFileManager;
 
-  private static final YAMLMapper YAML_MAPPER = YamlMapperFactory.createYamlMapper();
-
   @Test
   @SuppressWarnings("unchecked")
-  void addsValidator() throws IOException, ExecutionException, InterruptedException {
+  void addsValidator()
+      throws IOException, ExecutionException, InterruptedException, JsonProcessingException {
     final Future<Void> futureAddSigner = Mockito.mock(Future.class);
     when(artifactSignerProvider.addSigner(any())).thenReturn(futureAddSigner);
 
     final String keystoreJson = createKeystoreString();
     final BlsArtifactSigner signer =
         new BlsArtifactSigner(BLS_KEY_PAIR, SignerOrigin.FILE_KEYSTORE);
+    final KeystoreFileRecord fileRecord =
+        new KeystoreFileRecord(keystoreJson, "password", BLS_KEY_PAIR.getPublicKey().toString());
 
     final FileValidatorManager fileValidatorManager =
-        new FileValidatorManager(artifactSignerProvider, keystoreFileManager, YAML_MAPPER);
-    fileValidatorManager.preAddValidator(signer, keystoreJson, "password");
-    fileValidatorManager.addValidator(signer);
+        new FileValidatorManager(artifactSignerProvider, keystoreFileManager);
+    fileValidatorManager.addValidator(signer, fileRecord);
 
     verify(artifactSignerProvider).addSigner(eq(signer));
-    verify(keystoreFileManager)
-        .createKeystoreFiles(
-            eq(BLS_KEY_PAIR.getPublicKey().toString()), eq(keystoreJson), eq("password"));
+    verify(keystoreFileManager).createKeystoreFiles(eq(fileRecord));
     verify(futureAddSigner).get();
   }
 
@@ -87,7 +83,7 @@ class FileValidatorManagerTest {
     when(artifactSignerProvider.removeSigner(any())).thenReturn(futureDeleteSigner);
 
     final FileValidatorManager fileValidatorManager =
-        new FileValidatorManager(artifactSignerProvider, keystoreFileManager, YAML_MAPPER);
+        new FileValidatorManager(artifactSignerProvider, keystoreFileManager);
     fileValidatorManager.deleteValidator(BLS_KEY_PAIR.getPublicKey().toBytesCompressed());
 
     verify(artifactSignerProvider).removeSigner(eq(BLS_KEY_PAIR.getPublicKey().toString()));

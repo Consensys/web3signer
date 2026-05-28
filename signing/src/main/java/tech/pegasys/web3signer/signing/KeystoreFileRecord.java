@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 ConsenSys AG.
+ * Copyright 2026 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,15 +12,17 @@
  */
 package tech.pegasys.web3signer.signing;
 
-import org.apache.tuweni.bytes.Bytes;
+public record KeystoreFileRecord(String json, String password, String fileNameIdentifier) {
 
-public interface ValidatorManager {
+  public String getYamlFileName() {
+    return fileNameIdentifier + ".yaml";
+  }
 
-  /// Delete validator for provided public key
-  /// @param publicKey An instance of Bytes representing public key
-  void deleteValidator(final Bytes publicKey);
+  public String getJsonFileName() {
+    return fileNameIdentifier + ".json";
+  }
 
-  /// Add validator from a decrypted signer
-  /// @param signer instance of BLSArtifactSigner
-  void addValidator(final BlsArtifactSigner signer, final KeystoreFileRecord keystoreFileRecord);
+  public String passwordFileName() {
+    return fileNameIdentifier + ".password";
+  }
 }

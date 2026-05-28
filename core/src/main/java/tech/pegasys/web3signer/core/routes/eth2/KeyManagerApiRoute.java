@@ -117,15 +117,14 @@ public class KeyManagerApiRoute implements Web3SignerRoute {
     final ValidatorManager baseValidatorManager;
 
     if (keyManagerApiConfig.skipKeystoreStorage()) {
-      baseValidatorManager = new InMemoryValidatorManager(blsSignerProvider, objectMapper);
+      baseValidatorManager = new InMemoryValidatorManager(blsSignerProvider);
     } else {
       baseValidatorManager =
           new FileValidatorManager(
               blsSignerProvider,
               new KeystoreFileManager(
                   baseConfig.getKeyConfigPath(),
-                  YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())),
-              objectMapper);
+                  YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())));
     }
 
     return slashingProtectionContext

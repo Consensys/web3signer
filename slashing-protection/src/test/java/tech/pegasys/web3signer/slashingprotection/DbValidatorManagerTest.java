@@ -15,6 +15,8 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -23,6 +25,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.FileValidatorManager;
+import tech.pegasys.web3signer.signing.KeystoreFileRecord;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
@@ -81,23 +84,23 @@ class DbValidatorManagerTest {
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     final DbValidatorManager dbValidatorManager =
         new DbValidatorManager(fileValidatorManager, registeredValidators, jdbi, validatorsDao);
-    dbValidatorManager.addValidator(SIGNER);
+    dbValidatorManager.addValidator(SIGNER, null);
     assertThat(validatorsDao.isEnabled(handle, 1)).isTrue();
-    verify(fileValidatorManager).addValidator(SIGNER);
+    verify(fileValidatorManager).addValidator(eq(SIGNER), isNull(KeystoreFileRecord.class));
   }
 
   @Test
   public void doesNotEnableValidatorWhenDeletingIfFileErrorOccurs(
       final Jdbi jdbi, final Handle handle) {
     insertValidator(handle, 1, PUBLIC_KEY, false);
-    doThrow(new RuntimeException("error")).when(fileValidatorManager).addValidator(any());
+    doThrow(new RuntimeException("error")).when(fileValidatorManager).addValidator(any(), any());
 
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     final DbValidatorManager dbValidatorManager =
         new DbValidatorManager(fileValidatorManager, registeredValidators, jdbi, validatorsDao);
-    assertThatThrownBy(() -> dbValidatorManager.addValidator(SIGNER)).hasMessage("error");
+    assertThatThrownBy(() -> dbValidatorManager.addValidator(SIGNER, null)).hasMessage("error");
     assertThat(validatorsDao.isEnabled(handle, 1)).isFalse();
-    verify(fileValidatorManager).addValidator(SIGNER);
+    verify(fileValidatorManager).addValidator(eq(SIGNER), isNull(KeystoreFileRecord.class));
   }
 
   private void insertValidator(
