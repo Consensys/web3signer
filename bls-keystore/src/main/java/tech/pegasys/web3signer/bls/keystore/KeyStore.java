@@ -17,6 +17,8 @@ import static javax.crypto.Cipher.DECRYPT_MODE;
 import static javax.crypto.Cipher.ENCRYPT_MODE;
 import static org.apache.tuweni.bytes.Bytes.concatenate;
 
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.bls.keystore.model.Checksum;
 import tech.pegasys.web3signer.bls.keystore.model.Cipher;
 import tech.pegasys.web3signer.bls.keystore.model.Crypto;
@@ -30,6 +32,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 /**
@@ -46,9 +49,7 @@ public class KeyStore {
   /**
    * Encrypt the given BLS12-381 key with specified password.
    *
-   * @param blsPrivateKey BLS12-381 private key in Bytes to encrypt. It is not validated to be a
-   *     valid BLS12-381 key.
-   * @param blsPublicKey BLS12-381 public key in Bytes. It is not validated and stored as it is.
+   * @param blsKeyPair A valid BLS12-381 private key.
    * @param password The password to use for encryption
    * @param path Path as defined in EIP-2334. Can be empty String.
    * @param kdfParam crypto function such as scrypt or PBKDF2 and related parameters such as dklen,
@@ -58,15 +59,13 @@ public class KeyStore {
    *     details as defined by the EIP-2335 standard.
    */
   public static KeyStoreData encrypt(
-      final Bytes blsPrivateKey,
-      final Bytes blsPublicKey,
+      final BLSKeyPair blsKeyPair,
       final String password,
       final String path,
       final KdfParam kdfParam,
       final Cipher cipher) {
 
-    checkNotNull(blsPrivateKey, "PrivateKey cannot be null");
-    checkNotNull(blsPublicKey, "PublicKey cannot be null");
+    checkNotNull(blsKeyPair, "blsKeyPair cannot be null");
     checkNotNull(password, "Password cannot be null");
     checkNotNull(path, "Path cannot be null");
     checkNotNull(kdfParam, "KDFParam cannot be null");
@@ -75,8 +74,9 @@ public class KeyStore {
     kdfParam.validate();
     cipher.validate();
 
-    final Crypto crypto = encryptUsingCipherFunction(blsPrivateKey, password, kdfParam, cipher);
-    return new KeyStoreData(crypto, blsPublicKey, path);
+    final Crypto crypto =
+        encryptUsingCipherFunction(blsKeyPair.getSecretKey().toBytes(), password, kdfParam, cipher);
+    return new KeyStoreData(crypto, blsKeyPair.getPublicKey().toBytesCompressed(), path);
   }
 
   private static Crypto encryptUsingCipherFunction(
@@ -115,7 +115,7 @@ public class KeyStore {
    * @param keyStoreData The given Key Store
    * @return decrypted BLS private key in Bytes
    */
-  public static Bytes decrypt(final String password, final KeyStoreData keyStoreData) {
+  public static BLSKeyPair decrypt(final String password, final KeyStoreData keyStoreData) {
     checkNotNull(password, "Password cannot be null");
     checkNotNull(keyStoreData, "KeyStoreData cannot be null");
 
@@ -129,7 +129,18 @@ public class KeyStore {
 
     final Cipher cipher = keyStoreData.crypto().getCipher();
     final byte[] encryptedMessage = cipher.getMessage().toArrayUnsafe();
-    return applyCipherFunction(decryptionKey, cipher, false, encryptedMessage);
+    Bytes decryptedBLSKey = applyCipherFunction(decryptionKey, cipher, false, encryptedMessage);
+
+    final BLSKeyPair keyPair =
+        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(decryptedBLSKey)));
+
+    // pubKey is optional - however, if present it must match the derived pubKey
+    if (keyStoreData.pubkey() != null
+        && !keyStoreData.pubkey().equals(keyPair.getPublicKey().toBytesCompressed())) {
+      throw new KeyStoreValidationException("Keystore pubkey does not match decrypted key");
+    }
+
+    return keyPair;
   }
 
   private static boolean validateChecksum(

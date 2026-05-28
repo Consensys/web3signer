@@ -16,6 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.bls.keystore.model.Cipher;
 import tech.pegasys.web3signer.bls.keystore.model.KdfParam;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
@@ -50,8 +52,10 @@ class KeyStoreTest {
 
   private static final String PASSWORD =
       "\uD835\uDD31\uD835\uDD22\uD835\uDD30\uD835\uDD31\uD835\uDD2D\uD835\uDD1E\uD835\uDD30\uD835\uDD30\uD835\uDD34\uD835\uDD2C\uD835\uDD2F\uD835\uDD21\uD83D\uDD11";
-  private static final Bytes BLS_PRIVATE_KEY =
-      Bytes.fromHexString("0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
+  private static final Bytes32 BLS_PRIVATE_KEY =
+      Bytes32.fromHexString("0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
+  private static final BLSKeyPair BLS_KEY_PAIR =
+      new BLSKeyPair(BLSSecretKey.fromBytes(BLS_PRIVATE_KEY));
   private static final Bytes BLS_PUB_KEY =
       Bytes.fromHexString(
           "9612d7a727c9d0a22e185a1c768478dfe919cada9266988cb32359c11f2b7b27f4ae4040902382ae2910c15e2b420d07");
@@ -154,8 +158,8 @@ class KeyStoreTest {
       })
   void loadAndDecryptKeystore(final String resourcePath) {
     final KeyStoreData keyStoreData = loadKeyStoreFromResource(resourcePath);
-    final Bytes decryptedBlsPrivateKey = KeyStore.decrypt(PASSWORD, keyStoreData);
-    assertThat(decryptedBlsPrivateKey).isEqualTo(BLS_PRIVATE_KEY);
+    final BLSKeyPair decryptedBlsPrivateKey = KeyStore.decrypt(PASSWORD, keyStoreData);
+    assertThat(decryptedBlsPrivateKey.getSecretKey().toBytes()).isEqualTo(BLS_PRIVATE_KEY);
   }
 
   @ParameterizedTest(name = "{index} - Invalid Password with {0}")
@@ -178,7 +182,7 @@ class KeyStoreTest {
   void encryptWithKdfAndCipherFunction(
       final KdfParam kdfParam, final Bytes expectedChecksum, final Bytes encryptedCipherMessage) {
     final KeyStoreData keyStoreData =
-        KeyStore.encrypt(BLS_PRIVATE_KEY, BLS_PUB_KEY, PASSWORD, "", kdfParam, CIPHER);
+        KeyStore.encrypt(BLS_KEY_PAIR, PASSWORD, "", kdfParam, CIPHER);
     assertThat(keyStoreData.crypto().getChecksum().getMessage()).isEqualTo(expectedChecksum);
     assertThat(keyStoreData.crypto().getCipher().getMessage()).isEqualTo(encryptedCipherMessage);
     assertThat(keyStoreData.version()).isEqualTo(KeyStoreData.KEYSTORE_VERSION);
@@ -196,7 +200,7 @@ class KeyStoreTest {
       throws IOException {
 
     final KeyStoreData keyStoreData =
-        KeyStore.encrypt(BLS_PRIVATE_KEY, BLS_PUB_KEY, PASSWORD, "", kdfParam, CIPHER);
+        KeyStore.encrypt(BLS_KEY_PAIR, PASSWORD, "", kdfParam, CIPHER);
     final Path tempKeyStoreFile = Files.createTempFile(tempDir, "keystore", ".json");
     assertThatCode(() -> KeyStoreLoader.saveToFile(tempKeyStoreFile, keyStoreData))
         .doesNotThrowAnyException();
@@ -233,6 +237,46 @@ class KeyStoreTest {
         .isThrownBy(() -> KeyStoreLoader.loadFromFile(keyStoreFile.toUri()))
         .withMessageStartingWith("Failed to read keystore file:")
         .withMessageEndingWith(keyStoreFile.getFileName().toString());
+  }
+
+  @Test
+  void decryptSucceedsWhenPubkeyIsAbsent() {
+    final KeyStoreData withoutPubkey =
+        new KeyStoreData(
+            KeyStore.encrypt(
+                    BLS_KEY_PAIR,
+                    PASSWORD,
+                    "",
+                    new SCryptParam(DKLEN, MEMORY_CPU_COST, PARALLELIZATION, BLOCKSIZE, SALT),
+                    CIPHER)
+                .crypto(),
+            null,
+            "");
+    final BLSKeyPair result = KeyStore.decrypt(PASSWORD, withoutPubkey);
+    assertThat(result.getSecretKey().toBytes()).isEqualTo(BLS_PRIVATE_KEY);
+  }
+
+  @Test
+  void decryptThrowsExceptionWhenPubkeyMismatches() {
+    final BLSKeyPair otherPair =
+        new BLSKeyPair(
+            BLSSecretKey.fromBytes(
+                Bytes32.fromHexString(
+                    "0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26e")));
+    final KeyStoreData tampered =
+        new KeyStoreData(
+            KeyStore.encrypt(
+                    BLS_KEY_PAIR,
+                    PASSWORD,
+                    "",
+                    new SCryptParam(DKLEN, MEMORY_CPU_COST, PARALLELIZATION, BLOCKSIZE, SALT),
+                    CIPHER)
+                .crypto(),
+            otherPair.getPublicKey().toBytesCompressed(),
+            "");
+    assertThatExceptionOfType(KeyStoreValidationException.class)
+        .isThrownBy(() -> KeyStore.decrypt(PASSWORD, tampered))
+        .withMessage("Keystore pubkey does not match decrypted key");
   }
 
   private KeyStoreData loadKeyStoreFromResource(final String resourcePath) {

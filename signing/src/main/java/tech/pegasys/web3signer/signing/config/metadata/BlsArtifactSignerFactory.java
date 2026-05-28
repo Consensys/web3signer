@@ -115,8 +115,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
     try {
       final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile.toUri());
       final String password = loadPassword(keystorePasswordFile);
-      final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
-      final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
+      final BLSKeyPair keyPair = KeyStore.decrypt(password, keyStoreData);
       return signerFactory.apply(
           new BlsArtifactSignerArgs(
               keyPair, SignerOrigin.FILE_KEYSTORE, Optional.ofNullable(keyStoreData.path())));

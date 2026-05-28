@@ -178,13 +178,7 @@ class DefaultValidatorManagerTest {
     final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV);
     final Pbkdf2Param pbkdf2Param = new Pbkdf2Param(32, 262144, HMAC_SHA256, SALT);
     final KeyStoreData keyStoreData =
-        KeyStore.encrypt(
-            BLS_KEY_PAIR.getSecretKey().toBytes(),
-            BLS_KEY_PAIR.getPublicKey().toBytesCompressed(),
-            "password",
-            "",
-            pbkdf2Param,
-            cipher);
+        KeyStore.encrypt(BLS_KEY_PAIR, "password", "", pbkdf2Param, cipher);
 
     return OBJECT_MAPPER.writeValueAsString(keyStoreData);
   }

@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.signing.util;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.bls.keystore.KeyStore;
 import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
@@ -24,8 +23,6 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 /// Utility class for decrypting keystores
 public final class BLSKeystoreUtil {
@@ -35,17 +32,7 @@ public final class BLSKeystoreUtil {
       final ObjectMapper jsonMapper, final String jsonKeystoreData, final String password) {
     final KeyStoreData keyStoreData = parseKeystoreJson(jsonMapper, jsonKeystoreData);
 
-    final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
-
-    final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
-
-    final Bytes claimedPubkey = keyStoreData.pubkey();
-    // Our keystore parser requires pubKey to be present in the file, however, it is only meant to
-    // act as a hint. `claimedPubkey != null` is just a defensive check.
-    if (claimedPubkey != null
-        && !claimedPubkey.equals(keyPair.getPublicKey().toBytesCompressed())) {
-      throw new KeyStoreValidationException("Keystore pubkey does not match decrypted key");
-    }
+    final BLSKeyPair keyPair = KeyStore.decrypt(password, keyStoreData);
 
     return new BlsArtifactSigner(
         keyPair, SignerOrigin.FILE_KEYSTORE, Optional.ofNullable(keyStoreData.path()));

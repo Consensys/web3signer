@@ -63,9 +63,7 @@ public class KeystoreUtil {
     final KdfParam kdfParam = new Pbkdf2Param(32, 2, HMAC_SHA256, SALT);
     final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV);
     final Bytes48 publicKey = keyPair.getPublicKey().toBytesCompressed();
-    final KeyStoreData keyStoreData =
-        KeyStore.encrypt(
-            keyPair.getSecretKey().toBytes(), publicKey, password, "", kdfParam, cipher);
+    final KeyStoreData keyStoreData = KeyStore.encrypt(keyPair, password, "", kdfParam, cipher);
     try {
       final Path keystoreFile = keystoreDir.resolve(publicKey + ".json");
       KeyStoreLoader.saveToFile(keystoreFile, keyStoreData);

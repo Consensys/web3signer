@@ -82,12 +82,7 @@ public class MetadataFileHelpers {
 
     final Path keystoreFile =
         metadataFilePath.getParent().resolve(keyPair.getPublicKey().toString() + ".json");
-    createKeyStoreFile(
-        keystoreFile,
-        password,
-        privateKeyBytes,
-        keyPair.getPublicKey().toBytesCompressed(),
-        kdfFunctionType);
+    createKeyStoreFile(keystoreFile, keyPair, kdfFunctionType);
 
     createKeyStoreYamlFileAt(metadataFilePath, keystoreFile, password, KeyType.BLS);
   }
@@ -274,18 +269,14 @@ public class MetadataFileHelpers {
   }
 
   private void createKeyStoreFile(
-      final Path keyStoreFilePath,
-      final String password,
-      final Bytes privateKey,
-      final Bytes publicKey,
-      final KdfFunction kdfFunctionType) {
+      final Path keyStoreFilePath, final BLSKeyPair blsKeyPair, final KdfFunction kdfFunctionType) {
     final KdfParam kdfParam =
         kdfFunctionType == KdfFunction.SCRYPT
             ? new SCryptParam(32, SALT)
             : new Pbkdf2Param(32, 262144, HMAC_SHA256, SALT);
     final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV);
     final KeyStoreData keyStoreData =
-        KeyStore.encrypt(privateKey, publicKey, password, "m/12381/3600/0/0/0", kdfParam, cipher);
+        KeyStore.encrypt(blsKeyPair, "password", "m/12381/3600/0/0/0", kdfParam, cipher);
     try {
       KeyStoreLoader.saveToFile(keyStoreFilePath, keyStoreData);
     } catch (IOException e) {

@@ -98,9 +98,7 @@ public class ProxyKeysGenerator {
     final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, iv);
     final Bytes48 publicKey = keyPair.getPublicKey().toBytesCompressed();
     final String password = readFile(commitBoostParameters.getKeystoresPasswordFile());
-    final KeyStoreData keyStoreData =
-        KeyStore.encrypt(
-            keyPair.getSecretKey().toBytes(), publicKey, password, "", kdfParam, cipher);
+    final KeyStoreData keyStoreData = KeyStore.encrypt(keyPair, password, "", kdfParam, cipher);
     try {
       final Path keystoreDir =
           createSubDirectories(

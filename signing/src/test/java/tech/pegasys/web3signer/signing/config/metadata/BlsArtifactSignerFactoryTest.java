@@ -69,11 +69,7 @@ class BlsArtifactSignerFactoryTest {
     keystoreFile = configDir.resolve(KEYSTORE_FILE_NAME);
     passwordFile = configDir.resolve(PASSWORD_FILE_NAME);
 
-    createKeyStoreFile(
-        keystoreFile,
-        PASSWORD,
-        BLS_KEY_PAIR.getSecretKey().toBytes(),
-        BLS_KEY_PAIR.getPublicKey().toBytesCompressed());
+    createKeyStoreFile(keystoreFile);
     Files.writeString(passwordFile, "testpassword");
   }
 
@@ -196,17 +192,13 @@ class BlsArtifactSignerFactoryTest {
         .hasMessage("Failed to fetch secret from hashicorp vault");
   }
 
-  private static void createKeyStoreFile(
-      final Path keyStoreFilePath,
-      final String password,
-      final Bytes privateKey,
-      final Bytes publicKey) {
+  private static void createKeyStoreFile(final Path keyStoreFilePath) {
     final KdfParam kdfParam = new SCryptParam(32, KEYSTORE_SALT);
     final Cipher cipher =
         new Cipher(
             CipherFunction.AES_128_CTR, Bytes.fromHexString("e0f20a27d160f7cc92764579390e881a"));
     final KeyStoreData keyStoreData =
-        KeyStore.encrypt(privateKey, publicKey, password, "", kdfParam, cipher);
+        KeyStore.encrypt(BLS_KEY_PAIR, PASSWORD, "", kdfParam, cipher);
     try {
       KeyStoreLoader.saveToFile(keyStoreFilePath, keyStoreData);
     } catch (IOException e) {
