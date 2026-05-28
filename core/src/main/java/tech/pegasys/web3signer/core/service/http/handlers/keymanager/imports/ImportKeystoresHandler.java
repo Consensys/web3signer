@@ -231,7 +231,8 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   }
 
   private static boolean failed(ImportKeystoreData data) {
-    // signer is null when decryption itself failed — nothing to clean up in that case
+    // signer is null when decryptKeystore() threw (bad password, corrupt data, or pubkey mismatch)
+    // — addValidator was never called in those cases, so there is nothing to clean up
     return data.importKeystoreResult().getStatus() == ImportKeystoreStatus.ERROR
         && data.signer() != null;
   }
