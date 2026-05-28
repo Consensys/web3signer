@@ -39,9 +39,6 @@ import org.apache.logging.log4j.Logger;
 public class KeystoreFileManager {
 
   private static final Logger LOG = LogManager.getLogger();
-  public static final String METADATA_YAML_EXTENSION = ".yaml";
-  public static final String KEYSTORE_JSON_EXTENSION = ".json";
-  public static final String KEYSTORE_PASSWORD_EXTENSION = ".password";
 
   private final Path keystorePath;
   private final YAMLMapper yamlMapper;
@@ -67,8 +64,8 @@ public class KeystoreFileManager {
    * @throws IOException In case file write operations fail
    */
   public void createKeystoreFiles(final KeystoreFileRecord fileRecord) throws IOException {
-    final Path metadataYamlFile = keystorePath.resolve(fileRecord.getYamlFileName());
-    final Path keystoreJsonFile = keystorePath.resolve(fileRecord.getJsonFileName());
+    final Path metadataYamlFile = keystorePath.resolve(fileRecord.yamlFileName());
+    final Path keystoreJsonFile = keystorePath.resolve(fileRecord.jsonFileName());
     final Path keystorePasswordFile = keystorePath.resolve(fileRecord.passwordFileName());
 
     final FileKeyStoreMetadata data =

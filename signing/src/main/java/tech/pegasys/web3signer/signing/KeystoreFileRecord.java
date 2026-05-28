@@ -12,17 +12,31 @@
  */
 package tech.pegasys.web3signer.signing;
 
-public record KeystoreFileRecord(String json, String password, String fileNameIdentifier) {
+import java.util.Objects;
+import java.util.Set;
 
-  public String getYamlFileName() {
-    return fileNameIdentifier + ".yaml";
+public record KeystoreFileRecord(String json, String password, String fileNameIdentifier) {
+  private static final String YAML_EXTENSION = ".yaml";
+  private static final String JSON_EXTENSION = ".json";
+  private static final String PASSWORD_EXTENSION = ".password";
+  public static final Set<String> KEYSTORE_FILE_EXTENSIONS =
+      Set.of(YAML_EXTENSION, JSON_EXTENSION, PASSWORD_EXTENSION);
+
+  public KeystoreFileRecord {
+    Objects.requireNonNull(json, "Keystore json must not be null");
+    Objects.requireNonNull(json, "Keystore password must not be null");
+    Objects.requireNonNull(json, "Keystore fileNameIdentifier must not be null");
   }
 
-  public String getJsonFileName() {
-    return fileNameIdentifier + ".json";
+  public String yamlFileName() {
+    return fileNameIdentifier + YAML_EXTENSION;
+  }
+
+  public String jsonFileName() {
+    return fileNameIdentifier + JSON_EXTENSION;
   }
 
   public String passwordFileName() {
-    return fileNameIdentifier + ".password";
+    return fileNameIdentifier + PASSWORD_EXTENSION;
   }
 }

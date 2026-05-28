@@ -16,9 +16,6 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoreStatus.DUPLICATE;
 import static tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoreStatus.IMPORTED;
-import static tech.pegasys.web3signer.signing.KeystoreFileManager.KEYSTORE_JSON_EXTENSION;
-import static tech.pegasys.web3signer.signing.KeystoreFileManager.KEYSTORE_PASSWORD_EXTENSION;
-import static tech.pegasys.web3signer.signing.KeystoreFileManager.METADATA_YAML_EXTENSION;
 
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
@@ -258,9 +255,9 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
         LOG.warn("Unable to remove signer for {} due to {}", pubkey, e.getMessage());
       }
 
-      deleteFile(keystorePath.resolve(pubkey + METADATA_YAML_EXTENSION));
-      deleteFile(keystorePath.resolve(pubkey + KEYSTORE_JSON_EXTENSION));
-      deleteFile(keystorePath.resolve(pubkey + KEYSTORE_PASSWORD_EXTENSION));
+      for (String fileExtensions : KeystoreFileRecord.KEYSTORE_FILE_EXTENSIONS) {
+        deleteFile(keystorePath.resolve(pubkey + fileExtensions));
+      }
     }
   }
 
