@@ -18,7 +18,6 @@ import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 
 import java.util.Objects;
-import java.util.Optional;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
@@ -27,19 +26,17 @@ public class BlsArtifactSigner implements ArtifactSigner {
 
   private final BLSKeyPair keyPair;
   private final SignerOrigin origin;
-  private final Optional<String> derivationPath;
+  private final String derivationPath;
 
   public BlsArtifactSigner(
-      final BLSKeyPair keyPair, final SignerOrigin origin, final Optional<String> derivationPath) {
+      final BLSKeyPair keyPair, final SignerOrigin origin, final String derivationPath) {
     this.keyPair = keyPair;
     this.origin = origin;
     this.derivationPath = derivationPath;
   }
 
   public BlsArtifactSigner(final BLSKeyPair keyPair, final SignerOrigin origin) {
-    this.keyPair = keyPair;
-    this.origin = origin;
-    this.derivationPath = Optional.empty();
+    this(keyPair, origin, null);
   }
 
   @Override
@@ -57,7 +54,7 @@ public class BlsArtifactSigner implements ArtifactSigner {
     return KeyType.BLS;
   }
 
-  public Optional<String> getDerivationPath() {
+  public String getDerivationPath() {
     return derivationPath;
   }
 
