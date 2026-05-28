@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
-import tech.pegasys.web3signer.signing.FileValidatorManager;
+import tech.pegasys.web3signer.signing.DefaultValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileRecord;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
@@ -41,7 +41,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 @ExtendWith(DatabaseSetupExtension.class)
 class DbValidatorManagerTest {
-  @Mock private FileValidatorManager fileValidatorManager;
+  @Mock private DefaultValidatorManager fileValidatorManager;
   @Mock private RegisteredValidators registeredValidators;
   private static final BLSKeyPair BLS_KEY_PAIR = BLSTestUtil.randomKeyPair(1);
   private static final Bytes PUBLIC_KEY = BLS_KEY_PAIR.getPublicKey().toBytesCompressed();

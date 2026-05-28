@@ -21,8 +21,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.Dele
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.list.ListKeystoresHandler;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.FileValidatorManager;
-import tech.pegasys.web3signer.signing.InMemoryValidatorManager;
+import tech.pegasys.web3signer.signing.DefaultValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
@@ -115,17 +114,17 @@ public class KeyManagerApiRoute implements Web3SignerRoute {
 
   private ValidatorManager createValidatorManager() {
     final ValidatorManager baseValidatorManager;
-
+    final Optional<KeystoreFileManager> keystoreFileManager;
     if (keyManagerApiConfig.skipKeystoreStorage()) {
-      baseValidatorManager = new InMemoryValidatorManager(blsSignerProvider);
+      keystoreFileManager = Optional.empty();
     } else {
-      baseValidatorManager =
-          new FileValidatorManager(
-              blsSignerProvider,
+      keystoreFileManager =
+          Optional.of(
               new KeystoreFileManager(
                   baseConfig.getKeyConfigPath(),
                   YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())));
     }
+    baseValidatorManager = new DefaultValidatorManager(blsSignerProvider, keystoreFileManager);
 
     return slashingProtectionContext
         .map(
