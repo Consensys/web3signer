@@ -19,8 +19,6 @@ import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 
-import java.util.Optional;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -34,8 +32,7 @@ public final class BLSKeystoreUtil {
 
     final BLSKeyPair keyPair = KeyStore.decrypt(password, keyStoreData);
 
-    return new BlsArtifactSigner(
-        keyPair, SignerOrigin.FILE_KEYSTORE, Optional.ofNullable(keyStoreData.path()));
+    return new BlsArtifactSigner(keyPair, SignerOrigin.FILE_KEYSTORE, keyStoreData.path());
   }
 
   private static KeyStoreData parseKeystoreJson(ObjectMapper jsonMapper, String jsonKeystoreData) {
