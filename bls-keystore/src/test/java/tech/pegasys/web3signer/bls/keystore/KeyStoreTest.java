@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.bls.keystore.model.Cipher;
+import tech.pegasys.web3signer.bls.keystore.model.CipherFunction;
+import tech.pegasys.web3signer.bls.keystore.model.CipherParam;
 import tech.pegasys.web3signer.bls.keystore.model.KdfParam;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.bls.keystore.model.Pbkdf2Param;
@@ -61,7 +63,8 @@ class KeyStoreTest {
           "9612d7a727c9d0a22e185a1c768478dfe919cada9266988cb32359c11f2b7b27f4ae4040902382ae2910c15e2b420d07");
   private static final Bytes32 SALT =
       Bytes32.fromHexString("d4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3");
-  private static final Bytes AES_IV_PARAM = Bytes.fromHexString("264daa3f303d7259501c93d997d84fe6");
+  private static final CipherParam AES_IV_PARAM =
+      new CipherParam(Bytes.fromHexString("264daa3f303d7259501c93d997d84fe6"));
 
   private static final String SCRYPT_KEYSTORE_RESOURCE = "scryptTestVector.json";
   private static final String SCRYPT_EXTRA_FIELD_KEYSTORE_RESOURCE =
@@ -77,7 +80,8 @@ class KeyStoreTest {
   private static final String UNSUPPORTED_KDF_FUNCTION_JSON = "unsupportedKdfFunction.json";
   private static final String UNSUPPORTED_PBKDF2_PRF_FUNCTION_JSON = "unsupportedPBKDF2Prf.json";
   private static final String UNSUPPORTED_DKLEN_FUNCTION_JSON = "unsupportedDkLen.json";
-  private static final Cipher CIPHER = new Cipher(AES_IV_PARAM);
+  private static final Cipher CIPHER =
+      new Cipher(CipherFunction.AES_128_CTR, AES_IV_PARAM, Bytes.EMPTY);
 
   private static final String MISSING_CRYPTO = "missingCrypto.json";
   private static final String MISSING_PATH = "missingPath.json";
@@ -134,19 +138,11 @@ class KeyStoreTest {
         Arguments.of(
             "Missing crypto",
             MISSING_CRYPTO,
-            "Invalid KeyStore: Missing required creator property 'crypto'"),
-        Arguments.of(
-            "Missing path",
-            MISSING_PATH,
-            "Invalid KeyStore: Missing required creator property 'path'"),
-        Arguments.of(
-            "Missing uuid",
-            MISSING_UUID,
-            "Invalid KeyStore: Missing required creator property 'uuid'"),
+            "Invalid KeyStore: Missing 'crypto' property"),
         Arguments.of(
             "Missing version",
             MISSING_VERSION,
-            "Invalid KeyStore: Missing required creator property 'version'"));
+            "Invalid KeyStore: Missing 'version' property"));
   }
 
   @ParameterizedTest(name = "{index} - Load And Decrypt Keystore with {0}")
@@ -183,8 +179,8 @@ class KeyStoreTest {
       final KdfParam kdfParam, final Bytes expectedChecksum, final Bytes encryptedCipherMessage) {
     final KeyStoreData keyStoreData =
         KeyStore.encrypt(BLS_KEY_PAIR, PASSWORD, "", kdfParam, CIPHER);
-    assertThat(keyStoreData.crypto().getChecksum().getMessage()).isEqualTo(expectedChecksum);
-    assertThat(keyStoreData.crypto().getCipher().getMessage()).isEqualTo(encryptedCipherMessage);
+    assertThat(keyStoreData.crypto().checksum().message()).isEqualTo(expectedChecksum);
+    assertThat(keyStoreData.crypto().cipher().message()).isEqualTo(encryptedCipherMessage);
     assertThat(keyStoreData.version()).isEqualTo(KeyStoreData.KEYSTORE_VERSION);
     assertThat(keyStoreData.pubkey()).isEqualTo(BLS_PUB_KEY);
     assertThat(keyStoreData.uuid()).isNotNull();
@@ -208,8 +204,8 @@ class KeyStoreTest {
     // reload it back
     final KeyStoreData loadedKeyStore = KeyStoreLoader.loadFromFile(tempKeyStoreFile.toUri());
     assertThat(loadedKeyStore.uuid()).isEqualByComparingTo(keyStoreData.uuid());
-    assertThat(loadedKeyStore.crypto().getChecksum().getMessage()).isEqualTo(expectedChecksum);
-    assertThat(loadedKeyStore.crypto().getCipher().getMessage()).isEqualTo(encryptedCipherMessage);
+    assertThat(loadedKeyStore.crypto().checksum().message()).isEqualTo(expectedChecksum);
+    assertThat(loadedKeyStore.crypto().cipher().message()).isEqualTo(encryptedCipherMessage);
   }
 
   @ParameterizedTest(name = "{0} should result in an error")

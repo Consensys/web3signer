@@ -54,7 +54,7 @@ public class KeyStore {
    * @param path Path as defined in EIP-2334. Can be empty String.
    * @param kdfParam crypto function such as scrypt or PBKDF2 and related parameters such as dklen,
    *     salt etc.
-   * @param cipher cipher function and iv parameter to use.
+   * @param cipherWithoutMessage cipher function and iv parameter to use.
    * @return The constructed KeyStore with encrypted BLS Private Key as cipher.message and other
    *     details as defined by the EIP-2335 standard.
    */
@@ -63,19 +63,17 @@ public class KeyStore {
       final String password,
       final String path,
       final KdfParam kdfParam,
-      final Cipher cipher) {
+      final Cipher cipherWithoutMessage) {
 
     checkNotNull(blsKeyPair, "blsKeyPair cannot be null");
     checkNotNull(password, "Password cannot be null");
     checkNotNull(path, "Path cannot be null");
     checkNotNull(kdfParam, "KDFParam cannot be null");
-    checkNotNull(cipher, "Cipher cannot be null");
-
-    kdfParam.validate();
-    cipher.validate();
+    checkNotNull(cipherWithoutMessage, "Cipher cannot be null");
 
     final Crypto crypto =
-        encryptUsingCipherFunction(blsKeyPair.getSecretKey().toBytes(), password, kdfParam, cipher);
+        encryptUsingCipherFunction(
+            blsKeyPair.getSecretKey().toBytes(), password, kdfParam, cipherWithoutMessage);
     return new KeyStoreData(crypto, blsKeyPair.getPublicKey().toBytesCompressed(), path);
   }
 
@@ -86,8 +84,7 @@ public class KeyStore {
         applyCipherFunction(decryptionKey, cipher, true, secret.toArrayUnsafe());
     final Bytes checksumMessage = calculateSHA256Checksum(decryptionKey, cipherMessage);
     final Checksum checksum = new Checksum(checksumMessage);
-    final Cipher encryptedCipher =
-        new Cipher(cipher.getCipherFunction(), cipher.getCipherParam(), cipherMessage);
+    final Cipher encryptedCipher = new Cipher(cipher.function(), cipher.params(), cipherMessage);
     final Kdf kdf = new Kdf(kdfParam);
     return new Crypto(kdf, checksum, encryptedCipher);
   }
@@ -103,8 +100,7 @@ public class KeyStore {
     checkNotNull(password, "Password cannot be null");
     checkNotNull(keyStoreData, "KeyStoreData cannot be null");
 
-    final Bytes decryptionKey =
-        keyStoreData.crypto().getKdf().getParam().generateDecryptionKey(password);
+    final Bytes decryptionKey = keyStoreData.crypto().kdf().param().generateDecryptionKey(password);
     return validateChecksum(decryptionKey, keyStoreData);
   }
 
@@ -119,16 +115,15 @@ public class KeyStore {
     checkNotNull(password, "Password cannot be null");
     checkNotNull(keyStoreData, "KeyStoreData cannot be null");
 
-    final Bytes decryptionKey =
-        keyStoreData.crypto().getKdf().getParam().generateDecryptionKey(password);
+    final Bytes decryptionKey = keyStoreData.crypto().kdf().param().generateDecryptionKey(password);
 
     if (!validateChecksum(decryptionKey, keyStoreData)) {
       throw new KeyStoreValidationException(
           "Failed to decrypt KeyStore, checksum validation failed.");
     }
 
-    final Cipher cipher = keyStoreData.crypto().getCipher();
-    final byte[] encryptedMessage = cipher.getMessage().toArrayUnsafe();
+    final Cipher cipher = keyStoreData.crypto().cipher();
+    final byte[] encryptedMessage = cipher.message().toArrayUnsafe();
     Bytes decryptedBLSKey = applyCipherFunction(decryptionKey, cipher, false, encryptedMessage);
 
     final BLSKeyPair keyPair =
@@ -146,8 +141,8 @@ public class KeyStore {
   private static boolean validateChecksum(
       final Bytes decryptionKey, final KeyStoreData keyStoreData) {
     final Bytes checksum =
-        calculateSHA256Checksum(decryptionKey, keyStoreData.crypto().getCipher().getMessage());
-    return Objects.equals(checksum, keyStoreData.crypto().getChecksum().getMessage());
+        calculateSHA256Checksum(decryptionKey, keyStoreData.crypto().cipher().message());
+    return Objects.equals(checksum, keyStoreData.crypto().checksum().message());
   }
 
   private static Bytes calculateSHA256Checksum(
@@ -161,7 +156,7 @@ public class KeyStore {
       final Bytes key, final Cipher cipher, final boolean isEncrypt, final byte[] inputMessage) {
     // aes-128-ctr needs first 16 bytes for its key. The 2nd 16 bytes are used to create checksum
     var secretKey = new SecretKeySpec(key.slice(0, AES_KEY_LENGTH).toArrayUnsafe(), AES);
-    var iv = new IvParameterSpec(cipher.getCipherParam().getIv().toArrayUnsafe());
+    var iv = new IvParameterSpec(cipher.params().iv().toArrayUnsafe());
     try {
       var jceCipher = javax.crypto.Cipher.getInstance(AES_CTR_NO_PADDING, BC);
       jceCipher.init(isEncrypt ? ENCRYPT_MODE : DECRYPT_MODE, secretKey, iv);

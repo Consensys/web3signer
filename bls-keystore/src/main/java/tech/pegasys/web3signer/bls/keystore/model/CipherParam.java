@@ -12,26 +12,21 @@
  */
 package tech.pegasys.web3signer.bls.keystore.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 
-public class CipherParam {
-  private final Bytes iv;
+public record CipherParam(@JsonProperty(value = "iv") Bytes iv) {
+  public CipherParam {
+    if (iv == null) {
+      throw new KeyStoreValidationException(
+          "Invalid KeyStore: Missing 'crypto.cipher.params.iv' property");
+    }
 
-  @JsonCreator
-  public CipherParam(@JsonProperty(value = "iv", required = true) final Bytes iv) {
-    this.iv = iv;
-  }
-
-  @JsonProperty(value = "iv")
-  public Bytes getIv() {
-    return iv;
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this).add("iv", iv).toString();
+    // In case of CTR/SIC, the size of IV is between 8 bytes and 16 bytes
+    if (iv.size() < 8 || iv.size() > 16) {
+      throw new KeyStoreValidationException("iv size must be >= 8 and <= 16");
+    }
   }
 }

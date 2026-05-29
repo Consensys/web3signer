@@ -21,16 +21,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
- * BLS Key Store with Jackson Bindings as per json schema.
+ * BLS Key Store with Jackson Bindings as per json schema. crypto and version are minimum required
+ * fields. pubkey is optional, however, if provided, it is validated against decrypted key.
+ * description, uuid and path are not utilized for decryption.
  *
  * @see <a href="https://github.com/ethereum/ercs/blob/master/ERCS/erc-2335.md">EIP-2335</a>
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record KeyStoreData(
-    @JsonProperty(value = "crypto", required = true) Crypto crypto,
-    @JsonProperty(value = "path", required = true) String path,
-    @JsonProperty(value = "uuid", required = true) UUID uuid,
-    @JsonProperty(value = "version", required = true) Integer version,
+    @JsonProperty(value = "crypto") Crypto crypto,
+    @JsonProperty(value = "path") String path,
+    @JsonProperty(value = "uuid") UUID uuid,
+    @JsonProperty(value = "version") Integer version,
     @JsonProperty(value = "pubkey") Bytes pubkey,
     @JsonProperty(value = "description") String description) {
 
@@ -41,11 +43,16 @@ public record KeyStoreData(
    * manually invoked constructors.
    */
   public KeyStoreData {
-    if (version == null || version != KEYSTORE_VERSION) {
-      throw new KeyStoreValidationException("KeyStore version not supported: " + version);
+    if (version == null) {
+      throw new KeyStoreValidationException("Invalid KeyStore: Missing 'version' property");
     }
-    if (crypto != null) {
-      crypto.validate();
+
+    if (crypto == null) {
+      throw new KeyStoreValidationException("Invalid KeyStore: Missing 'crypto' property");
+    }
+
+    if (version != KEYSTORE_VERSION) {
+      throw new KeyStoreValidationException("KeyStore version not supported: " + version);
     }
   }
 

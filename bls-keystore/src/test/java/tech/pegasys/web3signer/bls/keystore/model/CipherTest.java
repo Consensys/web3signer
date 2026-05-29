@@ -26,13 +26,24 @@ class CipherTest {
   @ValueSource(ints = {7, 17})
   void cipherWithInvalidIvLengthThrowsException(final int bytesSize) {
     assertThatExceptionOfType(KeyStoreValidationException.class)
-        .isThrownBy(new Cipher(Bytes.random(bytesSize))::validate)
-        .withMessage("Initialization Vector parameter iv size must be >= 8 and <= 16");
+        .isThrownBy(
+            () ->
+                new Cipher(
+                    CipherFunction.AES_128_CTR,
+                    new CipherParam(Bytes.random(bytesSize)),
+                    Bytes.EMPTY))
+        .withMessage("iv size must be >= 8 and <= 16");
   }
 
   @ParameterizedTest
   @ValueSource(ints = {8, 16})
   void cipherWithValidIvLengthValidateDoesNotThrowException(final int bytesSize) {
-    assertThatCode(new Cipher(Bytes.random(bytesSize))::validate).doesNotThrowAnyException();
+    assertThatCode(
+            () ->
+                new Cipher(
+                    CipherFunction.AES_128_CTR,
+                    new CipherParam(Bytes.random(bytesSize)),
+                    Bytes.EMPTY))
+        .doesNotThrowAnyException();
   }
 }
