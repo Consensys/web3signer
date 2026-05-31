@@ -12,6 +12,10 @@
  */
 package tech.pegasys.web3signer.signing;
 
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.web3signer.bls.keystore.KeyStore;
+import tech.pegasys.web3signer.bls.keystore.KeyStoreLoader;
+import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.signing.config.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
 
@@ -24,6 +28,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class KeystoreFileManager {
 
@@ -39,12 +44,36 @@ public class KeystoreFileManager {
 
   public void deleteKeystoreFiles(final String pubkey) throws IOException {
     final Optional<KeystoreFiles> keystoreFiles = findKeystoreConfigFiles(pubkey);
-    if (keystoreFiles.isPresent()) {
-      final KeystoreFiles files = keystoreFiles.get();
-      Files.deleteIfExists(files.yamlFile());
-      Files.deleteIfExists(files.keystoreFile());
-      Files.deleteIfExists(files.passwordFile());
+    if (keystoreFiles.isEmpty()) {
+      return;
     }
+
+    final KeystoreFiles files = keystoreFiles.get();
+    if (!filesExists(files)) {
+      return;
+    }
+
+    // before deletion, decrypt and make sure that keystore is correct one
+    final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(files.keystoreFile.toUri());
+    final BLSKeyPair blsKeyPair =
+        KeyStore.decrypt(
+            Files.readString(files.passwordFile, StandardCharsets.UTF_8), keyStoreData);
+    final Bytes providedPubKey = Bytes.fromHexString(pubkey);
+    if (!blsKeyPair.getPublicKey().toBytesCompressed().equals(providedPubKey)) {
+      LOG.warn(
+          "Provided pub key {} doesn't match with keystore decrypted pub key {}",
+          pubkey,
+          blsKeyPair.getPublicKey().toBytesCompressed());
+      return;
+    }
+
+    Files.deleteIfExists(files.yamlFile());
+    Files.deleteIfExists(files.keystoreFile());
+    Files.deleteIfExists(files.passwordFile());
+  }
+
+  private static boolean filesExists(final KeystoreFiles files) {
+    return files.keystoreFile().toFile().exists() && files.passwordFile().toFile().exists();
   }
 
   /**
