@@ -76,8 +76,6 @@ public class MetadataFileHelpers {
 
   public void createKeyStoreYamlFileAt(
       final Path metadataFilePath, final BLSKeyPair keyPair, final KdfFunction kdfFunctionType) {
-    final Bytes32 privateKeyBytes = keyPair.getSecretKey().toBytes();
-
     final String password = "password";
 
     final Path keystoreFile =
