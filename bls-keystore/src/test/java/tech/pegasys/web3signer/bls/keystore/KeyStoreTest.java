@@ -136,13 +136,9 @@ class KeyStoreTest {
 
         // required attributes
         Arguments.of(
-            "Missing crypto",
-            MISSING_CRYPTO,
-            "Invalid KeyStore: Missing 'crypto' property"),
+            "Missing crypto", MISSING_CRYPTO, "Invalid KeyStore: Missing 'crypto' property"),
         Arguments.of(
-            "Missing version",
-            MISSING_VERSION,
-            "Invalid KeyStore: Missing 'version' property"));
+            "Missing version", MISSING_VERSION, "Invalid KeyStore: Missing 'version' property"));
   }
 
   @ParameterizedTest(name = "{index} - Load And Decrypt Keystore with {0}")

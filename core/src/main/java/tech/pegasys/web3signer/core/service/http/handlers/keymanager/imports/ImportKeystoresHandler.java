@@ -17,11 +17,15 @@ import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JS
 import static tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoreStatus.DUPLICATE;
 import static tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoreStatus.IMPORTED;
 
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.web3signer.bls.keystore.KeyStore;
+import tech.pegasys.web3signer.bls.keystore.KeyStoreLoader;
+import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.KeystoreFileRecord;
 import tech.pegasys.web3signer.signing.ValidatorManager;
-import tech.pegasys.web3signer.signing.util.BLSKeystoreUtil;
+import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
@@ -184,10 +188,12 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
               final String jsonKeystoreData = requestBody.getKeystores().get(i);
               final String password = requestBody.getPasswords().get(i);
 
-              // Decrypt first — the derived pubkey is authoritative
               final BlsArtifactSigner signer;
               try {
-                signer = BLSKeystoreUtil.decryptKeystore(objectMapper, jsonKeystoreData, password);
+                final KeyStoreData keyStoreData = KeyStoreLoader.loadFromString(jsonKeystoreData);
+                final BLSKeyPair keyPair = KeyStore.decrypt(password, keyStoreData);
+                signer =
+                    new BlsArtifactSigner(keyPair, SignerOrigin.FILE_KEYSTORE, keyStoreData.path());
               } catch (final Exception e) {
                 return new ImportKeystoreData(
                     i,
