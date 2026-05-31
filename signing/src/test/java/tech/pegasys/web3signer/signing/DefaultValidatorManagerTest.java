@@ -26,6 +26,7 @@ import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.bls.keystore.KeyStore;
 import tech.pegasys.web3signer.bls.keystore.model.Cipher;
 import tech.pegasys.web3signer.bls.keystore.model.CipherFunction;
+import tech.pegasys.web3signer.bls.keystore.model.CipherParam;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
@@ -50,7 +51,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DefaultValidatorManagerTest {
   private static final Bytes SALT =
       Bytes.fromHexString("0x9ac471d9d421bc06d9aefe2b46cf96d11829c51e36ed0b116132be57a9f8c22b");
-  private static final Bytes IV = Bytes.fromHexString("0xcca2c67ec95a1dd13edd986fea372789");
+  private static final CipherParam IV =
+      new CipherParam(Bytes.fromHexString("0xcca2c67ec95a1dd13edd986fea372789"));
   private static final BLSKeyPair BLS_KEY_PAIR = BLSTestUtil.randomKeyPair(1);
   private static final ObjectMapper OBJECT_MAPPER =
       JsonMapper.builder().addModule(new SigningMetadataModule()).build();
@@ -175,7 +177,7 @@ class DefaultValidatorManagerTest {
   }
 
   private String createKeystoreString() throws JsonProcessingException {
-    final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV);
+    final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV, Bytes.EMPTY);
     final Pbkdf2Param pbkdf2Param = new Pbkdf2Param(32, 262144, HMAC_SHA256, SALT);
     final KeyStoreData keyStoreData =
         KeyStore.encrypt(BLS_KEY_PAIR, "password", "", pbkdf2Param, cipher);
