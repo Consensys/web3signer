@@ -113,7 +113,7 @@ class KeystoreFileManagerTest {
     assertThat(parentDir.resolve(FILE_RECORD.keystoreFileName())).exists();
     assertThat(parentDir.resolve(FILE_RECORD.passwordFileName())).exists();
 
-    manager.deleteKeystoreFiles(FILE_RECORD.fileNameIdentifier());
+    assertThat(manager.deleteKeystoreFiles(FILE_RECORD.fileNameIdentifier())).isTrue();
 
     assertThat(parentDir.resolve(FILE_RECORD.metadataFileName())).doesNotExist();
     assertThat(parentDir.resolve(FILE_RECORD.keystoreFileName())).doesNotExist();
@@ -126,7 +126,7 @@ class KeystoreFileManagerTest {
     final KeystoreFileManager manager = new KeystoreFileManager(parentDir, YAML_MAPPER);
     manager.createKeystoreFiles(FILE_RECORD);
 
-    manager.deleteKeystoreFiles("unknown");
+    assertThat(manager.deleteKeystoreFiles("unknown")).isFalse();
 
     assertThat(parentDir.resolve(FILE_RECORD.metadataFileName())).exists();
     assertThat(parentDir.resolve(FILE_RECORD.keystoreFileName())).exists();
@@ -145,7 +145,7 @@ class KeystoreFileManagerTest {
         parentDir.resolve("deadbeef.yaml"),
         StandardCopyOption.REPLACE_EXISTING);
 
-    manager.deleteKeystoreFiles("deadbeef");
+    assertThat(manager.deleteKeystoreFiles("deadbeef")).isFalse();
 
     assertThat(parentDir.resolve("deadbeef.yaml")).exists();
     assertThat(parentDir.resolve(FILE_RECORD.keystoreFileName())).exists();

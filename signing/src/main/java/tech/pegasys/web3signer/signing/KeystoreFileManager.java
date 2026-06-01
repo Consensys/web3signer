@@ -28,7 +28,6 @@ import java.util.Optional;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
 
 public class KeystoreFileManager {
 
@@ -42,15 +41,24 @@ public class KeystoreFileManager {
     this.yamlMapper = yamlMapper;
   }
 
-  public void deleteKeystoreFiles(final String pubkey) throws IOException {
+  /**
+   * Keystore API uses pubkey.yaml format to write metadata file.
+   *
+   * @param pubkey Pubkey to use as filename (without .yaml extension)
+   * @return true if files are deleted successfully, false because metadata/keystore/password files
+   *     do not exist.
+   * @throws IOException In case of IO Exception while reading files
+   */
+  public boolean deleteKeystoreFiles(final String pubkey) throws IOException {
     final Optional<KeystoreFiles> keystoreFiles = findKeystoreConfigFiles(pubkey);
     if (keystoreFiles.isEmpty()) {
-      return;
+      return false;
     }
 
     final KeystoreFiles files = keystoreFiles.get();
     if (!filesExists(files)) {
-      return;
+      LOG.debug("Unable to delete keystore files because they don't exist");
+      return false;
     }
 
     // before deletion, decrypt and make sure that keystore is correct one
@@ -58,16 +66,15 @@ public class KeystoreFileManager {
     final BLSKeyPair blsKeyPair =
         KeyStore.decrypt(
             Files.readString(files.passwordFile, StandardCharsets.UTF_8), keyStoreData);
-    final Bytes providedPubKey = Bytes.fromHexString(pubkey);
-    if (!blsKeyPair.getPublicKey().toBytesCompressed().equals(providedPubKey)) {
+    if (!blsKeyPair.getPublicKey().toHexString().equals(pubkey)) {
       LOG.warn(
-          "Deletion request ignored because provided pub key doesn't match with decrypted pub key");
-      return;
+          "Unable to delete keystore files because provided pub key doesn't match with decrypted pub key");
+      return false;
     }
 
-    Files.deleteIfExists(files.yamlFile());
-    Files.deleteIfExists(files.keystoreFile());
-    Files.deleteIfExists(files.passwordFile());
+    return Files.deleteIfExists(files.yamlFile())
+        & Files.deleteIfExists(files.keystoreFile())
+        & Files.deleteIfExists(files.passwordFile());
   }
 
   private static boolean filesExists(final KeystoreFiles files) {
@@ -103,9 +110,10 @@ public class KeystoreFileManager {
     }
   }
 
-  private Optional<KeystoreFiles> findKeystoreConfigFiles(final String pubkey) throws IOException {
+  private Optional<KeystoreFiles> findKeystoreConfigFiles(final String pubkey) {
     final Path yamlFile = keystorePath.resolve(pubkey + ".yaml");
     if (!Files.exists(yamlFile)) {
+      LOG.debug("Cannot read metadata file because it doesn't exist {}", yamlFile);
       return Optional.empty();
     }
     try {
@@ -115,9 +123,11 @@ public class KeystoreFileManager {
           && metaDataInfo instanceof FileKeyStoreMetadata info) {
         return Optional.of(
             new KeystoreFiles(yamlFile, info.getKeystoreFile(), info.getKeystorePasswordFile()));
+      } else {
+        LOG.debug("Metadata file type is incorrect {}", yamlFile);
       }
     } catch (final Exception e) {
-      LOG.error("Error reading config file: {}", yamlFile, e);
+      LOG.error("Unexpected error reading metadata file: {}", yamlFile, e);
     }
     return Optional.empty();
   }
