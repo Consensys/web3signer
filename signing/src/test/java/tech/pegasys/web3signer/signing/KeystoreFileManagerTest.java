@@ -13,39 +13,58 @@
 package tech.pegasys.web3signer.signing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.web3signer.BLSTestUtil;
+import tech.pegasys.web3signer.bls.keystore.KeyStore;
+import tech.pegasys.web3signer.bls.keystore.KeyStoreLoader;
+import tech.pegasys.web3signer.bls.keystore.model.Cipher;
+import tech.pegasys.web3signer.bls.keystore.model.CipherFunction;
+import tech.pegasys.web3signer.bls.keystore.model.CipherParam;
+import tech.pegasys.web3signer.bls.keystore.model.KdfParam;
+import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
+import tech.pegasys.web3signer.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.web3signer.signing.config.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class KeystoreFileManagerTest {
   private static final YAMLMapper YAML_MAPPER = YamlMapperFactory.createYamlMapper();
-  private static final String TEST_JSON = "{\"test\":true}";
+  private static final Bytes SALT =
+      Bytes.fromHexString("0x9ac471d9d421bc06d9aefe2b46cf96d11829c51e36ed0b116132be57a9f8c22b");
+  private static final CipherParam IV =
+      new CipherParam(Bytes.fromHexString("0xcca2c67ec95a1dd13edd986fea372789"));
+  private static final BLSKeyPair blsKeyPair = BLSTestUtil.randomKeyPair(1);
+  private static final String TEST_JSON = keystoreJson();
   private static final KeystoreFileRecord FILE_RECORD =
-      new KeystoreFileRecord(TEST_JSON, "password", "filename");
+      new KeystoreFileRecord(TEST_JSON, "password", blsKeyPair.getPublicKey().toHexString());
 
   @Test
   void configurationFilesAreCreated(@TempDir final Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir, YAML_MAPPER).createKeystoreFiles(FILE_RECORD);
 
-    assertThat(parentDir.resolve("filename.yaml")).exists();
-    assertThat(parentDir.resolve("filename.json")).exists();
-    assertThat(parentDir.resolve("filename.password")).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.metadataFileName())).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.keystoreFileName())).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.passwordFileName())).exists();
   }
 
   @Test
   void yamlContentIsValidFileKeyStoreMetadata(@TempDir final Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir, YAML_MAPPER).createKeystoreFiles(FILE_RECORD);
 
-    final Path metadataYamlFile = parentDir.resolve("filename.yaml");
+    final Path metadataYamlFile = parentDir.resolve(FILE_RECORD.metadataFileName());
     assertThat(metadataYamlFile).exists();
 
     SigningMetadata signingMetadata =
@@ -57,9 +76,9 @@ class KeystoreFileManagerTest {
   void yamlContentIsNotConverted(@TempDir final Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir, YAML_MAPPER).createKeystoreFiles(FILE_RECORD);
 
-    final Path metadataYamlFile = parentDir.resolve("filename.yaml");
-    final Path keystoreJsonFile = parentDir.resolve("filename.json");
-    final Path keystorePasswordFile = parentDir.resolve("filename.password");
+    final Path metadataYamlFile = parentDir.resolve(FILE_RECORD.metadataFileName());
+    final Path keystoreJsonFile = parentDir.resolve(FILE_RECORD.keystoreFileName());
+    final Path keystorePasswordFile = parentDir.resolve(FILE_RECORD.passwordFileName());
 
     Map<String, String> deserializedYamlMap =
         YAML_MAPPER.readValue(metadataYamlFile.toFile(), new TypeReference<>() {});
@@ -75,14 +94,14 @@ class KeystoreFileManagerTest {
   void passwordContentsAreWritten(@TempDir final Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir, YAML_MAPPER).createKeystoreFiles(FILE_RECORD);
 
-    assertThat(parentDir.resolve("filename.password")).hasContent("password");
+    assertThat(parentDir.resolve(FILE_RECORD.passwordFileName())).hasContent("password");
   }
 
   @Test
   void jsonDataIsWritten(@TempDir final Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir, YAML_MAPPER).createKeystoreFiles(FILE_RECORD);
 
-    assertThat(parentDir.resolve("filename.json")).hasContent(TEST_JSON);
+    assertThat(parentDir.resolve(FILE_RECORD.keystoreFileName())).hasContent(TEST_JSON);
   }
 
   @Test
@@ -90,15 +109,15 @@ class KeystoreFileManagerTest {
     final KeystoreFileManager manager = new KeystoreFileManager(parentDir, YAML_MAPPER);
     manager.createKeystoreFiles(FILE_RECORD);
 
-    assertThat(parentDir.resolve("filename.yaml")).exists();
-    assertThat(parentDir.resolve("filename.json")).exists();
-    assertThat(parentDir.resolve("filename.password")).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.metadataFileName())).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.keystoreFileName())).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.passwordFileName())).exists();
 
-    manager.deleteKeystoreFiles("filename");
+    manager.deleteKeystoreFiles(FILE_RECORD.fileNameIdentifier());
 
-    assertThat(parentDir.resolve("filename.yaml")).doesNotExist();
-    assertThat(parentDir.resolve("filename.json")).doesNotExist();
-    assertThat(parentDir.resolve("filename.password")).doesNotExist();
+    assertThat(parentDir.resolve(FILE_RECORD.metadataFileName())).doesNotExist();
+    assertThat(parentDir.resolve(FILE_RECORD.keystoreFileName())).doesNotExist();
+    assertThat(parentDir.resolve(FILE_RECORD.passwordFileName())).doesNotExist();
   }
 
   @Test
@@ -109,8 +128,35 @@ class KeystoreFileManagerTest {
 
     manager.deleteKeystoreFiles("unknown");
 
-    assertThat(parentDir.resolve("filename.yaml")).exists();
-    assertThat(parentDir.resolve("filename.json")).exists();
-    assertThat(parentDir.resolve("filename.password")).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.metadataFileName())).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.keystoreFileName())).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.passwordFileName())).exists();
+  }
+
+  @Test
+  void deleteKeystoreFilesWithInvalidPubkeyDoesNothing(@TempDir final Path parentDir)
+      throws Exception {
+    final KeystoreFileManager manager = new KeystoreFileManager(parentDir, YAML_MAPPER);
+    manager.createKeystoreFiles(FILE_RECORD);
+
+    // rename - makes pubidentifier in filename different from actual public key in keystore
+    Files.move(
+        parentDir.resolve(FILE_RECORD.metadataFileName()),
+        parentDir.resolve("deadbeef.yaml"),
+        StandardCopyOption.REPLACE_EXISTING);
+
+    manager.deleteKeystoreFiles("deadbeef");
+
+    assertThat(parentDir.resolve("deadbeef.yaml")).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.keystoreFileName())).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.passwordFileName())).exists();
+  }
+
+  private static String keystoreJson() {
+    final KdfParam kdfParam = new Pbkdf2Param(32, 2, HMAC_SHA256, SALT);
+    final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV, Bytes.EMPTY);
+    final KeyStoreData keyStoreData =
+        KeyStore.encrypt(blsKeyPair, "password", "", kdfParam, cipher);
+    return KeyStoreLoader.toJson(keyStoreData);
   }
 }

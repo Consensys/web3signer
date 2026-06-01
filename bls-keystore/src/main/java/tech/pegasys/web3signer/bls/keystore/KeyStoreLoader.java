@@ -107,7 +107,7 @@ public class KeyStoreLoader {
     Files.writeString(keystoreFile, toJson(keyStoreData), UTF_8);
   }
 
-  private static String toJson(final KeyStoreData keyStoreData) {
+  public static String toJson(final KeyStoreData keyStoreData) {
     try {
       return PRETTY_PRINTER.writeValueAsString(keyStoreData);
     } catch (final JsonProcessingException e) {

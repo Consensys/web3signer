@@ -61,9 +61,7 @@ public class KeystoreFileManager {
     final Bytes providedPubKey = Bytes.fromHexString(pubkey);
     if (!blsKeyPair.getPublicKey().toBytesCompressed().equals(providedPubKey)) {
       LOG.warn(
-          "Provided pub key {} doesn't match with keystore decrypted pub key {}",
-          pubkey,
-          blsKeyPair.getPublicKey().toBytesCompressed());
+          "Deletion request ignored because provided pub key doesn't match with decrypted pub key");
       return;
     }
 
