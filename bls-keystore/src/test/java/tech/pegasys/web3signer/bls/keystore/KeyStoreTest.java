@@ -84,8 +84,6 @@ class KeyStoreTest {
       new Cipher(CipherFunction.AES_128_CTR, AES_IV_PARAM, Bytes.EMPTY);
 
   private static final String MISSING_CRYPTO = "missingCrypto.json";
-  private static final String MISSING_PATH = "missingPath.json";
-  private static final String MISSING_UUID = "missingUUID.json";
   private static final String MISSING_VERSION = "missingVersion.json";
 
   public static Stream<Arguments> encryptWithKdfAndCipherArguments() {

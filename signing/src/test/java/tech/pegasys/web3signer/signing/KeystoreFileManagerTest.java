@@ -46,10 +46,10 @@ class KeystoreFileManagerTest {
       Bytes.fromHexString("0x9ac471d9d421bc06d9aefe2b46cf96d11829c51e36ed0b116132be57a9f8c22b");
   private static final CipherParam IV =
       new CipherParam(Bytes.fromHexString("0xcca2c67ec95a1dd13edd986fea372789"));
-  private static final BLSKeyPair blsKeyPair = BLSTestUtil.randomKeyPair(1);
+  private static final BLSKeyPair BLS_KEY_PAIR = BLSTestUtil.randomKeyPair(1);
   private static final String TEST_JSON = keystoreJson();
   private static final KeystoreFileRecord FILE_RECORD =
-      new KeystoreFileRecord(TEST_JSON, "password", blsKeyPair.getPublicKey().toHexString());
+      new KeystoreFileRecord(TEST_JSON, "password", BLS_KEY_PAIR.getPublicKey().toHexString());
 
   @Test
   void configurationFilesAreCreated(@TempDir final Path parentDir) throws Exception {
@@ -156,7 +156,7 @@ class KeystoreFileManagerTest {
     final KdfParam kdfParam = new Pbkdf2Param(32, 2, HMAC_SHA256, SALT);
     final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV, Bytes.EMPTY);
     final KeyStoreData keyStoreData =
-        KeyStore.encrypt(blsKeyPair, "password", "", kdfParam, cipher);
+        KeyStore.encrypt(BLS_KEY_PAIR, "password", "", kdfParam, cipher);
     return KeyStoreLoader.toJson(keyStoreData);
   }
 }
