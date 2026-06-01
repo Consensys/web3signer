@@ -109,7 +109,7 @@ public class KeyStore {
    *
    * @param password The password to use for decryption
    * @param keyStoreData The given Key Store
-   * @return decrypted BLS private key in Bytes
+   * @return decrypted BLS KeyPair
    */
   public static BLSKeyPair decrypt(final String password, final KeyStoreData keyStoreData) {
     checkNotNull(password, "Password cannot be null");
