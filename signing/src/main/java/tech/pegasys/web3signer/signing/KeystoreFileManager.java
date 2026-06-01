@@ -72,9 +72,11 @@ public class KeystoreFileManager {
       return false;
     }
 
-    return Files.deleteIfExists(files.yamlFile())
-        & Files.deleteIfExists(files.keystoreFile())
-        & Files.deleteIfExists(files.passwordFile());
+    var metadataFileDeleted = Files.deleteIfExists(files.yamlFile());
+    var keystoreFileDeleted = Files.deleteIfExists(files.keystoreFile());
+    var passwordFileDeleted = Files.deleteIfExists(files.passwordFile());
+
+    return metadataFileDeleted && keystoreFileDeleted && passwordFileDeleted;
   }
 
   private static boolean filesExists(final KeystoreFiles files) {
