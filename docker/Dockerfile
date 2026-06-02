@@ -27,7 +27,7 @@ LABEL org.opencontainers.image.created=$BUILD_DATE \
       org.opencontainers.image.version=$VERSION \
       org.opencontainers.image.vendor="Consensys" \
       org.opencontainers.image.licenses="Apache-2.0" \
-      org.opencontainers.image.base.name="ubuntu:24.04"
+      org.opencontainers.image.base.name="ubuntu:26.04"
 
 ENV JAVA_HOME="/opt/java/openjdk" \
     PATH="/opt/java/openjdk/bin:${PATH}" \
