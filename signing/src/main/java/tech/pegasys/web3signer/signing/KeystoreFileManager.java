@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.signing;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.bls.keystore.KeyStore;
 import tech.pegasys.web3signer.bls.keystore.KeyStoreLoader;
+import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.signing.config.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
@@ -62,10 +63,20 @@ public class KeystoreFileManager {
     }
 
     // before deletion, decrypt and make sure that keystore is correct one
-    final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(files.keystoreFile.toUri());
-    final BLSKeyPair blsKeyPair =
-        KeyStore.decrypt(
-            Files.readString(files.passwordFile, StandardCharsets.UTF_8), keyStoreData);
+    final KeyStoreData keyStoreData;
+    final BLSKeyPair blsKeyPair;
+    try {
+      keyStoreData = KeyStoreLoader.loadFromFile(files.keystoreFile.toUri());
+      blsKeyPair =
+          KeyStore.decrypt(
+              Files.readString(files.passwordFile, StandardCharsets.UTF_8), keyStoreData);
+    } catch (KeyStoreValidationException e) {
+      LOG.warn(
+          "Unable to verify keystore for '{}', files will not be deleted: {}",
+          pubkey,
+          e.getMessage());
+      return false;
+    }
     if (!blsKeyPair.getPublicKey().toHexString().equals(pubkey)) {
       LOG.warn(
           "Unable to delete keystore files because provided pub key doesn't match with decrypted pub key");
