@@ -19,9 +19,9 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.bls.keystore.KeyStore;
 import tech.pegasys.web3signer.bls.keystore.KeyStoreLoader;
-import tech.pegasys.web3signer.bls.keystore.model.Cipher;
 import tech.pegasys.web3signer.bls.keystore.model.CipherFunction;
 import tech.pegasys.web3signer.bls.keystore.model.CipherParam;
+import tech.pegasys.web3signer.bls.keystore.model.CipherSpec;
 import tech.pegasys.web3signer.bls.keystore.model.KdfParam;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.bls.keystore.model.Pbkdf2Param;
@@ -195,7 +195,7 @@ class KeystoreFileManagerTest {
 
   private static String keystoreJson() {
     final KdfParam kdfParam = new Pbkdf2Param(32, 2, HMAC_SHA256, SALT);
-    final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV, Bytes.EMPTY);
+    final CipherSpec cipher = new CipherSpec(CipherFunction.AES_128_CTR, IV);
     final KeyStoreData keyStoreData =
         KeyStore.encrypt(BLS_KEY_PAIR, "password", "", kdfParam, cipher);
     return KeyStoreLoader.toJson(keyStoreData);

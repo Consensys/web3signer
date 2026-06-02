@@ -21,9 +21,9 @@ import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.bls.keystore.KeyStore;
 import tech.pegasys.web3signer.bls.keystore.KeyStoreLoader;
-import tech.pegasys.web3signer.bls.keystore.model.Cipher;
 import tech.pegasys.web3signer.bls.keystore.model.CipherFunction;
 import tech.pegasys.web3signer.bls.keystore.model.CipherParam;
+import tech.pegasys.web3signer.bls.keystore.model.CipherSpec;
 import tech.pegasys.web3signer.bls.keystore.model.KdfParam;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.bls.keystore.model.SCryptParam;
@@ -195,11 +195,10 @@ class BlsArtifactSignerFactoryTest {
 
   private static void createKeyStoreFile(final Path keyStoreFilePath) {
     final KdfParam kdfParam = new SCryptParam(32, KEYSTORE_SALT);
-    final Cipher cipher =
-        new Cipher(
+    final CipherSpec cipher =
+        new CipherSpec(
             CipherFunction.AES_128_CTR,
-            new CipherParam(Bytes.fromHexString("e0f20a27d160f7cc92764579390e881a")),
-            Bytes.EMPTY);
+            new CipherParam(Bytes.fromHexString("e0f20a27d160f7cc92764579390e881a")));
     final KeyStoreData keyStoreData =
         KeyStore.encrypt(BLS_KEY_PAIR, PASSWORD, "", kdfParam, cipher);
     try {

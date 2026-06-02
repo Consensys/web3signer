@@ -21,6 +21,8 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.bls.keystore.model.Checksum;
 import tech.pegasys.web3signer.bls.keystore.model.Cipher;
+import tech.pegasys.web3signer.bls.keystore.model.CipherParam;
+import tech.pegasys.web3signer.bls.keystore.model.CipherSpec;
 import tech.pegasys.web3signer.bls.keystore.model.Crypto;
 import tech.pegasys.web3signer.bls.keystore.model.Kdf;
 import tech.pegasys.web3signer.bls.keystore.model.KdfParam;
@@ -54,7 +56,7 @@ public class KeyStore {
    * @param path Path as defined in EIP-2334. Can be empty String.
    * @param kdfParam crypto function such as scrypt or PBKDF2 and related parameters such as dklen,
    *     salt etc.
-   * @param cipherWithoutMessage cipher function and iv parameter to use.
+   * @param cipherSpec cipher function and iv parameter to use.
    * @return The constructed KeyStore with encrypted BLS Private Key as cipher.message and other
    *     details as defined by the EIP-2335 standard.
    */
@@ -63,28 +65,32 @@ public class KeyStore {
       final String password,
       final String path,
       final KdfParam kdfParam,
-      final Cipher cipherWithoutMessage) {
+      final CipherSpec cipherSpec) {
 
     checkNotNull(blsKeyPair, "blsKeyPair cannot be null");
     checkNotNull(password, "Password cannot be null");
     checkNotNull(path, "Path cannot be null");
     checkNotNull(kdfParam, "KDFParam cannot be null");
-    checkNotNull(cipherWithoutMessage, "Cipher cannot be null");
+    checkNotNull(cipherSpec, "CipherSpec cannot be null");
 
     final Crypto crypto =
         encryptUsingCipherFunction(
-            blsKeyPair.getSecretKey().toBytes(), password, kdfParam, cipherWithoutMessage);
+            blsKeyPair.getSecretKey().toBytes(), password, kdfParam, cipherSpec);
     return new KeyStoreData(crypto, blsKeyPair.getPublicKey().toBytesCompressed(), path);
   }
 
   private static Crypto encryptUsingCipherFunction(
-      final Bytes secret, final String password, final KdfParam kdfParam, final Cipher cipher) {
+      final Bytes secret,
+      final String password,
+      final KdfParam kdfParam,
+      final CipherSpec cipherSpec) {
     final Bytes decryptionKey = kdfParam.generateDecryptionKey(password);
     final Bytes cipherMessage =
-        applyCipherFunction(decryptionKey, cipher, true, secret.toArrayUnsafe());
+        applyCipherFunction(decryptionKey, cipherSpec.params(), true, secret.toArrayUnsafe());
     final Bytes checksumMessage = calculateSHA256Checksum(decryptionKey, cipherMessage);
     final Checksum checksum = new Checksum(checksumMessage);
-    final Cipher encryptedCipher = new Cipher(cipher.function(), cipher.params(), cipherMessage);
+    final Cipher encryptedCipher =
+        new Cipher(cipherSpec.function(), cipherSpec.params(), cipherMessage);
     final Kdf kdf = new Kdf(kdfParam);
     return new Crypto(kdf, checksum, encryptedCipher);
   }
@@ -124,7 +130,8 @@ public class KeyStore {
 
     final Cipher cipher = keyStoreData.crypto().cipher();
     final byte[] encryptedMessage = cipher.message().toArrayUnsafe();
-    Bytes decryptedBLSKey = applyCipherFunction(decryptionKey, cipher, false, encryptedMessage);
+    Bytes decryptedBLSKey =
+        applyCipherFunction(decryptionKey, cipher.params(), false, encryptedMessage);
 
     final BLSKeyPair keyPair =
         new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(decryptedBLSKey)));
@@ -153,10 +160,13 @@ public class KeyStore {
   }
 
   private static Bytes applyCipherFunction(
-      final Bytes key, final Cipher cipher, final boolean isEncrypt, final byte[] inputMessage) {
+      final Bytes key,
+      final CipherParam params,
+      final boolean isEncrypt,
+      final byte[] inputMessage) {
     // aes-128-ctr needs first 16 bytes for its key. The 2nd 16 bytes are used to create checksum
     var secretKey = new SecretKeySpec(key.slice(0, AES_KEY_LENGTH).toArrayUnsafe(), AES);
-    var iv = new IvParameterSpec(cipher.params().iv().toArrayUnsafe());
+    var iv = new IvParameterSpec(params.iv().toArrayUnsafe());
     try {
       var jceCipher = javax.crypto.Cipher.getInstance(AES_CTR_NO_PADDING, BC);
       jceCipher.init(isEncrypt ? ENCRYPT_MODE : DECRYPT_MODE, secretKey, iv);

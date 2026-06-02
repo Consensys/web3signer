@@ -24,26 +24,22 @@ import org.junit.jupiter.params.provider.ValueSource;
 class CipherTest {
   @ParameterizedTest
   @ValueSource(ints = {7, 17})
-  void cipherWithInvalidIvLengthThrowsException(final int bytesSize) {
+  void cipherSpecWithInvalidIvLengthThrowsException(final int bytesSize) {
     assertThatExceptionOfType(KeyStoreValidationException.class)
         .isThrownBy(
             () ->
-                new Cipher(
-                    CipherFunction.AES_128_CTR,
-                    new CipherParam(Bytes.random(bytesSize)),
-                    Bytes.EMPTY))
+                new CipherSpec(
+                    CipherFunction.AES_128_CTR, new CipherParam(Bytes.random(bytesSize))))
         .withMessage("iv size must be >= 8 and <= 16");
   }
 
   @ParameterizedTest
   @ValueSource(ints = {8, 16})
-  void cipherWithValidIvLengthValidateDoesNotThrowException(final int bytesSize) {
+  void cipherSpecWithValidIvLengthValidateDoesNotThrowException(final int bytesSize) {
     assertThatCode(
             () ->
-                new Cipher(
-                    CipherFunction.AES_128_CTR,
-                    new CipherParam(Bytes.random(bytesSize)),
-                    Bytes.EMPTY))
+                new CipherSpec(
+                    CipherFunction.AES_128_CTR, new CipherParam(Bytes.random(bytesSize))))
         .doesNotThrowAnyException();
   }
 }

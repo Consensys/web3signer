@@ -18,9 +18,9 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
-import tech.pegasys.web3signer.bls.keystore.model.Cipher;
 import tech.pegasys.web3signer.bls.keystore.model.CipherFunction;
 import tech.pegasys.web3signer.bls.keystore.model.CipherParam;
+import tech.pegasys.web3signer.bls.keystore.model.CipherSpec;
 import tech.pegasys.web3signer.bls.keystore.model.KdfParam;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.bls.keystore.model.Pbkdf2Param;
@@ -80,8 +80,8 @@ class KeyStoreTest {
   private static final String UNSUPPORTED_KDF_FUNCTION_JSON = "unsupportedKdfFunction.json";
   private static final String UNSUPPORTED_PBKDF2_PRF_FUNCTION_JSON = "unsupportedPBKDF2Prf.json";
   private static final String UNSUPPORTED_DKLEN_FUNCTION_JSON = "unsupportedDkLen.json";
-  private static final Cipher CIPHER =
-      new Cipher(CipherFunction.AES_128_CTR, AES_IV_PARAM, Bytes.EMPTY);
+  private static final CipherSpec CIPHER_SPEC =
+      new CipherSpec(CipherFunction.AES_128_CTR, AES_IV_PARAM);
 
   private static final String MISSING_CRYPTO = "missingCrypto.json";
   private static final String MISSING_VERSION = "missingVersion.json";
@@ -172,7 +172,7 @@ class KeyStoreTest {
   void encryptWithKdfAndCipherFunction(
       final KdfParam kdfParam, final Bytes expectedChecksum, final Bytes encryptedCipherMessage) {
     final KeyStoreData keyStoreData =
-        KeyStore.encrypt(BLS_KEY_PAIR, PASSWORD, "", kdfParam, CIPHER);
+        KeyStore.encrypt(BLS_KEY_PAIR, PASSWORD, "", kdfParam, CIPHER_SPEC);
     assertThat(keyStoreData.crypto().checksum().message()).isEqualTo(expectedChecksum);
     assertThat(keyStoreData.crypto().cipher().message()).isEqualTo(encryptedCipherMessage);
     assertThat(keyStoreData.version()).isEqualTo(KeyStoreData.KEYSTORE_VERSION);
@@ -190,7 +190,7 @@ class KeyStoreTest {
       throws IOException {
 
     final KeyStoreData keyStoreData =
-        KeyStore.encrypt(BLS_KEY_PAIR, PASSWORD, "", kdfParam, CIPHER);
+        KeyStore.encrypt(BLS_KEY_PAIR, PASSWORD, "", kdfParam, CIPHER_SPEC);
     final Path tempKeyStoreFile = Files.createTempFile(tempDir, "keystore", ".json");
     assertThatCode(() -> KeyStoreLoader.saveToFile(tempKeyStoreFile, keyStoreData))
         .doesNotThrowAnyException();
@@ -238,7 +238,7 @@ class KeyStoreTest {
                     PASSWORD,
                     "",
                     new SCryptParam(DKLEN, MEMORY_CPU_COST, PARALLELIZATION, BLOCKSIZE, SALT),
-                    CIPHER)
+                    CIPHER_SPEC)
                 .crypto(),
             null,
             "");
@@ -260,7 +260,7 @@ class KeyStoreTest {
                     PASSWORD,
                     "",
                     new SCryptParam(DKLEN, MEMORY_CPU_COST, PARALLELIZATION, BLOCKSIZE, SALT),
-                    CIPHER)
+                    CIPHER_SPEC)
                 .crypto(),
             otherPair.getPublicKey().toBytesCompressed(),
             "");

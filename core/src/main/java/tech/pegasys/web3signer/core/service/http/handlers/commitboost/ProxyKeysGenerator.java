@@ -17,9 +17,9 @@ import static tech.pegasys.web3signer.bls.keystore.model.Pbkdf2PseudoRandomFunct
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.bls.keystore.KeyStore;
 import tech.pegasys.web3signer.bls.keystore.KeyStoreLoader;
-import tech.pegasys.web3signer.bls.keystore.model.Cipher;
 import tech.pegasys.web3signer.bls.keystore.model.CipherFunction;
 import tech.pegasys.web3signer.bls.keystore.model.CipherParam;
+import tech.pegasys.web3signer.bls.keystore.model.CipherSpec;
 import tech.pegasys.web3signer.bls.keystore.model.KdfParam;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.bls.keystore.model.Pbkdf2Param;
@@ -97,7 +97,7 @@ public class ProxyKeysGenerator {
         new CipherParam(Bytes.random(16, SecureRandomProvider.getSecureRandom()));
     final int counter = 65536; // 2^16
     final KdfParam kdfParam = new Pbkdf2Param(32, counter, HMAC_SHA256, salt);
-    final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, cipherParam, Bytes.EMPTY);
+    final CipherSpec cipher = new CipherSpec(CipherFunction.AES_128_CTR, cipherParam);
     final Bytes48 publicKey = keyPair.getPublicKey().toBytesCompressed();
     final String password = readFile(commitBoostParameters.getKeystoresPasswordFile());
     final KeyStoreData keyStoreData = KeyStore.encrypt(keyPair, password, "", kdfParam, cipher);

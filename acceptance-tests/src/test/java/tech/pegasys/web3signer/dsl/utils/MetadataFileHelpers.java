@@ -18,9 +18,9 @@ import static tech.pegasys.web3signer.bls.keystore.model.Pbkdf2PseudoRandomFunct
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.bls.keystore.KeyStore;
 import tech.pegasys.web3signer.bls.keystore.KeyStoreLoader;
-import tech.pegasys.web3signer.bls.keystore.model.Cipher;
 import tech.pegasys.web3signer.bls.keystore.model.CipherFunction;
 import tech.pegasys.web3signer.bls.keystore.model.CipherParam;
+import tech.pegasys.web3signer.bls.keystore.model.CipherSpec;
 import tech.pegasys.web3signer.bls.keystore.model.KdfFunction;
 import tech.pegasys.web3signer.bls.keystore.model.KdfParam;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
@@ -273,7 +273,7 @@ public class MetadataFileHelpers {
         kdfFunctionType == KdfFunction.SCRYPT
             ? new SCryptParam(32, SALT)
             : new Pbkdf2Param(32, 262144, HMAC_SHA256, SALT);
-    final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV, Bytes.EMPTY);
+    final CipherSpec cipher = new CipherSpec(CipherFunction.AES_128_CTR, IV);
     final KeyStoreData keyStoreData =
         KeyStore.encrypt(blsKeyPair, "password", "m/12381/3600/0/0/0", kdfParam, cipher);
     try {

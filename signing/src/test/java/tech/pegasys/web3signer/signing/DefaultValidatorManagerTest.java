@@ -24,9 +24,9 @@ import static tech.pegasys.web3signer.bls.keystore.model.Pbkdf2PseudoRandomFunct
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.bls.keystore.KeyStore;
-import tech.pegasys.web3signer.bls.keystore.model.Cipher;
 import tech.pegasys.web3signer.bls.keystore.model.CipherFunction;
 import tech.pegasys.web3signer.bls.keystore.model.CipherParam;
+import tech.pegasys.web3signer.bls.keystore.model.CipherSpec;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
@@ -198,7 +198,7 @@ class DefaultValidatorManagerTest {
   }
 
   private String createKeystoreString() throws JsonProcessingException {
-    final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV, Bytes.EMPTY);
+    final CipherSpec cipher = new CipherSpec(CipherFunction.AES_128_CTR, IV);
     final Pbkdf2Param pbkdf2Param = new Pbkdf2Param(32, 262144, HMAC_SHA256, SALT);
     final KeyStoreData keyStoreData =
         KeyStore.encrypt(BLS_KEY_PAIR, "password", "", pbkdf2Param, cipher);
