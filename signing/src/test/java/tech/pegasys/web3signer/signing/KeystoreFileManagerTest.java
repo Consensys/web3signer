@@ -152,6 +152,47 @@ class KeystoreFileManagerTest {
     assertThat(parentDir.resolve(FILE_RECORD.passwordFileName())).exists();
   }
 
+  @Test
+  void deleteKeystoreFilesReturnsFalseWhenKeystoreFileMissing(@TempDir final Path parentDir)
+      throws Exception {
+    final KeystoreFileManager manager = new KeystoreFileManager(parentDir, YAML_MAPPER);
+    manager.createKeystoreFiles(FILE_RECORD);
+    Files.delete(parentDir.resolve(FILE_RECORD.keystoreFileName()));
+
+    assertThat(manager.deleteKeystoreFiles(FILE_RECORD.fileNameIdentifier())).isFalse();
+
+    assertThat(parentDir.resolve(FILE_RECORD.metadataFileName())).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.passwordFileName())).exists();
+  }
+
+  @Test
+  void deleteKeystoreFilesReturnsFalseWhenKeystoreIsCorrupt(@TempDir final Path parentDir)
+      throws Exception {
+    final KeystoreFileManager manager = new KeystoreFileManager(parentDir, YAML_MAPPER);
+    manager.createKeystoreFiles(FILE_RECORD);
+    Files.writeString(parentDir.resolve(FILE_RECORD.keystoreFileName()), "not valid json");
+
+    assertThat(manager.deleteKeystoreFiles(FILE_RECORD.fileNameIdentifier())).isFalse();
+
+    assertThat(parentDir.resolve(FILE_RECORD.metadataFileName())).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.keystoreFileName())).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.passwordFileName())).exists();
+  }
+
+  @Test
+  void deleteKeystoreFilesReturnsFalseWhenPasswordIsWrong(@TempDir final Path parentDir)
+      throws Exception {
+    final KeystoreFileManager manager = new KeystoreFileManager(parentDir, YAML_MAPPER);
+    manager.createKeystoreFiles(FILE_RECORD);
+    Files.writeString(parentDir.resolve(FILE_RECORD.passwordFileName()), "wrong-password");
+
+    assertThat(manager.deleteKeystoreFiles(FILE_RECORD.fileNameIdentifier())).isFalse();
+
+    assertThat(parentDir.resolve(FILE_RECORD.metadataFileName())).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.keystoreFileName())).exists();
+    assertThat(parentDir.resolve(FILE_RECORD.passwordFileName())).exists();
+  }
+
   private static String keystoreJson() {
     final KdfParam kdfParam = new Pbkdf2Param(32, 2, HMAC_SHA256, SALT);
     final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV, Bytes.EMPTY);

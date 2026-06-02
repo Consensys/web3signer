@@ -16,8 +16,6 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 /// Default `ValidatorManager` implementation that supports both file-backed and in-memory-only
@@ -32,8 +30,6 @@ import org.apache.tuweni.bytes.Bytes;
 /// register the signer in memory _after_ a successful file write (if applicable), and deletions
 /// remove the signer from memory _before_ deleting any files.
 public class DefaultValidatorManager implements ValidatorManager {
-  private static final Logger LOG = LogManager.getLogger();
-
   private final ArtifactSignerProvider signerProvider;
   private final Optional<KeystoreFileManager> keystoreFileManager;
 
@@ -60,9 +56,10 @@ public class DefaultValidatorManager implements ValidatorManager {
         final boolean filesDeleted =
             keystoreFileManager.get().deleteKeystoreFiles(publicKey.toHexString());
         if (!filesDeleted) {
-          LOG.warn(
-              "One or more files associated with '{}' could not be deleted; they may not exist or the keystore may not match the expected key name",
-              publicKey);
+          throw new IllegalStateException(
+              "Unable to delete keystore files for '"
+                  + publicKey
+                  + "': files missing, unreadable, or pubkey mismatch — check logs for details");
         }
       }
     } catch (InterruptedException e) {

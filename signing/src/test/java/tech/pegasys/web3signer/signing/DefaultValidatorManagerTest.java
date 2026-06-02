@@ -87,6 +87,7 @@ class DefaultValidatorManagerTest {
   void deletesValidator() throws ExecutionException, InterruptedException, IOException {
     final Future<Void> futureDeleteSigner = Mockito.mock(Future.class);
     when(artifactSignerProvider.removeSigner(any())).thenReturn(futureDeleteSigner);
+    when(keystoreFileManager.deleteKeystoreFiles(any())).thenReturn(true);
 
     final DefaultValidatorManager defaultValidatorManager =
         new DefaultValidatorManager(artifactSignerProvider, Optional.of(keystoreFileManager));
@@ -95,6 +96,26 @@ class DefaultValidatorManagerTest {
     verify(artifactSignerProvider).removeSigner(eq(BLS_KEY_PAIR.getPublicKey().toString()));
     verify(keystoreFileManager).deleteKeystoreFiles(eq(BLS_KEY_PAIR.getPublicKey().toString()));
     verify(futureDeleteSigner).get();
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void deleteValidatorThrowsWhenFilesNotDeleted()
+      throws ExecutionException, InterruptedException, IOException {
+    final Future<Void> futureDeleteSigner = Mockito.mock(Future.class);
+    when(artifactSignerProvider.removeSigner(any())).thenReturn(futureDeleteSigner);
+    when(keystoreFileManager.deleteKeystoreFiles(any())).thenReturn(false);
+
+    final DefaultValidatorManager defaultValidatorManager =
+        new DefaultValidatorManager(artifactSignerProvider, Optional.of(keystoreFileManager));
+
+    assertThatThrownBy(
+            () ->
+                defaultValidatorManager.deleteValidator(
+                    BLS_KEY_PAIR.getPublicKey().toBytesCompressed()))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Unable to delete keystore files");
+    verify(artifactSignerProvider).removeSigner(eq(BLS_KEY_PAIR.getPublicKey().toString()));
   }
 
   @Test
