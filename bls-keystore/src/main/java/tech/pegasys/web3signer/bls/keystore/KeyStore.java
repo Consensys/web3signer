@@ -17,8 +17,12 @@ import static javax.crypto.Cipher.DECRYPT_MODE;
 import static javax.crypto.Cipher.ENCRYPT_MODE;
 import static org.apache.tuweni.bytes.Bytes.concatenate;
 
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.bls.keystore.model.Checksum;
 import tech.pegasys.web3signer.bls.keystore.model.Cipher;
+import tech.pegasys.web3signer.bls.keystore.model.CipherParam;
+import tech.pegasys.web3signer.bls.keystore.model.CipherSpec;
 import tech.pegasys.web3signer.bls.keystore.model.Crypto;
 import tech.pegasys.web3signer.bls.keystore.model.Kdf;
 import tech.pegasys.web3signer.bls.keystore.model.KdfParam;
@@ -30,6 +34,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 /**
@@ -46,48 +51,46 @@ public class KeyStore {
   /**
    * Encrypt the given BLS12-381 key with specified password.
    *
-   * @param blsPrivateKey BLS12-381 private key in Bytes to encrypt. It is not validated to be a
-   *     valid BLS12-381 key.
-   * @param blsPublicKey BLS12-381 public key in Bytes. It is not validated and stored as it is.
+   * @param blsKeyPair A valid BLS12-381 private key.
    * @param password The password to use for encryption
    * @param path Path as defined in EIP-2334. Can be empty String.
    * @param kdfParam crypto function such as scrypt or PBKDF2 and related parameters such as dklen,
    *     salt etc.
-   * @param cipher cipher function and iv parameter to use.
+   * @param cipherSpec cipher function and iv parameter to use.
    * @return The constructed KeyStore with encrypted BLS Private Key as cipher.message and other
    *     details as defined by the EIP-2335 standard.
    */
   public static KeyStoreData encrypt(
-      final Bytes blsPrivateKey,
-      final Bytes blsPublicKey,
+      final BLSKeyPair blsKeyPair,
       final String password,
       final String path,
       final KdfParam kdfParam,
-      final Cipher cipher) {
+      final CipherSpec cipherSpec) {
 
-    checkNotNull(blsPrivateKey, "PrivateKey cannot be null");
-    checkNotNull(blsPublicKey, "PublicKey cannot be null");
+    checkNotNull(blsKeyPair, "blsKeyPair cannot be null");
     checkNotNull(password, "Password cannot be null");
     checkNotNull(path, "Path cannot be null");
     checkNotNull(kdfParam, "KDFParam cannot be null");
-    checkNotNull(cipher, "Cipher cannot be null");
+    checkNotNull(cipherSpec, "CipherSpec cannot be null");
 
-    kdfParam.validate();
-    cipher.validate();
-
-    final Crypto crypto = encryptUsingCipherFunction(blsPrivateKey, password, kdfParam, cipher);
-    return new KeyStoreData(crypto, blsPublicKey, path);
+    final Crypto crypto =
+        encryptUsingCipherFunction(
+            blsKeyPair.getSecretKey().toBytes(), password, kdfParam, cipherSpec);
+    return new KeyStoreData(crypto, blsKeyPair.getPublicKey().toBytesCompressed(), path);
   }
 
   private static Crypto encryptUsingCipherFunction(
-      final Bytes secret, final String password, final KdfParam kdfParam, final Cipher cipher) {
+      final Bytes secret,
+      final String password,
+      final KdfParam kdfParam,
+      final CipherSpec cipherSpec) {
     final Bytes decryptionKey = kdfParam.generateDecryptionKey(password);
     final Bytes cipherMessage =
-        applyCipherFunction(decryptionKey, cipher, true, secret.toArrayUnsafe());
+        applyCipherFunction(decryptionKey, cipherSpec.params(), true, secret.toArrayUnsafe());
     final Bytes checksumMessage = calculateSHA256Checksum(decryptionKey, cipherMessage);
     final Checksum checksum = new Checksum(checksumMessage);
     final Cipher encryptedCipher =
-        new Cipher(cipher.getCipherFunction(), cipher.getCipherParam(), cipherMessage);
+        new Cipher(cipherSpec.function(), cipherSpec.params(), cipherMessage);
     final Kdf kdf = new Kdf(kdfParam);
     return new Crypto(kdf, checksum, encryptedCipher);
   }
@@ -103,8 +106,7 @@ public class KeyStore {
     checkNotNull(password, "Password cannot be null");
     checkNotNull(keyStoreData, "KeyStoreData cannot be null");
 
-    final Bytes decryptionKey =
-        keyStoreData.getCrypto().getKdf().getParam().generateDecryptionKey(password);
+    final Bytes decryptionKey = keyStoreData.crypto().kdf().param().generateDecryptionKey(password);
     return validateChecksum(decryptionKey, keyStoreData);
   }
 
@@ -113,30 +115,41 @@ public class KeyStore {
    *
    * @param password The password to use for decryption
    * @param keyStoreData The given Key Store
-   * @return decrypted BLS private key in Bytes
+   * @return decrypted BLS KeyPair
    */
-  public static Bytes decrypt(final String password, final KeyStoreData keyStoreData) {
+  public static BLSKeyPair decrypt(final String password, final KeyStoreData keyStoreData) {
     checkNotNull(password, "Password cannot be null");
     checkNotNull(keyStoreData, "KeyStoreData cannot be null");
 
-    final Bytes decryptionKey =
-        keyStoreData.getCrypto().getKdf().getParam().generateDecryptionKey(password);
+    final Bytes decryptionKey = keyStoreData.crypto().kdf().param().generateDecryptionKey(password);
 
     if (!validateChecksum(decryptionKey, keyStoreData)) {
       throw new KeyStoreValidationException(
           "Failed to decrypt KeyStore, checksum validation failed.");
     }
 
-    final Cipher cipher = keyStoreData.getCrypto().getCipher();
-    final byte[] encryptedMessage = cipher.getMessage().toArrayUnsafe();
-    return applyCipherFunction(decryptionKey, cipher, false, encryptedMessage);
+    final Cipher cipher = keyStoreData.crypto().cipher();
+    final byte[] encryptedMessage = cipher.message().toArrayUnsafe();
+    Bytes decryptedBLSKey =
+        applyCipherFunction(decryptionKey, cipher.params(), false, encryptedMessage);
+
+    final BLSKeyPair keyPair =
+        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(decryptedBLSKey)));
+
+    // pubKey is optional - however, if present it must match the derived pubKey
+    if (keyStoreData.pubkey() != null
+        && !keyStoreData.pubkey().equals(keyPair.getPublicKey().toBytesCompressed())) {
+      throw new KeyStoreValidationException("Keystore pubkey does not match decrypted key");
+    }
+
+    return keyPair;
   }
 
   private static boolean validateChecksum(
       final Bytes decryptionKey, final KeyStoreData keyStoreData) {
     final Bytes checksum =
-        calculateSHA256Checksum(decryptionKey, keyStoreData.getCrypto().getCipher().getMessage());
-    return Objects.equals(checksum, keyStoreData.getCrypto().getChecksum().getMessage());
+        calculateSHA256Checksum(decryptionKey, keyStoreData.crypto().cipher().message());
+    return Objects.equals(checksum, keyStoreData.crypto().checksum().message());
   }
 
   private static Bytes calculateSHA256Checksum(
@@ -147,10 +160,13 @@ public class KeyStore {
   }
 
   private static Bytes applyCipherFunction(
-      final Bytes key, final Cipher cipher, final boolean isEncrypt, final byte[] inputMessage) {
+      final Bytes key,
+      final CipherParam params,
+      final boolean isEncrypt,
+      final byte[] inputMessage) {
     // aes-128-ctr needs first 16 bytes for its key. The 2nd 16 bytes are used to create checksum
     var secretKey = new SecretKeySpec(key.slice(0, AES_KEY_LENGTH).toArrayUnsafe(), AES);
-    var iv = new IvParameterSpec(cipher.getCipherParam().getIv().toArrayUnsafe());
+    var iv = new IvParameterSpec(params.iv().toArrayUnsafe());
     try {
       var jceCipher = javax.crypto.Cipher.getInstance(AES_CTR_NO_PADDING, BC);
       jceCipher.init(isEncrypt ? ENCRYPT_MODE : DECRYPT_MODE, secretKey, iv);

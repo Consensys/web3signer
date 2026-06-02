@@ -16,12 +16,16 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoreStatus.DUPLICATE;
 import static tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoreStatus.IMPORTED;
-import static tech.pegasys.web3signer.signing.KeystoreFileManager.KEYSTORE_JSON_EXTENSION;
-import static tech.pegasys.web3signer.signing.KeystoreFileManager.KEYSTORE_PASSWORD_EXTENSION;
-import static tech.pegasys.web3signer.signing.KeystoreFileManager.METADATA_YAML_EXTENSION;
 
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.web3signer.bls.keystore.KeyStore;
+import tech.pegasys.web3signer.bls.keystore.KeyStoreLoader;
+import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.signing.KeystoreFileRecord;
 import tech.pegasys.web3signer.signing.ValidatorManager;
+import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
@@ -41,13 +45,11 @@ import java.util.stream.IntStream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
 
 public class ImportKeystoresHandler implements Handler<RoutingContext> {
 
@@ -157,8 +159,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
         .forEach(
             data -> {
               try {
-                final Bytes pubKeyBytes = Bytes.fromHexString(data.pubKey());
-                validatorManager.addValidator(pubKeyBytes, data.keystoreJson(), data.password());
+                validatorManager.addValidator(data.signer(), data.keystoreFileRecord());
               } catch (final Exception e) {
                 // modify the result to error status
                 data.importKeystoreResult().setStatus(ImportKeystoreStatus.ERROR);
@@ -186,22 +187,32 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
             i -> {
               final String jsonKeystoreData = requestBody.getKeystores().get(i);
               final String password = requestBody.getPasswords().get(i);
-              final String pubkey;
+
+              final BlsArtifactSigner signer;
               try {
-                pubkey = parseAndNormalizePubKey(jsonKeystoreData);
+                final KeyStoreData keyStoreData = KeyStoreLoader.loadFromString(jsonKeystoreData);
+                final BLSKeyPair keyPair = KeyStore.decrypt(password, keyStoreData);
+                signer =
+                    new BlsArtifactSigner(keyPair, SignerOrigin.FILE_KEYSTORE, keyStoreData.path());
               } catch (final Exception e) {
-                final ImportKeystoreResult errorResult =
-                    new ImportKeystoreResult(
-                        ImportKeystoreStatus.ERROR, "Error parsing pubkey: " + e.getMessage());
-                return new ImportKeystoreData(i, null, null, null, errorResult);
-              }
-              if (activePubKeys.contains(pubkey)) {
                 return new ImportKeystoreData(
-                    i, pubkey, null, null, new ImportKeystoreResult(DUPLICATE, null));
+                    i,
+                    null,
+                    null,
+                    new ImportKeystoreResult(
+                        ImportKeystoreStatus.ERROR,
+                        "Failed to decrypt keystore: " + e.getMessage()));
               }
 
+              if (activePubKeys.contains(signer.getIdentifier())) {
+                return new ImportKeystoreData(
+                    i, signer, null, new ImportKeystoreResult(DUPLICATE, null));
+              }
+
+              var keystoreFileRecord =
+                  new KeystoreFileRecord(jsonKeystoreData, password, signer.getIdentifier());
               return new ImportKeystoreData(
-                  i, pubkey, jsonKeystoreData, password, new ImportKeystoreResult(IMPORTED, null));
+                  i, signer, keystoreFileRecord, new ImportKeystoreResult(IMPORTED, null));
             })
         .toList();
   }
@@ -210,14 +221,14 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
       final List<ImportKeystoreData> importKeystoreDataList) {
     return importKeystoreDataList.stream()
         .filter(ImportKeystoresHandler::imported)
-        .map(ImportKeystoreData::pubKey)
+        .map(data -> data.signer().getIdentifier())
         .toList();
   }
 
   private static List<String> getFailedValidators(List<ImportKeystoreData> importKeystoreDataList) {
     return importKeystoreDataList.stream()
         .filter(ImportKeystoresHandler::failed)
-        .map(ImportKeystoreData::pubKey)
+        .map(data -> data.signer().getIdentifier())
         .toList();
   }
 
@@ -226,12 +237,10 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   }
 
   private static boolean failed(ImportKeystoreData data) {
+    // signer is null when decryptKeystore() threw (bad password, corrupt data, or pubkey mismatch)
+    // — addValidator was never called in those cases, so there is nothing to clean up
     return data.importKeystoreResult().getStatus() == ImportKeystoreStatus.ERROR
-        && data.pubKey() != null;
-  }
-
-  private static String parseAndNormalizePubKey(final String json) {
-    return IdentifierUtils.normaliseIdentifier(new JsonObject(json).getString("pubkey"));
+        && data.signer() != null;
   }
 
   private ImportKeystoresRequestBody parseRequestBody(final RequestBody requestBody)
@@ -253,9 +262,9 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
         LOG.warn("Unable to remove signer for {} due to {}", pubkey, e.getMessage());
       }
 
-      deleteFile(keystorePath.resolve(pubkey + METADATA_YAML_EXTENSION));
-      deleteFile(keystorePath.resolve(pubkey + KEYSTORE_JSON_EXTENSION));
-      deleteFile(keystorePath.resolve(pubkey + KEYSTORE_PASSWORD_EXTENSION));
+      for (String fileExtensions : KeystoreFileRecord.KEYSTORE_FILE_EXTENSIONS) {
+        deleteFile(keystorePath.resolve(pubkey + fileExtensions));
+      }
     }
   }
 
