@@ -12,11 +12,13 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports;
 
+import tech.pegasys.web3signer.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.signing.KeystoreFileRecord;
+
 public record ImportKeystoreData(
     int index,
-    String pubKey,
-    String keystoreJson,
-    String password,
+    BlsArtifactSigner signer,
+    KeystoreFileRecord keystoreFileRecord,
     ImportKeystoreResult importKeystoreResult)
     implements Comparable<ImportKeystoreData> {
 

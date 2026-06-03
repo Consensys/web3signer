@@ -1,11 +1,18 @@
 # Changelog
 
 ## Upcoming Release
+### Bugs Fixed
+- Fix Key Manager API (`POST /eth/v1/keystores`) accepting a keystore whose JSON `pubkey` field does not match the decrypted private key. A mismatched import now returns `status: "error"` for that entry rather than poisoning the slashing-protection database under the claimed (unverified) pubkey.
+
 ### Breaking Changes
+- The Key Manager API (`DELETE /eth/v1/keystores`) now only attempts to delete keystore files that follow the `<pubkey>.yaml` naming convention. Files using a different naming scheme are left untouched. This replaces the previous approach of scanning all metadata files and matching on the EIP-2335 `pubkey` field, which is optional and not guaranteed to be correct.
 - Java 25 is now required to build Web3Signer (previously Java 21).
 - The `.tar.gz` and `.zip` binary distributions now require Java 25 on the host machine to run Web3Signer (previously Java 21).
 - Docker images are unchanged — they have shipped Java 25 since 25.12.0.
 - Contributors no longer need to install JDK 25 manually. The build now uses a Gradle toolchain (`JavaLanguageVersion.of(25)`) with the foojay resolver, so Gradle will auto-detect a locally installed JDK 25 and download Temurin 25 if none is found. The Gradle daemon itself can run on any JDK supported by Gradle 9 (17+).
+
+### Security
+- Update base docker image to latest LTS Ubuntu 26.04.
 
 ---
 ## 26.4.2

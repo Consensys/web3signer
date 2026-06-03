@@ -46,9 +46,7 @@ public class KeyStoreLoader {
 
   public static KeyStoreData loadFromString(final String keystoreString) {
     try {
-      final KeyStoreData keyStoreData = OBJECT_MAPPER.readValue(keystoreString, KeyStoreData.class);
-      keyStoreData.validate();
-      return keyStoreData;
+      return OBJECT_MAPPER.readValue(keystoreString, KeyStoreData.class);
     } catch (final JsonParseException e) {
       throw new KeyStoreValidationException("Invalid KeyStore: " + e.getMessage(), e);
     } catch (final JsonMappingException e) {
@@ -68,9 +66,7 @@ public class KeyStoreLoader {
       final Path path = Path.of(keystoreFile);
       // Read all bytes first, then parse (better control over buffering)
       final byte[] fileContent = Files.readAllBytes(path);
-      final KeyStoreData keyStoreData = OBJECT_MAPPER.readValue(fileContent, KeyStoreData.class);
-      keyStoreData.validate();
-      return keyStoreData;
+      return OBJECT_MAPPER.readValue(fileContent, KeyStoreData.class);
     } catch (final FileNotFoundException e) {
       throw new KeyStoreValidationException("KeyStore file not found: " + keystoreFile, e);
     } catch (final JacksonException e) {
@@ -111,7 +107,7 @@ public class KeyStoreLoader {
     Files.writeString(keystoreFile, toJson(keyStoreData), UTF_8);
   }
 
-  private static String toJson(final KeyStoreData keyStoreData) {
+  public static String toJson(final KeyStoreData keyStoreData) {
     try {
       return PRETTY_PRINTER.writeValueAsString(keyStoreData);
     } catch (final JsonProcessingException e) {

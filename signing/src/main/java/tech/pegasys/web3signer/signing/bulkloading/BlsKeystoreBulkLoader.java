@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.signing.bulkloading;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.bls.keystore.KeyStore;
 import tech.pegasys.web3signer.bls.keystore.KeyStoreLoader;
 import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
@@ -33,8 +32,6 @@ import java.util.Set;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class BlsKeystoreBulkLoader {
   private static final Logger LOG = LogManager.getLogger();
@@ -90,8 +87,7 @@ public class BlsKeystoreBulkLoader {
       final String fileNameWithoutExt =
           FilenameUtils.removeExtension(keystoreFile.getFileName().toString());
       final String password = passwordReader.readPassword(fileNameWithoutExt + ".txt");
-      final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
-      final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
+      final BLSKeyPair keyPair = KeyStore.decrypt(password, keyStoreData);
       final BlsArtifactSigner artifactSigner =
           new BlsArtifactSigner(keyPair, SignerOrigin.FILE_KEYSTORE);
       return MappedResults.newInstance(Set.of(artifactSigner), 0);

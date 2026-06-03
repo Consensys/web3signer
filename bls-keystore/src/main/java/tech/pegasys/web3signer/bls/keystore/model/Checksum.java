@@ -12,51 +12,39 @@
  */
 package tech.pegasys.web3signer.bls.keystore.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 
-public class Checksum {
-  private final ChecksumFunction checksumFunction;
-  private final EmptyParam emptyParam;
-  private final Bytes message;
+public record Checksum(
+    @JsonProperty(value = "function") ChecksumFunction function,
+    @JsonProperty(value = "params") EmptyParam params,
+    @JsonProperty(value = "message") Bytes message) {
 
-  @JsonCreator
-  public Checksum(
-      @JsonProperty(value = "function", required = true) final ChecksumFunction checksumFunction,
-      @JsonProperty(value = "params", required = true) final EmptyParam emptyParam,
-      @JsonProperty(value = "message", required = true) final Bytes message) {
-    this.checksumFunction = checksumFunction;
-    this.emptyParam = emptyParam;
-    this.message = message;
+  /**
+   * Compact constructor: validates all parameters eagerly for both Jackson deserialisation and
+   * programmatic construction, producing clear {@link
+   * tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException} messages in both cases.
+   */
+  public Checksum {
+    if (function == null) {
+      throw new KeyStoreValidationException(
+          "Invalid KeyStore: Missing 'crypto.checksum.function' property");
+    }
+
+    if (params == null) {
+      throw new KeyStoreValidationException(
+          "Invalid KeyStore: Missing 'crypto.checksum.params' property");
+    }
+
+    if (message == null) {
+      throw new KeyStoreValidationException(
+          "Invalid KeyStore: Missing 'crypto.checksum.message' property");
+    }
   }
 
   public Checksum(final Bytes message) {
     this(ChecksumFunction.SHA256, new EmptyParam(), message);
-  }
-
-  @JsonProperty(value = "function")
-  public ChecksumFunction getChecksumFunction() {
-    return checksumFunction;
-  }
-
-  @JsonProperty(value = "params")
-  public EmptyParam getEmptyParam() {
-    return emptyParam;
-  }
-
-  @JsonProperty(value = "message")
-  public Bytes getMessage() {
-    return message;
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("function", checksumFunction)
-        .add("params", emptyParam)
-        .add("message", message)
-        .toString();
   }
 }
