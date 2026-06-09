@@ -192,7 +192,8 @@ class BlsArtifactSignerFactoryTest {
     Files.writeString(malformedknownServers, "Illegal Known Servers.");
 
     final HashicorpSigningMetadata metaData =
-        new HashicorpSigningMetadata("localhost", "keyPath", "token", KeyType.BLS);
+        new HashicorpSigningMetadata("localhost", "keyPath", KeyType.BLS);
+    metaData.setToken("token");
     metaData.setTlsEnabled(true);
     metaData.setTlsKnownServersPath(malformedknownServers);
 
@@ -205,7 +206,7 @@ class BlsArtifactSignerFactoryTest {
   void kubernetesAuthServiceAccountTokenPathIsResolvedToAbsolute() {
     final Path relativeTokenPath = Path.of("relative-token");
     final HashicorpSigningMetadata metaData =
-        new HashicorpSigningMetadata("localhost", "keyPath", null, KeyType.BLS);
+        new HashicorpSigningMetadata("localhost", "keyPath", KeyType.BLS);
     metaData.setAuthMethod(VaultAuthMethod.KUBERNETES);
     metaData.setKubernetesRole("my-role");
     metaData.setKubernetesServiceAccountTokenPath(relativeTokenPath);
