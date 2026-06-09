@@ -15,6 +15,9 @@ package tech.pegasys.web3signer.signing.config.metadata;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
@@ -28,7 +31,11 @@ import tech.pegasys.web3signer.bls.keystore.model.KdfParam;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.bls.keystore.model.SCryptParam;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
+import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnection;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.web3signer.keystorage.hashicorp.VaultAuthMethod;
+import tech.pegasys.web3signer.keystorage.hashicorp.config.ConnectionParameters;
+import tech.pegasys.web3signer.keystorage.hashicorp.config.KubernetesAuthOptions;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
@@ -37,6 +44,7 @@ import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
@@ -190,7 +198,54 @@ class BlsArtifactSignerFactoryTest {
 
     assertThatThrownBy(() -> artifactSignerFactory.create(metaData))
         .isInstanceOf(SigningMetadataException.class)
-        .hasMessage("Failed to fetch secret from hashicorp vault");
+        .hasMessage("Unable to initialise connection to hashicorp vault.");
+  }
+
+  @Test
+  void kubernetesAuthServiceAccountTokenPathIsResolvedToAbsolute() {
+    final Path relativeTokenPath = Path.of("relative-token");
+    final HashicorpSigningMetadata metaData =
+        new HashicorpSigningMetadata("localhost", "keyPath", null, KeyType.BLS);
+    metaData.setAuthMethod(VaultAuthMethod.KUBERNETES);
+    metaData.setKubernetesRole("my-role");
+    metaData.setKubernetesServiceAccountTokenPath(relativeTokenPath);
+
+    final AtomicReference<KubernetesAuthOptions> capturedAuthOptions = new AtomicReference<>();
+
+    final HashicorpConnection mockConnection = mock(HashicorpConnection.class);
+
+    when(mockConnection.authenticateWithKubernetes(any()))
+        .thenAnswer(
+            invocation -> {
+              final KubernetesAuthOptions kubernetesAuthOptions = invocation.getArgument(0);
+              capturedAuthOptions.set(kubernetesAuthOptions);
+              throw new SigningMetadataException("Authentication intercepted");
+            });
+
+    final HashicorpConnectionFactory connectionFactory =
+        new HashicorpConnectionFactory() {
+          @Override
+          public HashicorpConnection create(final ConnectionParameters connectionParameters) {
+            return mockConnection;
+          }
+        };
+
+    final ArtifactSignerFactory customFactory =
+        new BlsArtifactSignerFactory(
+            configDir,
+            new NoOpMetricsSystem(),
+            connectionFactory,
+            awsSecretsManagerProvider,
+            (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin()),
+            azureKeyVaultFactory);
+
+    assertThatThrownBy(() -> customFactory.create(metaData))
+        .isInstanceOf(SigningMetadataException.class)
+        .hasMessage("Authentication intercepted");
+
+    assertThat(capturedAuthOptions.get()).isNotNull();
+    assertThat(capturedAuthOptions.get().getServiceAccountTokenPath())
+        .isEqualTo(configDir.resolve(relativeTokenPath));
   }
 
   private static void createKeyStoreFile(final Path keyStoreFilePath) {
