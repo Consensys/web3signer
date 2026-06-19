@@ -30,13 +30,13 @@ jobs:
 
       - name: Setup Java and Gradle
         id: setup-java-gradle
-        uses: ConsenSys/github-actions/java-setup-gradle@8e207ec2ad53d90ab419d39d03084fa93e04d190 # main
+        uses: ConsenSys/github-actions/java-setup-gradle@68e0677c7c567c2447fc82d43dc4fceb4b31a680 # main
         with:
           VERSION: '25'
 
       - name: Determine Web3Signer version
         id: project-version
-        uses: ConsenSys/github-actions/java-get-project-version@8e207ec2ad53d90ab419d39d03084fa93e04d190 # main
+        uses: ConsenSys/github-actions/java-get-project-version@68e0677c7c567c2447fc82d43dc4fceb4b31a680 # main
 
       # v3
       - name: Authenticate to Google Cloud
