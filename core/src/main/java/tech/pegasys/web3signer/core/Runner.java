@@ -89,6 +89,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
   private final List<Closeable> closeables = new ArrayList<>();
   private final Object httpShutdownMonitor = new Object();
   private final AtomicInteger inFlightHttpRequests = new AtomicInteger();
+  private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
   private volatile HttpServer httpServer;
 
   protected Runner(final BaseConfig baseConfig) {
@@ -211,6 +212,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
   }
 
   private void gracefulHttpShutdown() {
+    shuttingDown.set(true);
     waitForInFlightRequestsToComplete();
 
     final CountDownLatch latch = new CountDownLatch(1);
@@ -259,6 +261,10 @@ public abstract class Runner implements Runnable, AutoCloseable {
   private Handler<HttpServerRequest> trackInFlightRequests(
       final Handler<HttpServerRequest> requestHandler) {
     return request -> {
+      if (shuttingDown.get()) {
+        request.response().setStatusCode(503).end();
+        return;
+      }
       inFlightHttpRequests.incrementAndGet();
 
       final AtomicBoolean requestCompleted = new AtomicBoolean(false);

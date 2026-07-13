@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -240,8 +241,13 @@ class RunnerGracefulShutdownTest {
               }
             });
 
-    // Give close() time to enter its waiting state before releasing the request
-    Thread.sleep(300);
+    // Verify close() is actually blocking — it must not return while the request is in-flight
+    try {
+      closeFuture.get(200, TimeUnit.MILLISECONDS);
+      throw new AssertionError("close() returned immediately — it should have waited for the in-flight request");
+    } catch (final TimeoutException expected) {
+      // correct: close() is blocked waiting for the in-flight request
+    }
 
     // Release the in-flight request
     requestCanComplete.countDown();
