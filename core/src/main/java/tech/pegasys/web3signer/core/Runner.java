@@ -212,13 +212,21 @@ public abstract class Runner implements Runnable, AutoCloseable {
   }
 
   private void gracefulHttpShutdown() {
-    shuttingDown.set(true);
+    // Set the flag under the monitor so that any thread currently inside the
+    // check-then-increment block in trackInFlightRequests will either see it
+    // before incrementing (and return 503) or will have already incremented
+    // and will be counted in the drain. This closes the TOCTOU window.
+    synchronized (httpShutdownMonitor) {
+      shuttingDown.set(true);
+    }
     waitForInFlightRequestsToComplete();
 
     final CountDownLatch latch = new CountDownLatch(1);
     httpServer.close(res -> latch.countDown());
     try {
-      latch.await(HTTP_SHUTDOWN_TIMEOUT_SECONDS + 5, TimeUnit.SECONDS);
+      if (!latch.await(HTTP_SHUTDOWN_TIMEOUT_SECONDS + 5, TimeUnit.SECONDS)) {
+        LOG.warn("Timed out waiting for HTTP server to close");
+      }
     } catch (final InterruptedException e) {
       Thread.currentThread().interrupt();
       LOG.warn("Interrupted while waiting for HTTP server to drain connections");
@@ -261,11 +269,17 @@ public abstract class Runner implements Runnable, AutoCloseable {
   private Handler<HttpServerRequest> trackInFlightRequests(
       final Handler<HttpServerRequest> requestHandler) {
     return request -> {
-      if (shuttingDown.get()) {
-        request.response().setStatusCode(503).end();
-        return;
+      // Synchronize on httpShutdownMonitor so the shuttingDown check and the
+      // counter increment are atomic with respect to gracefulHttpShutdown().
+      // This prevents a request from slipping past the check after the drain
+      // has already seen counter=0 and begun closing the server.
+      synchronized (httpShutdownMonitor) {
+        if (shuttingDown.get()) {
+          request.response().setStatusCode(503).end();
+          return;
+        }
+        inFlightHttpRequests.incrementAndGet();
       }
-      inFlightHttpRequests.incrementAndGet();
 
       final AtomicBoolean requestCompleted = new AtomicBoolean(false);
       final Runnable completeRequest =
