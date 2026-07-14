@@ -20,7 +20,7 @@ RUN gzip -t /tmp/web3signer.tar.gz || (echo "ERROR: TAR_FILE is not a valid gzip
 # The other shaded natives in the classpath (Netty transports, netty-tcnative,
 # jffi, conscrypt) are not exercised at runtime because Vert.x uses its NIO
 # transport by default.
-FROM ubuntu:26.04@sha256:f3d28607ddd78734bb7f71f117f3c6706c666b8b76cbff7c9ff6e5718d46ff64 AS prep
+FROM ubuntu:26.04@sha256:b7f48194d4d8b763a478a621cdc81c27be222ba2206ca3ca6bc42b49685f3d9e AS prep
 ARG TARGETARCH
 RUN apt-get update && apt-get install -y --no-install-recommends unzip zip && rm -rf /var/lib/apt/lists/*
 COPY --from=app-extract /opt/web3signer /opt/web3signer
@@ -36,7 +36,7 @@ RUN set -eu; \
     zip -d "$JBLST_JAR" "supranational/blst/Linux/${BLST_ARCH}/libblst.so"
 
 # Stage 3: Runtime on Google Distroless (nonroot by default, no shell, no package manager).
-FROM gcr.io/distroless/java25-debian13:nonroot@sha256:dade01b669efd3bea3977f73cc196c56f1ee678a71ec8305f84ec15fd5a23c8d
+FROM gcr.io/distroless/java25-debian13:nonroot@sha256:9ccf2b8bce700d9f450523e2055afabe4d4ee795e6d69a0647a2dcd6e180e411
 
 ARG BUILD_DATE
 ARG VCS_REF

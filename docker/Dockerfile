@@ -11,7 +11,7 @@ RUN gzip -t /tmp/web3signer.tar.gz || (echo "ERROR: TAR_FILE is not a valid gzip
     rm /tmp/web3signer.tar.gz
 
 # Stage 2: Final image with Ubuntu base for latest security patches
-FROM ubuntu:26.04@sha256:f3d28607ddd78734bb7f71f117f3c6706c666b8b76cbff7c9ff6e5718d46ff64
+FROM ubuntu:26.04@sha256:b7f48194d4d8b763a478a621cdc81c27be222ba2206ca3ca6bc42b49685f3d9e
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -44,7 +44,7 @@ RUN apt-get update && \
     useradd --system --no-create-home --shell /bin/false web3signer
 
 # Copy full JRE from Eclipse Temurin (no module complexity, all features available)
-COPY --from=eclipse-temurin:25.0.3_9-jre@sha256:5cf92df78f6dba978777d5cffa3c856e583f86814fde82a6c3534ccdfd794f2f /opt/java/openjdk /opt/java/openjdk
+COPY --from=eclipse-temurin:25.0.3_9-jre@sha256:d0eb1b9018b3044da1b7346f39e945f71095749853d69a3aa16b8c99dad9bb45 /opt/java/openjdk /opt/java/openjdk
 COPY --from=app-extract --chown=web3signer:web3signer /opt/web3signer /opt/web3signer
 
 USER web3signer
