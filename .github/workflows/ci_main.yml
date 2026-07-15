@@ -22,7 +22,7 @@ jobs:
       publish-version: ${{ steps.project-version.outputs.publish-version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           submodules: 'recursive'
           fetch-depth: 0
@@ -30,13 +30,13 @@ jobs:
 
       - name: Setup Java and Gradle
         id: setup-java-gradle
-        uses: ConsenSys/github-actions/java-setup-gradle@68e0677c7c567c2447fc82d43dc4fceb4b31a680 # main
+        uses: ConsenSys/github-actions/java-setup-gradle@31dbb917dd78b1dc18b4838a2d7d598b359b834f # main
         with:
           VERSION: '25'
 
       - name: Determine Web3Signer version
         id: project-version
-        uses: ConsenSys/github-actions/java-get-project-version@68e0677c7c567c2447fc82d43dc4fceb4b31a680 # main
+        uses: ConsenSys/github-actions/java-get-project-version@31dbb917dd78b1dc18b4838a2d7d598b359b834f # main
 
       # v3
       - name: Authenticate to Google Cloud
@@ -86,7 +86,7 @@ jobs:
     runs-on: ${{ matrix.platform.runner }}
     steps:
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -329,7 +329,7 @@ jobs:
         contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           fetch-depth: 0
           fetch-tags: true
