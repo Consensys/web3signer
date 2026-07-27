@@ -22,6 +22,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
+import org.web3j.crypto.Hash;
 import org.web3j.crypto.Sign;
 import org.web3j.crypto.Sign.SignatureData;
 import org.web3j.utils.Numeric;
@@ -54,6 +55,25 @@ class EthSecpArtifactSignerTest {
     final SecpArtifactSignature signature = ethSecpArtifactSigner.sign(message);
 
     final SignatureData expectedSignature = Sign.signMessage(message.toArrayUnsafe(), ecKeyPair);
+    final Signature signatureData = signature.getSignatureData();
+    assertThat(signatureData.getR()).isEqualTo(Numeric.toBigInt(expectedSignature.getR()));
+    assertThat(signatureData.getS()).isEqualTo(Numeric.toBigInt(expectedSignature.getS()));
+    assertThat(signatureData.getV()).isEqualTo(Numeric.toBigInt(expectedSignature.getV()));
+  }
+
+  @Test
+  void signsDigestWithoutHashing() {
+    final ECKeyPair ecKeyPair =
+        new ECKeyPair(Numeric.toBigInt(PRIVATE_KEY), Numeric.toBigInt(PUBLIC_KEY));
+    final Credentials credentials = Credentials.create(ecKeyPair);
+    final EthSecpArtifactSigner ethSecpArtifactSigner =
+        new EthSecpArtifactSigner(new CredentialSigner(credentials));
+
+    final Bytes digest = Bytes.wrap(Hash.sha3("Hello, world!".getBytes(UTF_8)));
+    final SecpArtifactSignature signature = ethSecpArtifactSigner.sign(digest, false);
+
+    final SignatureData expectedSignature =
+        Sign.signMessage(digest.toArrayUnsafe(), ecKeyPair, false);
     final Signature signatureData = signature.getSignatureData();
     assertThat(signatureData.getR()).isEqualTo(Numeric.toBigInt(expectedSignature.getR()));
     assertThat(signatureData.getS()).isEqualTo(Numeric.toBigInt(expectedSignature.getS()));

@@ -141,11 +141,24 @@ public class Signer {
   }
 
   public Response eth1Sign(final String publicKey, final Bytes dataToSign) {
+    return eth1Sign(publicKey, dataToSign, null);
+  }
+
+  public Response eth1Sign(
+      final String publicKey, final Bytes dataToSign, final Boolean applyHash) {
+    final JsonObject requestBody = new JsonObject().put("data", dataToSign.toHexString());
+    if (applyHash != null) {
+      requestBody.put("applyHash", applyHash);
+    }
+    return eth1Sign(publicKey, requestBody);
+  }
+
+  public Response eth1Sign(final String publicKey, final JsonObject requestBody) {
     return given()
         .baseUri(getUrl())
         .contentType(ContentType.JSON)
         .pathParam("identifier", publicKey)
-        .body(new JsonObject().put("data", dataToSign.toHexString()).toString())
+        .body(requestBody.toString())
         .post(signPath(KeyType.SECP256K1));
   }
 

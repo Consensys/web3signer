@@ -42,7 +42,12 @@ public class CredentialSigner implements Signer {
 
   @Override
   public Signature sign(final byte[] data) {
-    final SignatureData signature = Sign.signMessage(data, credentials.getEcKeyPair(), needToHash);
+    return sign(data, needToHash);
+  }
+
+  @Override
+  public Signature sign(final byte[] data, final boolean applyHash) {
+    final SignatureData signature = Sign.signMessage(data, credentials.getEcKeyPair(), applyHash);
     return new Signature(
         new BigInteger(signature.getV()),
         new BigInteger(1, signature.getR()),

@@ -20,7 +20,6 @@ import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -31,6 +30,7 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext
 public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private static final Logger LOG = LogManager.getLogger();
+  private static final int DIGEST_SIZE = 32;
   private final SignerForIdentifier signerForIdentifier;
   private final HttpApiMetrics metrics;
 
@@ -45,8 +45,15 @@ public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
     try (final TimingContext ignored = metrics.getSigningTimer().startTimer()) {
       final String identifier = routingContext.pathParam("identifier");
       final Bytes data;
+      final boolean applyHash;
       try {
-        data = getDataToSign(routingContext.body());
+        final JsonObject requestBody = routingContext.body().asJsonObject();
+        data = getDataToSign(requestBody);
+        applyHash = getApplyHash(requestBody);
+        if (!applyHash && data.size() != DIGEST_SIZE) {
+          throw new IllegalArgumentException(
+              "Data must be exactly 32 bytes when 'applyHash' is false");
+        }
       } catch (final RuntimeException e) {
         metrics.getMalformedRequestCounter().inc();
         LOG.debug("Invalid signing request", e);
@@ -55,7 +62,7 @@ public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
       }
 
       signerForIdentifier
-          .sign(normaliseIdentifier(identifier), data)
+          .sign(normaliseIdentifier(identifier), data, applyHash)
           .ifPresentOrElse(
               signature -> respondWithSignature(routingContext, signature),
               () -> {
@@ -70,9 +77,7 @@ public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
     routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(signature);
   }
 
-  private Bytes getDataToSign(final RequestBody requestBody) {
-    final JsonObject jsonObject = requestBody.asJsonObject();
-
+  private Bytes getDataToSign(final JsonObject jsonObject) {
     if (!jsonObject.containsKey("data")) {
       throw new IllegalArgumentException("Request must contain a 'data' field");
     }
@@ -81,5 +86,16 @@ public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
     }
 
     return Bytes.fromHexString(jsonObject.getString("data"));
+  }
+
+  private boolean getApplyHash(final JsonObject jsonObject) {
+    if (!jsonObject.containsKey("applyHash")) {
+      return true;
+    }
+    final Boolean applyHash = jsonObject.getBoolean("applyHash");
+    if (applyHash == null) {
+      throw new IllegalArgumentException("Field 'applyHash' must not be null");
+    }
+    return applyHash;
   }
 }

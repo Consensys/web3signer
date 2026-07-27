@@ -41,7 +41,12 @@ public class AwsKmsSigner implements Signer {
   @Override
   public Signature sign(final byte[] data) {
     // sha3hash is required for eth1 signing. Filecoin signing doesn't need hashing.
-    final byte[] dataToSign = applySha3Hash ? Hash.sha3(data) : data;
+    return sign(data, applySha3Hash);
+  }
+
+  @Override
+  public Signature sign(final byte[] data, final boolean applyHash) {
+    final byte[] dataToSign = applyHash ? Hash.sha3(data) : data;
     final byte[] signature = awsKmsClient.sign(kmsKeyId, dataToSign);
     return Eth1SignatureUtil.deriveSignatureFromDerEncoded(dataToSign, ecPublicKey, signature);
   }
