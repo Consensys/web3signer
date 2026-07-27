@@ -150,6 +150,10 @@ public class Signer {
     if (applyHash != null) {
       requestBody.put("applyHash", applyHash);
     }
+    return eth1Sign(publicKey, requestBody);
+  }
+
+  public Response eth1Sign(final String publicKey, final JsonObject requestBody) {
     return given()
         .baseUri(getUrl())
         .contentType(ContentType.JSON)

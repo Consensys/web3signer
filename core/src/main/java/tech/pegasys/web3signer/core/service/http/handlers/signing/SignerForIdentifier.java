@@ -50,12 +50,23 @@ public class SignerForIdentifier {
    * @param data Data to sign.
    * @param applyHash Whether to apply Keccak-256 before signing.
    * @return Optional String of signature (in hex format). Empty if no signer is available.
+   * @throws UnsupportedOperationException if applyHash is false and the resolved signer cannot sign
+   *     a pre-computed digest.
    */
   public Optional<String> sign(final String identifier, final Bytes data, final boolean applyHash) {
     return signerProvider
         .getSigner(identifier)
-        .map(EthSecpArtifactSigner.class::cast)
-        .map(signer -> signer.sign(data, applyHash).asHex());
+        .map(
+            signer -> {
+              if (signer instanceof EthSecpArtifactSigner ethSecpSigner) {
+                return ethSecpSigner.sign(data, applyHash).asHex();
+              }
+              if (!applyHash) {
+                throw new UnsupportedOperationException(
+                    "Signer for identifier does not support signing a pre-computed digest");
+              }
+              return signer.sign(data).asHex();
+            });
   }
 
   /**

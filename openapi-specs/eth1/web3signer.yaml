@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: 'Web3Signer ETH1 API'
   description: 'Sign ETH1 Artifacts'
-  version: '1.1.1'
+  version: '1.2.0'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -41,6 +41,8 @@ paths:
                   description: 'Whether to apply Keccak-256 to data before signing. If false, data must be exactly 32 bytes.'
               required:
                 - data
+              additionalProperties:
+                type: string
             example:
               data: 0x48656c6c6f2c20776f726c6421
               applyHash: true

@@ -39,6 +39,7 @@ import java.util.Optional;
 import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
 import io.restassured.response.Response;
+import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -64,28 +65,14 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   @Test
   public void signDataWithFileBasedKey() throws URISyntaxException {
-    final String keyPath =
-        new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
-
-    METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(
-        testDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
-        Path.of(keyPath),
-        "pass",
-        KeyType.SECP256K1);
+    createFileBasedKeyStore();
 
     signAndVerifySignature();
   }
 
   @Test
   public void signDigestWithFileBasedKeyWithoutHashing() throws URISyntaxException {
-    final String keyPath =
-        new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
-
-    METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(
-        testDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
-        Path.of(keyPath),
-        "pass",
-        KeyType.SECP256K1);
+    createFileBasedKeyStore();
     setupEth1Signer();
 
     final Bytes digest = Bytes.wrap(Hash.sha3(DATA.toArray()));
@@ -96,6 +83,33 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   @Test
   public void rejectNonDigestWhenHashingIsDisabled() throws URISyntaxException {
+    createFileBasedKeyStore();
+    setupEth1Signer();
+
+    assertThat(signer.eth1Sign(PUBLIC_KEY_HEX_STRING, DATA, false).statusCode()).isEqualTo(400);
+  }
+
+  @Test
+  public void rejectNonBooleanApplyHash() throws URISyntaxException {
+    createFileBasedKeyStore();
+    setupEth1Signer();
+
+    final JsonObject requestBody =
+        new JsonObject().put("data", DATA.toHexString()).put("applyHash", "false");
+    assertThat(signer.eth1Sign(PUBLIC_KEY_HEX_STRING, requestBody).statusCode()).isEqualTo(400);
+  }
+
+  @Test
+  public void rejectNullApplyHash() throws URISyntaxException {
+    createFileBasedKeyStore();
+    setupEth1Signer();
+
+    final JsonObject requestBody =
+        new JsonObject().put("data", DATA.toHexString()).putNull("applyHash");
+    assertThat(signer.eth1Sign(PUBLIC_KEY_HEX_STRING, requestBody).statusCode()).isEqualTo(400);
+  }
+
+  private void createFileBasedKeyStore() throws URISyntaxException {
     final String keyPath =
         new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
 
@@ -104,9 +118,6 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
         Path.of(keyPath),
         "pass",
         KeyType.SECP256K1);
-    setupEth1Signer();
-
-    assertThat(signer.eth1Sign(PUBLIC_KEY_HEX_STRING, DATA, false).statusCode()).isEqualTo(400);
   }
 
   @Test
@@ -203,8 +214,12 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
           awsEndpointOverride,
           awsKeyId);
 
-      signAndVerifySignature(EthPublicKeyUtils.toHexString(ecPublicKey));
+      final String publicKeyHex = EthPublicKeyUtils.toHexString(ecPublicKey);
+      signAndVerifySignature(publicKeyHex);
 
+      final Bytes digest = Bytes.wrap(Hash.sha3(DATA.toArray()));
+      final Response digestResponse = signer.eth1Sign(publicKeyHex, digest, false);
+      verifyDigestSignature(verifyAndGetSignatureResponse(digestResponse), digest, publicKeyHex);
     } finally {
       awsKmsUtil.deleteKey(awsKeyId);
     }

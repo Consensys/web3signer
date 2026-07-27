@@ -3,6 +3,7 @@
 ## Upcoming Release
 ### Features Added
 - Support for Hashicorp Vault Kubernetes authentication [PR 1195](https://github.com/Consensys/web3signer/pull/1195)
+- The eth1 signing endpoint (`POST /api/v1/eth1/sign/{identifier}`) accepts an optional `applyHash` field. It defaults to `true`, preserving the existing behaviour of applying Keccak-256 to `data` before signing. Setting it to `false` signs the caller-supplied `data` as a pre-computed digest, which must be exactly 32 bytes. Supported by file-based, AWS KMS and Azure Key Vault signers. [PR 1213](https://github.com/Consensys/web3signer/pull/1213)
 
 ### Bugs Fixed
 - Fix Key Manager API (`POST /eth/v1/keystores`) accepting a keystore whose JSON `pubkey` field does not match the decrypted private key. A mismatched import now returns `status: "error"` for that entry rather than poisoning the slashing-protection database under the claimed (unverified) pubkey.

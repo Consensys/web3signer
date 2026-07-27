@@ -40,6 +40,7 @@ public class AwsKmsSigner implements Signer {
 
   @Override
   public Signature sign(final byte[] data) {
+    // sha3hash is required for eth1 signing. Filecoin signing doesn't need hashing.
     return sign(data, applySha3Hash);
   }
 

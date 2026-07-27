@@ -20,7 +20,6 @@ import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -48,8 +47,9 @@ public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
       final Bytes data;
       final boolean applyHash;
       try {
-        data = getDataToSign(routingContext.body());
-        applyHash = getApplyHash(routingContext.body());
+        final JsonObject requestBody = routingContext.body().asJsonObject();
+        data = getDataToSign(requestBody);
+        applyHash = getApplyHash(requestBody);
         if (!applyHash && data.size() != DIGEST_SIZE) {
           throw new IllegalArgumentException(
               "Data must be exactly 32 bytes when 'applyHash' is false");
@@ -77,9 +77,7 @@ public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
     routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(signature);
   }
 
-  private Bytes getDataToSign(final RequestBody requestBody) {
-    final JsonObject jsonObject = requestBody.asJsonObject();
-
+  private Bytes getDataToSign(final JsonObject jsonObject) {
     if (!jsonObject.containsKey("data")) {
       throw new IllegalArgumentException("Request must contain a 'data' field");
     }
@@ -90,7 +88,14 @@ public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
     return Bytes.fromHexString(jsonObject.getString("data"));
   }
 
-  private boolean getApplyHash(final RequestBody requestBody) {
-    return requestBody.asJsonObject().getBoolean("applyHash", true);
+  private boolean getApplyHash(final JsonObject jsonObject) {
+    if (!jsonObject.containsKey("applyHash")) {
+      return true;
+    }
+    final Boolean applyHash = jsonObject.getBoolean("applyHash");
+    if (applyHash == null) {
+      throw new IllegalArgumentException("Field 'applyHash' must not be null");
+    }
+    return applyHash;
   }
 }

@@ -43,11 +43,17 @@ class CredentialSignerTest {
   @Test
   void requestHashFlagOverridesSignerDefault() {
     final Credentials credentials = Credentials.create(ECKeyPair.create(BigInteger.ONE));
-    final CredentialSigner signer = new CredentialSigner(credentials);
-    final byte[] data = "Hello World".getBytes(UTF_8);
 
-    assertThat(signer.sign(data, true))
+    final CredentialSigner hashingSigner = new CredentialSigner(credentials);
+    final CredentialSigner nonHashingSigner = new CredentialSigner(credentials, false);
+
+    final byte[] digest = Hash.sha3("Hello World".getBytes(UTF_8));
+
+    assertThat(hashingSigner.sign(digest, false))
         .usingRecursiveComparison()
-        .isEqualTo(signer.sign(Hash.sha3(data), false));
+        .isEqualTo(nonHashingSigner.sign(digest));
+    assertThat(nonHashingSigner.sign(digest, true))
+        .usingRecursiveComparison()
+        .isEqualTo(hashingSigner.sign(digest));
   }
 }
