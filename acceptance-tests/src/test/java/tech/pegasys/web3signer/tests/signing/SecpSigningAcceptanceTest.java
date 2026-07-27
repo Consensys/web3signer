@@ -43,6 +43,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
+import org.web3j.crypto.Hash;
+import org.web3j.crypto.Sign;
 import org.web3j.crypto.Sign.SignatureData;
 
 public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
@@ -72,6 +74,39 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
         KeyType.SECP256K1);
 
     signAndVerifySignature();
+  }
+
+  @Test
+  public void signDigestWithFileBasedKeyWithoutHashing() throws URISyntaxException {
+    final String keyPath =
+        new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
+
+    METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(
+        testDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
+        Path.of(keyPath),
+        "pass",
+        KeyType.SECP256K1);
+    setupEth1Signer();
+
+    final Bytes digest = Bytes.wrap(Hash.sha3(DATA.toArray()));
+    final Response response = signer.eth1Sign(PUBLIC_KEY_HEX_STRING, digest, false);
+    final Bytes signature = verifyAndGetSignatureResponse(response);
+    verifyDigestSignature(signature, digest, PUBLIC_KEY_HEX_STRING);
+  }
+
+  @Test
+  public void rejectNonDigestWhenHashingIsDisabled() throws URISyntaxException {
+    final String keyPath =
+        new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
+
+    METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(
+        testDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
+        Path.of(keyPath),
+        "pass",
+        KeyType.SECP256K1);
+    setupEth1Signer();
+
+    assertThat(signer.eth1Sign(PUBLIC_KEY_HEX_STRING, DATA, false).statusCode()).isEqualTo(400);
   }
 
   @Test
@@ -198,6 +233,23 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final BigInteger messagePublicKey = recoverPublicKey(new SignatureData(v, r, s));
     assertThat(EthPublicKeyUtils.web3JPublicKeyToECPublicKey(messagePublicKey))
         .isEqualTo(expectedPublicKey);
+  }
+
+  void verifyDigestSignature(final Bytes signature, final Bytes digest, final String publicKeyHex) {
+    final ECPublicKey expectedPublicKey =
+        EthPublicKeyUtils.bytesToECPublicKey(Bytes.fromHexString(publicKeyHex));
+
+    final byte[] r = signature.slice(0, 32).toArray();
+    final byte[] s = signature.slice(32, 32).toArray();
+    final byte[] v = signature.slice(64).toArray();
+    try {
+      final BigInteger messagePublicKey =
+          Sign.signedMessageHashToKey(digest.toArray(), new SignatureData(v, r, s));
+      assertThat(EthPublicKeyUtils.web3JPublicKeyToECPublicKey(messagePublicKey))
+          .isEqualTo(expectedPublicKey);
+    } catch (final SignatureException e) {
+      throw new IllegalStateException("signature cannot be recovered", e);
+    }
   }
 
   private BigInteger recoverPublicKey(final SignatureData signature) {

@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 
 import java.util.Optional;
 
@@ -40,6 +41,21 @@ public class SignerForIdentifier {
    */
   public Optional<String> sign(final String identifier, final Bytes data) {
     return signerProvider.getSigner(identifier).map(signer -> signer.sign(data).asHex());
+  }
+
+  /**
+   * Sign data for a given identifier with a request-specific hashing preference.
+   *
+   * @param identifier The identifier for which to sign data.
+   * @param data Data to sign.
+   * @param applyHash Whether to apply Keccak-256 before signing.
+   * @return Optional String of signature (in hex format). Empty if no signer is available.
+   */
+  public Optional<String> sign(final String identifier, final Bytes data, final boolean applyHash) {
+    return signerProvider
+        .getSigner(identifier)
+        .map(EthSecpArtifactSigner.class::cast)
+        .map(signer -> signer.sign(data, applyHash).asHex());
   }
 
   /**

@@ -39,4 +39,15 @@ class CredentialSignerTest {
         .usingRecursiveComparison()
         .isEqualTo(nonHashingSigner.sign(Hash.sha3(data)));
   }
+
+  @Test
+  void requestHashFlagOverridesSignerDefault() {
+    final Credentials credentials = Credentials.create(ECKeyPair.create(BigInteger.ONE));
+    final CredentialSigner signer = new CredentialSigner(credentials);
+    final byte[] data = "Hello World".getBytes(UTF_8);
+
+    assertThat(signer.sign(data, true))
+        .usingRecursiveComparison()
+        .isEqualTo(signer.sign(Hash.sha3(data), false));
+  }
 }

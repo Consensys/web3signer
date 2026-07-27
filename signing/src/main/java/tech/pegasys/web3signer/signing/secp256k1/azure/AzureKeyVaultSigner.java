@@ -63,8 +63,12 @@ public class AzureKeyVaultSigner implements Signer {
 
   @Override
   public Signature sign(byte[] data) {
+    return sign(data, needsToHash);
+  }
 
-    final byte[] dataToSign = needsToHash ? Hash.sha3(data) : data;
+  @Override
+  public Signature sign(final byte[] data, final boolean applyHash) {
+    final byte[] dataToSign = applyHash ? Hash.sha3(data) : data;
 
     // TODO - We can use the sign method from the azure library again once they fix the issue with
     // the SECP256K1 for java 17

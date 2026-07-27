@@ -38,6 +38,10 @@ public class EthSecpArtifactSigner implements ArtifactSigner {
     return new SecpArtifactSignature(signer.sign(message.toArray()));
   }
 
+  public SecpArtifactSignature sign(final Bytes message, final boolean applyHash) {
+    return new SecpArtifactSignature(signer.sign(message.toArray(), applyHash));
+  }
+
   @Override
   public KeyType getKeyType() {
     return KeyType.SECP256K1;

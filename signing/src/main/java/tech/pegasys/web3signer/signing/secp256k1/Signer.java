@@ -18,5 +18,7 @@ public interface Signer {
 
   Signature sign(final byte[] data);
 
+  Signature sign(final byte[] data, final boolean applyHash);
+
   ECPublicKey getPublicKey();
 }

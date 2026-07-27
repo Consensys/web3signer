@@ -31,6 +31,7 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext
 public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private static final Logger LOG = LogManager.getLogger();
+  private static final int DIGEST_SIZE = 32;
   private final SignerForIdentifier signerForIdentifier;
   private final HttpApiMetrics metrics;
 
@@ -45,8 +46,14 @@ public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
     try (final TimingContext ignored = metrics.getSigningTimer().startTimer()) {
       final String identifier = routingContext.pathParam("identifier");
       final Bytes data;
+      final boolean applyHash;
       try {
         data = getDataToSign(routingContext.body());
+        applyHash = getApplyHash(routingContext.body());
+        if (!applyHash && data.size() != DIGEST_SIZE) {
+          throw new IllegalArgumentException(
+              "Data must be exactly 32 bytes when 'applyHash' is false");
+        }
       } catch (final RuntimeException e) {
         metrics.getMalformedRequestCounter().inc();
         LOG.debug("Invalid signing request", e);
@@ -55,7 +62,7 @@ public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
       }
 
       signerForIdentifier
-          .sign(normaliseIdentifier(identifier), data)
+          .sign(normaliseIdentifier(identifier), data, applyHash)
           .ifPresentOrElse(
               signature -> respondWithSignature(routingContext, signature),
               () -> {
@@ -81,5 +88,9 @@ public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
     }
 
     return Bytes.fromHexString(jsonObject.getString("data"));
+  }
+
+  private boolean getApplyHash(final RequestBody requestBody) {
+    return requestBody.asJsonObject().getBoolean("applyHash", true);
   }
 }
