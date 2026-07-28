@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test;
 class PostgresBulkKeyLoaderTest {
 
   private static final String VAULT_TYPE = "TEST";
-
+  private static SecureRandom secureRandom = new SecureRandom();
   private PostgresKeystoreTestUtil.TestDatabase testDatabase;
   private DataSource dataSource;
   private final AesGcmKeyCipher cipher = new AesGcmKeyCipher();
@@ -199,7 +199,7 @@ class PostgresBulkKeyLoaderTest {
 
   private static byte[] randomKey() {
     final byte[] key = new byte[32];
-    new SecureRandom().nextBytes(key);
+    secureRandom.nextBytes(key);
     return key;
   }
 
