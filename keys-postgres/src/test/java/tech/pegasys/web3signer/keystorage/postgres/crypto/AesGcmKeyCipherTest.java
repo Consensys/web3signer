@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 
 class AesGcmKeyCipherTest {
 
+  private static SecureRandom secureRandom = new SecureRandom();
   private final AesGcmKeyCipher cipher = new AesGcmKeyCipher();
   private final byte[] key = randomKey();
   private final byte[] aad = AadCodec.forRow("tenant-a", "0xabc", 1);
@@ -73,7 +74,7 @@ class AesGcmKeyCipherTest {
 
   private static byte[] randomKey() {
     final byte[] key = new byte[32];
-    new SecureRandom().nextBytes(key);
+    secureRandom.nextBytes(key);
     return key;
   }
 }
