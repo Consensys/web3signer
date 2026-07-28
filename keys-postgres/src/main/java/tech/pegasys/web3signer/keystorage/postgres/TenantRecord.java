@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.keystorage.postgres;
 
+import org.apache.tuweni.bytes.Bytes;
+
 /**
  * A tenant row from the {@code tenants} table, as needed to resolve its DEK.
  *
@@ -25,4 +27,4 @@ package tech.pegasys.web3signer.keystorage.postgres;
  * @param dekVersion the version of the DEK - bumped by provisioning on rotation
  */
 public record TenantRecord(
-    int id, String name, String vaultType, String kekKeyId, byte[] encryptedDek, int dekVersion) {}
+    int id, String name, String vaultType, String kekKeyId, Bytes encryptedDek, int dekVersion) {}

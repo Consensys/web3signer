@@ -32,7 +32,6 @@ import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 
 import java.io.Closeable;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -112,8 +111,6 @@ public class BlsPostgresBulkLoader implements Closeable {
           key.keyIdentifier(),
           e.getClass().getSimpleName());
       return null;
-    } finally {
-      Arrays.fill(key.rawSecretKeyBytes(), (byte) 0);
     }
   }
 

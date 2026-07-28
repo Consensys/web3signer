@@ -12,9 +12,11 @@
  */
 package tech.pegasys.web3signer.keystorage.postgres;
 
+import org.apache.tuweni.bytes.Bytes;
+
 /**
  * A decrypted BLS private key read from the postgres keystore. Deliberately free of any BLS/Teku
  * type so this module has no dependency on the {@code signing} module - the {@code signing}
  * module's {@code BlsPostgresBulkLoader} maps this to a {@code BlsArtifactSigner}.
  */
-public record DecryptedBlsKey(String keyIdentifier, byte[] rawSecretKeyBytes) {}
+public record DecryptedBlsKey(String keyIdentifier, Bytes rawSecretKeyBytes) {}

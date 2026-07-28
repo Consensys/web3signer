@@ -42,6 +42,7 @@ import javax.sql.DataSource;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Bulk-loads and decrypts every BLS key from the postgres keystore in a single streaming pass,
@@ -140,7 +141,7 @@ public final class PostgresBulkKeyLoader implements Closeable {
                 resultSet.getString("tenant_name"),
                 resultSet.getString("vault_type"),
                 resultSet.getString("kek_key_id"),
-                resultSet.getBytes("encrypted_dek"),
+                Bytes.of(resultSet.getBytes("encrypted_dek")),
                 resultSet.getInt("tenant_dek_version"));
         currentDek = tryResolveDek(currentTenant, vaultCalls);
       }
@@ -217,8 +218,8 @@ public final class PostgresBulkKeyLoader implements Closeable {
       final AtomicInteger errorCount) {
     final byte[] aad = AadCodec.forRow(tenant.name(), keyIdentifier, tenant.dekVersion());
     try (final TenantDek.Lease lease = dek.acquireForRead()) {
-      final byte[] plaintext =
-          cipherThreadLocal.get().decrypt(lease.keyBytes(), encryptedBlsKey, aad);
+      final Bytes plaintext =
+          Bytes.of(cipherThreadLocal.get().decrypt(lease.keyBytes(), encryptedBlsKey, aad));
       results.add(new DecryptedBlsKey(keyIdentifier, plaintext));
     } catch (final GeneralSecurityException | IllegalStateException e) {
       errorCount.incrementAndGet();

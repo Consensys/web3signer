@@ -69,7 +69,7 @@ public class PostgresAwsKmsKekResolver implements KekResolver, Closeable {
           client.decrypt(
               DecryptRequest.builder()
                   .keyId(tenant.kekKeyId())
-                  .ciphertextBlob(SdkBytes.fromByteArray(tenant.encryptedDek()))
+                  .ciphertextBlob(SdkBytes.fromByteArray(tenant.encryptedDek().toArray()))
                   .encryptionContext(Map.of(TENANT_ID_ENCRYPTION_CONTEXT_KEY, tenant.name()))
                   .build());
       return response.plaintext().asByteArray();
