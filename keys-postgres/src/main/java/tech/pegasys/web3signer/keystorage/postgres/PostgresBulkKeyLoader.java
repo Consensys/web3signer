@@ -79,7 +79,7 @@ public final class PostgresBulkKeyLoader implements Closeable {
     this.resolversByVaultType = Map.copyOf(resolversByVaultType);
     this.dekCache = new TenantDekCache(dekCacheTtl);
     this.decryptionParallelism =
-        Math.max(1, Math.min(decryptionParallelism, Runtime.getRuntime().availableProcessors()));
+        Math.clamp(decryptionParallelism, 1, Runtime.getRuntime().availableProcessors());
   }
 
   /** The number of KEK vault calls made during the most recent {@link #loadAll()} invocation. */
