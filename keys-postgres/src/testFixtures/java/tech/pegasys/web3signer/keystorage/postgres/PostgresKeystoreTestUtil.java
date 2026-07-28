@@ -25,7 +25,7 @@ public final class PostgresKeystoreTestUtil {
 
   public static final String USERNAME = "postgres";
   public static final String PASSWORD = "postgres";
-  public static final String MIGRATIONS_LOCATION = "/migrations/postgresql/";
+  public static final String MIGRATIONS_LOCATION = "/migrations/keystore-postgresql/";
 
   private PostgresKeystoreTestUtil() {}
 
