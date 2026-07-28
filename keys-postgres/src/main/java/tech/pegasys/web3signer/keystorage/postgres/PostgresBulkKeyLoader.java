@@ -235,7 +235,7 @@ public final class PostgresBulkKeyLoader implements Closeable {
     for (final Future<?> future : futures) {
       try {
         future.get();
-      } catch (final InterruptedException e) {
+      } catch (final InterruptedException _) {
         Thread.currentThread().interrupt();
         errorCount.incrementAndGet();
       } catch (final ExecutionException e) {
@@ -265,7 +265,7 @@ public final class PostgresBulkKeyLoader implements Closeable {
       if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
         executorService.shutdownNow();
       }
-    } catch (final InterruptedException e) {
+    } catch (final InterruptedException _) {
       Thread.currentThread().interrupt();
       executorService.shutdownNow();
     }

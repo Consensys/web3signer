@@ -89,7 +89,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
 
 public class Eth2Runner extends Runner {
   private static final Logger LOG = LogManager.getLogger();
@@ -336,7 +335,7 @@ public class Eth2Runner extends Runner {
     if (blsPostgresBulkLoader.isPresent()) {
       LOG.info("Bulk loading keys from PostgreSQL ... ");
       final MappedResults<ArtifactSigner> postgresResult;
-      try (final TimingContext _ = postgresBulkLoadTimer.labels("full").startTimer()) {
+      try (final var _ = postgresBulkLoadTimer.labels("full").startTimer()) {
         postgresResult = blsPostgresBulkLoader.get().load();
       }
       postgresKekVaultCallsCounter.inc(blsPostgresBulkLoader.get().getLastVaultCallCount());
