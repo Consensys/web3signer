@@ -336,7 +336,7 @@ public class Eth2Runner extends Runner {
     if (blsPostgresBulkLoader.isPresent()) {
       LOG.info("Bulk loading keys from PostgreSQL ... ");
       final MappedResults<ArtifactSigner> postgresResult;
-      try (final TimingContext ignored = postgresBulkLoadTimer.labels("full").startTimer()) {
+      try (final TimingContext _ = postgresBulkLoadTimer.labels("full").startTimer()) {
         postgresResult = blsPostgresBulkLoader.get().load();
       }
       postgresKekVaultCallsCounter.inc(blsPostgresBulkLoader.get().getLastVaultCallCount());
