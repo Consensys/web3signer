@@ -18,9 +18,11 @@ import tech.pegasys.web3signer.keystorage.postgres.kek.KekResolutionException;
 import tech.pegasys.web3signer.keystorage.postgres.kek.KekResolver;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.google.common.base.Splitter;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
@@ -91,12 +93,12 @@ public class PostgresAwsKmsKekResolver implements KekResolver, Closeable {
   }
 
   private static String extractRegion(final String kmsKeyArn) {
-    final String[] parts = kmsKeyArn.split(":");
-    if (parts.length < 4 || !"arn".equals(parts[0])) {
+    final List<String> parts = Splitter.on(':').splitToList(kmsKeyArn);
+    if (parts.size() < 4 || !"arn".equals(parts.getFirst())) {
       throw new KekResolutionException(
           "tenants.kek_key_id is not a valid KMS key ARN: " + kmsKeyArn);
     }
-    return parts[3];
+    return parts.get(3);
   }
 
   private static AwsCredentialsProvider createCredentialsProvider(
