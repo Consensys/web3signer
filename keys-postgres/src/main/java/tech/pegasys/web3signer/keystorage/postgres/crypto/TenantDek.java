@@ -41,11 +41,15 @@ public final class TenantDek {
 
   public Lease acquireForRead() {
     lock.readLock().lock();
-    if (pendingWipe || wiped) {
+    try {
+      if (pendingWipe || wiped) {
+        throw new IllegalStateException("TenantDek has been invalidated and can no longer be used");
+      }
+      return new Lease();
+    } catch (final RuntimeException e) {
       lock.readLock().unlock();
-      throw new IllegalStateException("TenantDek has been invalidated and can no longer be used");
+      throw e;
     }
-    return new Lease();
   }
 
   /** Marks this DEK for wipe and attempts it immediately; safe to call more than once. */
