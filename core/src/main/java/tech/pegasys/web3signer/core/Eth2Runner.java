@@ -220,7 +220,9 @@ public class Eth2Runner extends Runner {
       final AzureKeyVaultFactory azureKeyVaultFactory) {
     MappedResults<ArtifactSigner> results = MappedResults.newSetInstance();
     if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
-      LOG.info("Bulk loading keys from Azure key vault ... ");
+      LOG.info(
+          "Bulk loading keys from Azure key vault (max concurrency: {}) ... ",
+          azureKeyVaultParameters.getBulkLoadOptions().maxConcurrency());
       /*
        Note: Azure supports 25K bytes per secret. https://learn.microsoft.com/en-us/azure/key-vault/secrets/about-secrets
        Each raw bls private key in hex format is approximately 100 bytes. We should store about 200 or fewer
@@ -373,6 +375,7 @@ public class Eth2Runner extends Runner {
             return null;
           }
         },
-        azureKeyVaultParameters.getTags());
+        azureKeyVaultParameters.getTags(),
+        azureKeyVaultParameters.getBulkLoadOptions());
   }
 }

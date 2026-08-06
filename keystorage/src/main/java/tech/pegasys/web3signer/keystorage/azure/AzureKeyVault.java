@@ -24,12 +24,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.azure.core.credential.AccessToken;
 import com.azure.core.credential.TokenCredential;
@@ -54,17 +53,15 @@ import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
 import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.json.JsonObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 public class AzureKeyVault {
 
-  private static final Logger LOG = LogManager.getLogger();
   private final TokenCredential tokenCredential;
   private final SecretClient secretClient;
   private final KeyClient keyClient;
   private static final List<String> SCOPE = List.of("https://vault.azure.net/.default");
+
   private final TokenRequestContext tokenRequestContext =
       new TokenRequestContext().setScopes(SCOPE);
 
@@ -182,45 +179,28 @@ public class AzureKeyVault {
    *
    * @param mapper The mapper function to transform secret values to type R.
    * @param tags Map of tags. Only secrets which contains all the tags entries are processed.
+   * @param options Concurrency and retry parameters for the load.
    * @return Mapped results containing the converted secrets and error count.
    * @param <R> The result type of mapper function.
    */
   public <R> MappedResults<R> mapSecrets(
-      final BiFunction<String, String, R> mapper, final Map<String, String> tags) {
-    final Set<R> result = ConcurrentHashMap.newKeySet();
-    final AtomicInteger errorCount = new AtomicInteger(0);
-    try {
-      final PagedIterable<SecretProperties> secretsPagedIterable =
-          secretClient.listPropertiesOfSecrets();
+      final BiFunction<String, String, R> mapper,
+      final Map<String, String> tags,
+      final BulkLoadOptions options) {
+    // the listing is consumed lazily, so secrets are fetched while later pages are still listed
+    final Stream<SecretProperties> secrets =
+        secretClient.listPropertiesOfSecrets().stream()
+            .filter(sp -> secretPropertiesPredicate(tags, sp));
 
-      secretsPagedIterable
-          .streamByPage()
-          .forEach(
-              keyPage ->
-                  keyPage.getValue().parallelStream()
-                      .filter(secretProperties -> secretPropertiesPredicate(tags, secretProperties))
-                      .forEach(
-                          sp -> {
-                            try {
-                              final KeyVaultSecret secret = secretClient.getSecret(sp.getName());
-                              final MappedResults<R> multiResult =
-                                  SecretValueMapperUtil.mapSecretValue(
-                                      mapper, sp.getName(), secret.getValue());
-                              result.addAll(multiResult.getValues());
-                              errorCount.addAndGet(multiResult.getErrorCount());
-                            } catch (final Exception e) {
-                              LOG.warn(
-                                  "Failed to map secret '{}' to requested object type.",
-                                  sp.getName());
-                              errorCount.incrementAndGet();
-                            }
-                          }));
-
-    } catch (final Exception e) {
-      LOG.error("Unexpected error during Azure map-secrets", e);
-      errorCount.incrementAndGet();
-    }
-    return MappedResults.newInstance(result, errorCount.intValue());
+    return new ConcurrentBulkLoader(options)
+        .load(
+            "Azure secrets bulk load",
+            secrets,
+            SecretProperties::getName,
+            sp -> {
+              final KeyVaultSecret secret = secretClient.getSecret(sp.getName());
+              return SecretValueMapperUtil.mapSecretValue(mapper, sp.getName(), secret.getValue());
+            });
   }
 
   /**
@@ -229,39 +209,24 @@ public class AzureKeyVault {
    *
    * @param mapper Mapper function to transform Azure KeyProperties to type R
    * @param tags Map of tags. Only keys which contains all the tags entries are processed.
+   * @param options Concurrency and retry parameters for the load.
    * @return Mapped results containing the converted keys and error count.
    * @param <R> The result type of mapper function.
    */
   public <R> MappedResults<R> mapKeyProperties(
-      final Function<KeyProperties, R> mapper, final Map<String, String> tags) {
-    final Set<R> result = ConcurrentHashMap.newKeySet();
-    final AtomicInteger errorCount = new AtomicInteger(0);
-    try {
-      keyClient
-          .listPropertiesOfKeys()
-          .streamByPage()
-          .forEach(
-              keyPage ->
-                  keyPage.getValue().parallelStream()
-                      .filter(keyProperties -> keyPropertiesPredicate(tags, keyProperties))
-                      .forEach(
-                          kp -> {
-                            try {
-                              final R value = mapper.apply(kp);
-                              result.add(value);
-                            } catch (final Exception e) {
-                              LOG.warn(
-                                  "Failed to map keyProperties '{}' to requested object type.",
-                                  kp.getName());
-                              errorCount.incrementAndGet();
-                            }
-                          }));
-    } catch (final Exception e) {
-      LOG.error("Unexpected error during Azure mapKeyProperties", e);
-      errorCount.incrementAndGet();
-    }
+      final Function<KeyProperties, R> mapper,
+      final Map<String, String> tags,
+      final BulkLoadOptions options) {
+    // the listing is consumed lazily, so keys are mapped while later pages are still listed
+    final Stream<KeyProperties> keys =
+        keyClient.listPropertiesOfKeys().stream().filter(kp -> keyPropertiesPredicate(tags, kp));
 
-    return MappedResults.newInstance(result, errorCount.intValue());
+    return new ConcurrentBulkLoader(options)
+        .load(
+            "Azure keys bulk load",
+            keys,
+            KeyProperties::getName,
+            kp -> MappedResults.newInstance(Set.of(mapper.apply(kp)), 0));
   }
 
   /**

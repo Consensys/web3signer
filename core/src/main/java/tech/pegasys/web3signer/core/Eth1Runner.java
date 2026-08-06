@@ -183,8 +183,10 @@ public class Eth1Runner extends Runner {
 
   private MappedResults<ArtifactSigner> bulkLoadAzureKeys(
       AzureKeyVaultFactory azureKeyVaultFactory, AzureKeyVaultSignerFactory azureSignerFactory) {
-    LOG.info("Bulk loading keys from Azure key vault ... ");
     final AzureKeyVaultParameters azureKeyVaultConfig = eth1Config.getAzureKeyVaultConfig();
+    LOG.info(
+        "Bulk loading keys from Azure key vault (max concurrency: {}) ... ",
+        azureKeyVaultConfig.getBulkLoadOptions().maxConcurrency());
     final AzureKeyVault azureKeyVault =
         azureKeyVaultFactory.createAzureKeyVault(
             azureKeyVaultConfig.getClientId(),

@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
+import tech.pegasys.web3signer.keystorage.azure.BulkLoadOptions;
+
 import java.util.Map;
 
 public interface AzureKeyVaultParameters {
@@ -31,4 +33,14 @@ public interface AzureKeyVaultParameters {
   Map<String, String> getTags();
 
   long getTimeout();
+
+  /**
+   * Concurrency and retry parameters applied when bulk loading from the vault. Only meaningful for
+   * bulk loading, so single key configurations keep the defaults.
+   *
+   * @return the options to apply to a bulk load.
+   */
+  default BulkLoadOptions getBulkLoadOptions() {
+    return BulkLoadOptions.DEFAULT;
+  }
 }

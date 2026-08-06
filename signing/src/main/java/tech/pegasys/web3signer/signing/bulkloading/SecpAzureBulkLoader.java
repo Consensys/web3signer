@@ -34,7 +34,8 @@ public class SecpAzureBulkLoader {
   public MappedResults<ArtifactSigner> load(final AzureKeyVaultParameters azureKeyVaultParameters) {
     return azureKeyVault.mapKeyProperties(
         kp -> createSigner(kp.getName(), azureKeyVaultParameters),
-        azureKeyVaultParameters.getTags());
+        azureKeyVaultParameters.getTags(),
+        azureKeyVaultParameters.getBulkLoadOptions());
   }
 
   private EthSecpArtifactSigner createSigner(
