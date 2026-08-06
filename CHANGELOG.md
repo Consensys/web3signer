@@ -1,5 +1,10 @@
 # Changelog
 
+## Next release
+### Features Added
+- Bulk loading keys from Azure Key Vault is significantly faster. Secrets and keys are now fetched concurrently, up to a configurable limit, while the vault is still being listed, instead of one 25-item page at a time. New options: `--azure-bulk-load-max-concurrency` (default 20) and `--azure-bulk-load-timeout` (default 900 seconds). Retries for throttled or transient failures are left to the Azure SDK's own default retry policy.
+
+---
 ## 26.7.0
 ### Features Added
 - Support for Hashicorp Vault Kubernetes authentication [PR 1195](https://github.com/Consensys/web3signer/pull/1195)

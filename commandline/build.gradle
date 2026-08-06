@@ -16,6 +16,7 @@ dependencies {
 
   implementation project(":common")
   implementation project(":core")
+  implementation project(":keystorage")
   implementation project(":slashing-protection")
   implementation project(":signing")
   implementation 'info.picocli:picocli'

@@ -105,7 +105,7 @@ public class AzureKeyVaultTest {
 
     // mapSecrets can convert multiple secrets under single key.
     final MappedResults<SimpleEntry<String, String>> result =
-        azureKeyVault.mapSecrets(SimpleEntry::new, Collections.emptyMap());
+        azureKeyVault.mapSecrets(SimpleEntry::new, Collections.emptyMap(), BulkLoadOptions.DEFAULT);
     final Collection<SimpleEntry<String, String>> entries = result.getValues();
 
     // the number of entries should match the available secret values count
@@ -125,7 +125,8 @@ public class AzureKeyVaultTest {
     assertThat(availableKeyNames).isNotEmpty();
 
     final MappedResults<String> result =
-        azureKeyVault.mapKeyProperties(KeyProperties::getName, Collections.emptyMap());
+        azureKeyVault.mapKeyProperties(
+            KeyProperties::getName, Collections.emptyMap(), BulkLoadOptions.DEFAULT);
     final Collection<String> entries = result.getValues();
     assertThat(entries).containsExactlyInAnyOrderElementsOf(availableKeyNames);
     assertThat(result.getErrorCount()).isZero();
@@ -138,7 +139,7 @@ public class AzureKeyVaultTest {
             CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor, AZURE_DEFAULT_TIMEOUT);
 
     final MappedResults<SimpleEntry<String, String>> result =
-        azureKeyVault.mapSecrets(SimpleEntry::new, Map.of("ENV", "TEST"));
+        azureKeyVault.mapSecrets(SimpleEntry::new, Map.of("ENV", "TEST"), BulkLoadOptions.DEFAULT);
     // The Azure key vault is set up with at least one Secret with above tag.
     assertThat(result.getValues()).isNotEmpty();
     // we should not encounter any error count
@@ -152,7 +153,8 @@ public class AzureKeyVaultTest {
             CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor, AZURE_DEFAULT_TIMEOUT);
 
     final MappedResults<String> result =
-        azureKeyVault.mapKeyProperties(KeyProperties::getName, Map.of("ENV", "TEST"));
+        azureKeyVault.mapKeyProperties(
+            KeyProperties::getName, Map.of("ENV", "TEST"), BulkLoadOptions.DEFAULT);
     // The Azure key vault is set up with at least one Key with above tag.
     final Collection<String> entries = result.getValues();
     assertThat(entries).isNotEmpty();
@@ -167,7 +169,8 @@ public class AzureKeyVaultTest {
             CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor, AZURE_DEFAULT_TIMEOUT);
 
     final MappedResults<SimpleEntry<String, String>> result =
-        azureKeyVault.mapSecrets(SimpleEntry::new, Map.of("INVALID_TAG", "INVALID_TEST"));
+        azureKeyVault.mapSecrets(
+            SimpleEntry::new, Map.of("INVALID_TAG", "INVALID_TEST"), BulkLoadOptions.DEFAULT);
 
     // The secret vault is not expected to have any secrets with above tags.
     assertThat(result.getValues()).isEmpty();
@@ -184,7 +187,7 @@ public class AzureKeyVaultTest {
 
     final MappedResults<String> result =
         azureKeyVault.mapKeyProperties(
-            KeyProperties::getName, Map.of("INVALID_TAG", "INVALID_TEST"));
+            KeyProperties::getName, Map.of("INVALID_TAG", "INVALID_TEST"), BulkLoadOptions.DEFAULT);
 
     // The key vault is not expected to have any secrets with above tags.
     assertThat(result.getValues()).isEmpty();
@@ -211,7 +214,8 @@ public class AzureKeyVaultTest {
               }
               return new SimpleEntry<>(name, value);
             },
-            Collections.emptyMap());
+            Collections.emptyMap(),
+            BulkLoadOptions.DEFAULT);
     assertThat(result.getErrorCount()).isOne();
     assertThat(result.getValues()).isNotEmpty();
   }
@@ -233,7 +237,8 @@ public class AzureKeyVaultTest {
               }
               return keyProperties.getName();
             },
-            Collections.emptyMap());
+            Collections.emptyMap(),
+            BulkLoadOptions.DEFAULT);
 
     assertThat(result.getErrorCount()).isOne();
     assertThat(result.getValues()).isNotEmpty();
@@ -247,7 +252,8 @@ public class AzureKeyVaultTest {
 
     // map all remote Secrets values to null - this is to simulate failure in mapping function
     final MappedResults<SimpleEntry<String, String>> result =
-        azureKeyVault.mapSecrets((name, value) -> null, Collections.emptyMap());
+        azureKeyVault.mapSecrets(
+            (name, value) -> null, Collections.emptyMap(), BulkLoadOptions.DEFAULT);
 
     assertThat(result.getErrorCount()).isNotZero();
     assertThat(result.getValues()).isEmpty();
@@ -261,7 +267,8 @@ public class AzureKeyVaultTest {
 
     // map all remote Keys to null - this is to simulate failure in mapping function
     final MappedResults<String> result =
-        azureKeyVault.mapKeyProperties(keyProperties -> null, Collections.emptyMap());
+        azureKeyVault.mapKeyProperties(
+            keyProperties -> null, Collections.emptyMap(), BulkLoadOptions.DEFAULT);
 
     assertThat(result.getErrorCount()).isNotZero();
     assertThat(result.getValues()).isEmpty();

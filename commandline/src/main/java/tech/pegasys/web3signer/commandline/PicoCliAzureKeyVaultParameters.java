@@ -12,9 +12,11 @@
  */
 package tech.pegasys.web3signer.commandline;
 
+import tech.pegasys.web3signer.keystorage.azure.BulkLoadOptions;
 import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -71,6 +73,22 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
       paramLabel = "<AZURE_RESPONSE_TIMEOUT>")
   private long timeout = 60;
 
+  @Option(
+      names = {"--azure-bulk-load-max-concurrency"},
+      description =
+          "Maximum number of concurrent requests to Azure Key Vault during bulk key loading "
+              + "(Default: ${DEFAULT-VALUE})",
+      paramLabel = "<MAX_CONCURRENCY>")
+  private int maxConcurrency = BulkLoadOptions.DEFAULT_MAX_CONCURRENCY;
+
+  @Option(
+      names = {"--azure-bulk-load-timeout"},
+      description =
+          "Overall time budget for bulk loading keys from Azure Key Vault (in seconds). Keys not "
+              + "loaded within it are reported as errors (Default: ${DEFAULT-VALUE})",
+      paramLabel = "<AZURE_BULK_LOAD_TIMEOUT>")
+  private long bulkLoadTimeout = BulkLoadOptions.DEFAULT_DEADLINE.toSeconds();
+
   @CommandLine.Option(
       names = {"--azure-tags"},
       mapFallbackValue = "",
@@ -118,5 +136,10 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
   @Override
   public Map<String, String> getTags() {
     return tags;
+  }
+
+  @Override
+  public BulkLoadOptions getBulkLoadOptions() {
+    return new BulkLoadOptions(maxConcurrency, Duration.ofSeconds(bulkLoadTimeout));
   }
 }
