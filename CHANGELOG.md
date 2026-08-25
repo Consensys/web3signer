@@ -1,5 +1,12 @@
 # Changelog
 
+## Upcoming Release
+### Features Added
+
+### Bugs Fixed
+
+
+---
 ## 26.7.0
 ### Features Added
 - Support for Hashicorp Vault Kubernetes authentication [PR 1195](https://github.com/Consensys/web3signer/pull/1195)
