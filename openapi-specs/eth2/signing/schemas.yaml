@@ -877,22 +877,6 @@ components:
         blob_data_available:
           type: boolean
           description: Whether blob data is available for this slot
-    BuilderRequestAuth:
-      type: object
-      description: >-
-        Proposer-signed, out-of-protocol builder-API authentication message
-        (builder-specs, Gloas), used to authenticate per-request builder-API
-        calls (e.g. getExecutionPayloadBid). Signed with DOMAIN_BUILDER_REQUEST_AUTH
-        (0x0B000001) computed from the genesis fork version and a zero
-        genesis_validators_root (no fork_info required), not the proposer's
-        current fork.
-      properties:
-        data:
-          type: string
-          description: variable-length bytes (opaque per-builder authorization data)
-        slot:
-          type: string
-          format: uint64
     ProposerPreferences:
       type: object
       description: >-
@@ -913,6 +897,22 @@ components:
           type: string
           description: Bytes20 hexadecimal
         target_gas_limit:
+          type: string
+          format: uint64
+    BuilderRequestAuth:
+      type: object
+      description: >-
+        Proposer-signed, out-of-protocol builder-API authentication message
+        (builder-specs, Gloas), used to authenticate per-request builder-API
+        calls (e.g. getExecutionPayloadBid). Signed with DOMAIN_BUILDER_REQUEST_AUTH
+        (0x0B000001) computed from the genesis fork version and a zero
+        genesis_validators_root (no fork_info required), not the proposer's
+        current fork.
+      properties:
+        data:
+          type: string
+          description: variable-length bytes (opaque per-builder authorization data)
+        slot:
           type: string
           format: uint64
     BeaconBlockSigning:
