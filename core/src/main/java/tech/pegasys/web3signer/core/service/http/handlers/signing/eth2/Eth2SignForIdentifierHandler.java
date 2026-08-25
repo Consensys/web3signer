@@ -357,7 +357,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       case BUILDER_REQUEST_AUTH -> {
         final BuilderRequestAuth builderRequestAuth = body.builderRequestAuth();
         checkArgument(builderRequestAuth != null, "builderRequestAuth is required");
-        // Genesis-fork domain (like ValidatorRegistrationV1), not the proposer's fork info.
+        // Genesis fork version + zero genesis_validators_root, not the proposer's current fork.
         final Bytes32 domain =
             eth2Spec.getGenesisSpec().miscHelpers().computeDomain(Domain.REQUEST_AUTH);
         return eth2Spec

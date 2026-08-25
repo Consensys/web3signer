@@ -880,9 +880,12 @@ components:
     BuilderRequestAuth:
       type: object
       description: >-
-        Proposer-signed builder-API auth message (builder-specs, Gloas) using
-        DOMAIN_BUILDER_REQUEST_AUTH (0x0B000001), analogous to the deprecated
-        ValidatorRegistrationV1 flow (genesis fork version, no fork_info needed).
+        Proposer-signed, out-of-protocol builder-API authentication message
+        (builder-specs, Gloas), used to authenticate per-request builder-API
+        calls (e.g. getExecutionPayloadBid). Signed with DOMAIN_BUILDER_REQUEST_AUTH
+        (0x0B000001) computed from the genesis fork version and a zero
+        genesis_validators_root (no fork_info required), not the proposer's
+        current fork.
       properties:
         data:
           type: string

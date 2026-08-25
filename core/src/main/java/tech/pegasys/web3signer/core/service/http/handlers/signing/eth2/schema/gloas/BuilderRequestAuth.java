@@ -20,8 +20,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
- * Proposer-signed builder-API auth message (builder-specs, Gloas), domain
- * DOMAIN_BUILDER_REQUEST_AUTH (0x0B000001). Genesis-fork domain, like ValidatorRegistrationV1.
+ * Proposer-signed, out-of-protocol builder-API auth message (builder-specs, Gloas). Signed with
+ * DOMAIN_BUILDER_REQUEST_AUTH (0x0B000001), computed from the genesis fork version and a zero
+ * genesis_validators_root (no fork_info required), not the proposer's current fork.
  */
 public class BuilderRequestAuth {
 
