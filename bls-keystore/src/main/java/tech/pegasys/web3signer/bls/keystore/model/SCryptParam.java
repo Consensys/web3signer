@@ -12,70 +12,65 @@
  */
 package tech.pegasys.web3signer.bls.keystore.model;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.crypto.generators.SCrypt;
 
-public class SCryptParam extends KdfParam {
-  private final int n;
-  private final int p;
-  private final int r;
+/**
+ * SCrypt Key Derivation Function parameters (EIP-2335).
+ *
+ * <p>This is an immutable record. All parameter validation — including the common {@code dklen} and
+ * {@code salt} checks that previously lived in the abstract {@code KdfParam} base class — is
+ * performed eagerly in the compact constructor. Instances are therefore always valid; no separate
+ * {@code validate()} call is needed.
+ *
+ * @param dklen desired key length in bytes; must be &gt;= 32
+ * @param n CPU/memory cost parameter; must be &gt; 1, a power of 2, and &lt; 2^(128*r/8)
+ * @param p parallelisation parameter; must be &gt;= 1 and &lt;= {@link Integer#MAX_VALUE} / (128 *
+ *     r * 8)
+ * @param r block size; must be &gt;= 1
+ * @param salt KDF salt; must not be null
+ */
+public record SCryptParam(
+    @JsonProperty("dklen") int dklen,
+    @JsonProperty("n") int n,
+    @JsonProperty("p") int p,
+    @JsonProperty("r") int r,
+    @JsonProperty("salt") Bytes salt)
+    implements KdfParam {
 
   /**
-   * SCrypt Key Derivation Function
+   * Compact constructor: validates all parameters eagerly for both Jackson deserialisation and
+   * programmatic construction, producing clear {@link KeyStoreValidationException} messages in both
+   * cases.
    *
-   * @param dklen The length of key to generate.
-   * @param n CPU/Memory cost parameter. Must be larger than 1, a power of 2 and less than <code>
-   *     2^(128 * r / 8)</code>.
-   * @param p Parallelization parameter. Must be a positive integer less than or equal to <code>
-   *     Integer.MAX_VALUE / (128 * r * 8)</code>
-   * @param r the block size, must be &gt;= 1.
-   * @param salt The salt to use
+   * <p>Absent JSON fields for primitives default to {@code 0} when {@code required} is not set; the
+   * range checks below catch those cases with the same clear messages.
    */
-  @JsonCreator
-  public SCryptParam(
-      @JsonProperty(value = "dklen", required = true) final int dklen,
-      @JsonProperty(value = "n", required = true) final int n,
-      @JsonProperty(value = "p", required = true) final int p,
-      @JsonProperty(value = "r", required = true) final int r,
-      @JsonProperty(value = "salt", required = true) final Bytes salt) {
-    super(dklen, salt);
-    this.n = n;
-    this.p = p;
-    this.r = r;
-  }
+  public SCryptParam {
+    if (salt == null) {
+      throw new KeyStoreValidationException(
+          "Invalid KeyStore: Missing 'crypto.kdf.params.salt' property");
+    }
 
-  /**
-   * Create SCryptParam with dklen and salt and using reasonable defaults for n (2^18), p and r.
-   *
-   * @param dklen The derivative key length to generate
-   * @param salt The salt to use
-   */
-  public SCryptParam(final int dklen, final Bytes salt) {
-    this(dklen, 262_144, 1, 8, salt);
-  }
+    if (dklen < 32) {
+      throw new KeyStoreValidationException("Generated key length parameter dklen must be >= 32.");
+    }
 
-  @Override
-  public void validate() throws KeyStoreValidationException {
-    super.validate();
     if (n <= 1 || !isPowerOf2(n)) {
       throw new KeyStoreValidationException("Cost parameter n must be > 1 and a power of 2");
     }
-    // Only value of r that cost (as an int) could be exceeded for is 1
+    // When r == 1 the internal cost expression (128 * r * N) overflows an int for N >= 65536.
     if (r == 1 && n >= 65536) {
       throw new KeyStoreValidationException("Cost parameter n must be > 1 and < 65536");
     }
     if (r < 1) {
       throw new KeyStoreValidationException("Block size r must be >= 1");
     }
-    int maxParallel = Integer.MAX_VALUE / (128 * r * 8);
+    final int maxParallel = Integer.MAX_VALUE / (128 * r * 8);
     if (p < 1 || p > maxParallel) {
       throw new KeyStoreValidationException(
           String.format(
@@ -84,52 +79,33 @@ public class SCryptParam extends KdfParam {
     }
   }
 
-  @JsonProperty(value = "n")
-  public Integer getN() {
-    return n;
-  }
-
-  @JsonProperty(value = "p")
-  public Integer getP() {
-    return p;
-  }
-
-  @JsonProperty(value = "r")
-  public Integer getR() {
-    return r;
+  /**
+   * Convenience constructor using the EIP-2335 recommended defaults: N = 2^18 (262 144), r = 8, p =
+   * 1.
+   *
+   * @param dklen desired key length in bytes
+   * @param salt KDF salt
+   */
+  public SCryptParam(final int dklen, final Bytes salt) {
+    this(dklen, 262_144, 1, 8, salt);
   }
 
   @Override
   @JsonIgnore
-  public KdfFunction getKdfFunction() {
+  public KdfFunction kdfFunction() {
     return KdfFunction.SCRYPT;
   }
 
   @Override
-  protected Bytes generateDecryptionKey(final Bytes password) {
-    checkNotNull(password, "Password cannot be null");
+  public Bytes generateDecryptionKey(final Bytes password) {
+    if (password == null) {
+      throw new KeyStoreValidationException("Password cannot be null");
+    }
     return Bytes.wrap(
-        SCrypt.generate(
-            password.toArrayUnsafe(),
-            getSalt().toArrayUnsafe(),
-            getN(),
-            getR(),
-            getP(),
-            getDkLen()));
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("dklen", getDkLen())
-        .add("n", n)
-        .add("p", p)
-        .add("r", r)
-        .add("salt", getSalt())
-        .toString();
+        SCrypt.generate(password.toArrayUnsafe(), salt().toArrayUnsafe(), n(), r(), p(), dklen()));
   }
 
   private static boolean isPowerOf2(final int x) {
-    return ((x & (x - 1)) == 0);
+    return (x & (x - 1)) == 0;
   }
 }

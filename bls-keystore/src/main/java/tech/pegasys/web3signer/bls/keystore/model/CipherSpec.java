@@ -14,19 +14,15 @@ package tech.pegasys.web3signer.bls.keystore.model;
 
 import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.tuweni.bytes.Bytes;
-
-public record CipherParam(@JsonProperty(value = "iv") Bytes iv) {
-  public CipherParam {
-    if (iv == null) {
+public record CipherSpec(CipherFunction function, CipherParam params) {
+  public CipherSpec {
+    if (function == null) {
       throw new KeyStoreValidationException(
-          "Invalid KeyStore: Missing 'crypto.cipher.params.iv' property");
+          "Invalid KeyStore: Missing 'crypto.cipher.function' property");
     }
-
-    // In case of CTR/SIC, the size of IV is between 8 bytes and 16 bytes
-    if (iv.size() < 8 || iv.size() > 16) {
-      throw new KeyStoreValidationException("iv size must be >= 8 and <= 16");
+    if (params == null) {
+      throw new KeyStoreValidationException(
+          "Invalid KeyStore: Missing 'crypto.cipher.params' property");
     }
   }
 }

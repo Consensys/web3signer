@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import tech.pegasys.web3signer.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.signing.KeystoreFileRecord;
 import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
@@ -50,10 +52,12 @@ public class DbValidatorManager implements ValidatorManager {
   }
 
   @Override
-  public void addValidator(final Bytes publicKey, final String keystore, final String password) {
+  public void addValidator(
+      final BlsArtifactSigner signer, final KeystoreFileRecord keystoreFileRecord) {
+    final Bytes publicKey = Bytes.fromHexString(signer.getIdentifier());
     jdbi.useTransaction(
         handle -> {
-          validatorManager.addValidator(publicKey, keystore, password);
+          validatorManager.addValidator(signer, keystoreFileRecord);
           registeredValidators.registerValidators(List.of(publicKey));
           final int validatorId = registeredValidators.mustGetValidatorIdForPublicKey(publicKey);
           DbLocker.lockAllForValidator(handle, validatorId);

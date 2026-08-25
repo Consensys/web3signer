@@ -1,7 +1,22 @@
 # Changelog
 
 ## Upcoming Release
+### Features Added
+
+### Bugs Fixed
+
+
+---
+## 26.7.0
+### Features Added
+- Support for Hashicorp Vault Kubernetes authentication [PR 1195](https://github.com/Consensys/web3signer/pull/1195)
+- The eth1 signing endpoint (`POST /api/v1/eth1/sign/{identifier}`) accepts an optional `applyHash` field. It defaults to `true`, preserving the existing behaviour of applying Keccak-256 to `data` before signing. Setting it to `false` signs the caller-supplied `data` as a pre-computed digest, which must be exactly 32 bytes. Supported by file-based, AWS KMS and Azure Key Vault signers. [PR 1213](https://github.com/Consensys/web3signer/pull/1213)
+
+### Bugs Fixed
+- Fix Key Manager API (`POST /eth/v1/keystores`) accepting a keystore whose JSON `pubkey` field does not match the decrypted private key. A mismatched import now returns `status: "error"` for that entry rather than poisoning the slashing-protection database under the claimed (unverified) pubkey.
+
 ### Breaking Changes
+- The Key Manager API (`DELETE /eth/v1/keystores`) now only attempts to delete keystore files that follow the `<pubkey>.yaml` naming convention. Files using a different naming scheme are left untouched. This replaces the previous approach of scanning all metadata files and matching on the EIP-2335 `pubkey` field, which is optional and not guaranteed to be correct.
 - Java 25 is now required to build Web3Signer (previously Java 21).
 - The `.tar.gz` and `.zip` binary distributions now require Java 25 on the host machine to run Web3Signer (previously Java 21).
 - Docker images are unchanged — they have shipped Java 25 since 25.12.0.
@@ -11,6 +26,9 @@
 - Initial signing support for the upcoming Glamsterdam (GLOAS / ePBS) fork. Subject to change until the next Teku release pins the schemas. PR [#1192][PR_1192].
 
 [PR_1192]: https://github.com/Consensys/web3signer/pull/1192
+
+### Security
+- Update base docker image to latest LTS Ubuntu 26.04.
 
 ---
 ## 26.4.2

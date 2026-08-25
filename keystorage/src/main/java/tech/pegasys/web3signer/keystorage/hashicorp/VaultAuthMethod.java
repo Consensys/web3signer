@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 ConsenSys AG.
+ * Copyright 2024 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,15 +10,16 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.signing.secp256k1;
+package tech.pegasys.web3signer.keystorage.hashicorp;
 
-import java.security.interfaces.ECPublicKey;
+/** Authentication methods supported for HashiCorp Vault. */
+public enum VaultAuthMethod {
+  /** Authenticate using a static Vault token (default, backward-compatible). */
+  TOKEN,
 
-public interface Signer {
-
-  Signature sign(final byte[] data);
-
-  Signature sign(final byte[] data, final boolean applyHash);
-
-  ECPublicKey getPublicKey();
+  /**
+   * Authenticate using the Vault Kubernetes auth method. The pod's service-account JWT is exchanged
+   * for a short-lived Vault client token via {@code POST /v1/auth/<mount>/login}.
+   */
+  KUBERNETES
 }

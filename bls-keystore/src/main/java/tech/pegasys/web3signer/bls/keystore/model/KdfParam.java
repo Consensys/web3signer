@@ -12,52 +12,52 @@
  */
 package tech.pegasys.web3signer.bls.keystore.model;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
 import tech.pegasys.web3signer.bls.keystore.PasswordUtils;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.MoreObjects;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.tuweni.bytes.Bytes;
 
-public abstract class KdfParam {
-  private final Integer dklen;
-  private final Bytes salt;
+/**
+ * Sealed interface representing the parameter set for a Key Derivation Function used in an EIP-2335
+ * BLS keystore. Only {@link SCryptParam} and {@link Pbkdf2Param} are permitted implementations,
+ * reflecting the two KDF functions defined by the spec.
+ *
+ * <p>Validation is enforced eagerly in each implementation's compact record constructor,
+ * eliminating the need for a separate {@code validate()} call chain.
+ */
+public sealed interface KdfParam permits SCryptParam, Pbkdf2Param {
 
-  public KdfParam(final Integer dklen, final Bytes salt) {
-    this.dklen = dklen;
-    this.salt = salt;
-  }
+  /** The desired length (in bytes) of the derived key. Must be &gt;= 32 per EIP-2335. */
+  int dklen();
 
-  @JsonProperty(value = "dklen")
-  public Integer getDkLen() {
-    return dklen;
-  }
+  /** The KDF salt. */
+  Bytes salt();
 
-  public abstract KdfFunction getKdfFunction();
+  /**
+   * Returns the KDF function identifier for this parameter set.
+   *
+   * <p>Excluded from JSON serialisation: the discriminator is already carried by the {@code
+   * function} property on the enclosing {@link Kdf} object, so emitting it again here would produce
+   * a duplicate field.
+   */
+  @JsonIgnore
+  KdfFunction kdfFunction();
 
-  public Bytes generateDecryptionKey(final String password) {
+  /**
+   * Derives the decryption key from a raw UTF-8 password string.
+   *
+   * <p>The string is normalised (NFKD decomposition + control-code stripping) per EIP-2335 before
+   * being passed to the underlying KDF.
+   */
+  default Bytes generateDecryptionKey(final String password) {
     return generateDecryptionKey(PasswordUtils.normalizePassword(password));
   }
 
-  protected abstract Bytes generateDecryptionKey(final Bytes password);
-
-  public void validate() {
-    checkNotNull(getSalt(), "salt cannot be null");
-    // because the EIP-2335 spec requires dklen >= 32
-    if (dklen < 32) {
-      throw new KeyStoreValidationException("Generated key length parameter dklen must be >= 32.");
-    }
-  }
-
-  @JsonProperty(value = "salt")
-  public Bytes getSalt() {
-    return salt;
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this).add("dklen", dklen).add("salt", salt).toString();
-  }
+  /**
+   * Derives the decryption key from a pre-normalised password byte sequence.
+   *
+   * @param password normalised password bytes produced by {@link PasswordUtils#normalizePassword}
+   * @return the derived key of length {@link #dklen()} bytes
+   */
+  Bytes generateDecryptionKey(Bytes password);
 }

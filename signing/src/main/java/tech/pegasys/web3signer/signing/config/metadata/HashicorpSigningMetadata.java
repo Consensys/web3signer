@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.signing.config.metadata;
 
+import tech.pegasys.web3signer.keystorage.hashicorp.VaultAuthMethod;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
 
@@ -25,8 +26,8 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 public class HashicorpSigningMetadata extends SigningMetadata {
   public static final String TYPE = "hashicorp";
   private final String serverHost;
-  private final String token;
   private final String keyPath;
+  private String token;
 
   // Optional Fields (will be populated if need be).
   private Integer serverPort;
@@ -37,16 +38,24 @@ public class HashicorpSigningMetadata extends SigningMetadata {
   private Path tlsKnownServerFile = null;
   private HttpClient.Version httpProtocolVersion;
 
+  private VaultAuthMethod authMethod = VaultAuthMethod.TOKEN;
+  private String kubernetesRole;
+  private Path kubernetesServiceAccountTokenPath;
+  private String kubernetesAuthPath;
+
   @JsonCreator
   public HashicorpSigningMetadata(
       @JsonProperty(value = "serverHost", required = true) final String serverHost,
       @JsonProperty(value = "keyPath", required = true) final String keyPath,
-      @JsonProperty(value = "token", required = true) final String token,
       @JsonProperty(value = "keyType") final KeyType keyType) {
     super(TYPE, keyType != null ? keyType : KeyType.BLS);
     this.serverHost = serverHost;
-    this.token = token;
     this.keyPath = keyPath;
+  }
+
+  @JsonSetter("token")
+  public void setToken(final String value) {
+    this.token = value;
   }
 
   @JsonSetter("serverPort")
@@ -77,6 +86,28 @@ public class HashicorpSigningMetadata extends SigningMetadata {
   @JsonSetter("httpProtocolVersion")
   public void setHttpProtocolVersion(final HttpClient.Version httpProtocolVersion) {
     this.httpProtocolVersion = httpProtocolVersion;
+  }
+
+  @JsonSetter("authMethod")
+  public void setAuthMethod(final VaultAuthMethod authMethod) {
+    if (authMethod != null) {
+      this.authMethod = authMethod;
+    }
+  }
+
+  @JsonSetter("kubernetesRole")
+  public void setKubernetesRole(final String kubernetesRole) {
+    this.kubernetesRole = kubernetesRole;
+  }
+
+  @JsonSetter("kubernetesServiceAccountTokenPath")
+  public void setKubernetesServiceAccountTokenPath(final Path kubernetesServiceAccountTokenPath) {
+    this.kubernetesServiceAccountTokenPath = kubernetesServiceAccountTokenPath;
+  }
+
+  @JsonSetter("kubernetesAuthPath")
+  public void setKubernetesAuthPath(final String kubernetesAuthPath) {
+    this.kubernetesAuthPath = kubernetesAuthPath;
   }
 
   public String getServerHost() {
@@ -113,6 +144,22 @@ public class HashicorpSigningMetadata extends SigningMetadata {
 
   public HttpClient.Version getHttpProtocolVersion() {
     return httpProtocolVersion;
+  }
+
+  public VaultAuthMethod getAuthMethod() {
+    return authMethod;
+  }
+
+  public String getKubernetesRole() {
+    return kubernetesRole;
+  }
+
+  public Path getKubernetesServiceAccountTokenPath() {
+    return kubernetesServiceAccountTokenPath;
+  }
+
+  public String getKubernetesAuthPath() {
+    return kubernetesAuthPath;
   }
 
   @Override

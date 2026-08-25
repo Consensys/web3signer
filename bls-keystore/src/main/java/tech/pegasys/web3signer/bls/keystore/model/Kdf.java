@@ -14,65 +14,53 @@ package tech.pegasys.web3signer.bls.keystore.model;
 
 import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.google.common.base.MoreObjects;
 
-public class Kdf {
-  private final KdfFunction kdfFunction;
-  private final KdfParam param;
-  private final String message;
+public record Kdf(
+    @JsonProperty(value = "function") KdfFunction kdfFunction,
+    @JsonProperty(value = "params")
+        @JsonTypeInfo(
+            use = JsonTypeInfo.Id.NAME,
+            include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
+            property = "function")
+        @JsonSubTypes({
+          @JsonSubTypes.Type(value = SCryptParam.class, name = "scrypt"),
+          @JsonSubTypes.Type(value = Pbkdf2Param.class, name = "pbkdf2")
+        })
+        KdfParam param,
+    @JsonProperty(value = "message") String message) {
 
-  @JsonCreator
-  public Kdf(
-      @JsonProperty(value = "function", required = true) final KdfFunction kdfFunction,
-      @JsonProperty(value = "params", required = true)
-          @JsonTypeInfo(
-              use = JsonTypeInfo.Id.NAME,
-              include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
-              property = "function")
-          @JsonSubTypes({
-            @JsonSubTypes.Type(value = SCryptParam.class, name = "scrypt"),
-            @JsonSubTypes.Type(value = Pbkdf2Param.class, name = "pbkdf2")
-          })
-          final KdfParam param,
-      @JsonProperty(value = "message", required = true) final String message) {
-    this.kdfFunction = kdfFunction;
-    this.param = param;
-    this.message = message;
+  /**
+   * Compact Constructor: Automatically executes validation for BOTH Jackson deserialization and
+   * manually invoked constructors.
+   */
+  public Kdf {
+    if (kdfFunction == null) {
+      throw new KeyStoreValidationException(
+          "Invalid KeyStore: Missing 'crypto.kdf.function' property");
+    }
+
+    if (param == null) {
+      throw new KeyStoreValidationException(
+          "Invalid KeyStore: Missing 'crypto.kdf.params' property");
+    }
+
+    if (message == null) {
+      throw new KeyStoreValidationException(
+          "Invalid KeyStore: Missing 'crypto.kdf.message' property");
+    }
   }
 
+  /**
+   * Convenience constructor for programmatic creation from a {@link KdfParam} instance. The {@code
+   * function} discriminator is derived from the param itself, and {@code message} defaults to an
+   * empty string.
+   *
+   * @param kdfParam kdf parameter
+   */
   public Kdf(final KdfParam kdfParam) {
-    this(kdfParam.getKdfFunction(), kdfParam, "");
-  }
-
-  @JsonProperty(value = "function")
-  public KdfFunction getKdfFunction() {
-    return kdfFunction;
-  }
-
-  @JsonProperty(value = "params")
-  public KdfParam getParam() {
-    return param;
-  }
-
-  @JsonProperty(value = "message")
-  public String getMessage() {
-    return message;
-  }
-
-  public void validate() throws KeyStoreValidationException {
-    param.validate();
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("function", kdfFunction)
-        .add("params", param)
-        .add("message", message)
-        .toString();
+    this(kdfParam.kdfFunction(), kdfParam, "");
   }
 }

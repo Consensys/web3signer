@@ -16,7 +16,13 @@ import org.apache.tuweni.bytes.Bytes;
 
 public interface ValidatorManager {
 
+  /// Delete validator for provided public key
+  /// @param publicKey An instance of Bytes representing public key
   void deleteValidator(final Bytes publicKey);
 
-  void addValidator(final Bytes publicKey, final String keystore, final String password);
+  /// Add validator from a decrypted signer
+  /// @param signer instance of BlsArtifactSigner
+  /// @param keystoreFileRecord keystore file record associated with manager. May be `null` for
+  /// managers that manages validators only in-memory
+  void addValidator(final BlsArtifactSigner signer, final KeystoreFileRecord keystoreFileRecord);
 }

@@ -28,7 +28,6 @@ import tech.pegasys.web3signer.signing.config.AwsSecretsManagerFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -115,11 +114,9 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
     try {
       final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile.toUri());
       final String password = loadPassword(keystorePasswordFile);
-      final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
-      final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
+      final BLSKeyPair keyPair = KeyStore.decrypt(password, keyStoreData);
       return signerFactory.apply(
-          new BlsArtifactSignerArgs(
-              keyPair, SignerOrigin.FILE_KEYSTORE, Optional.ofNullable(keyStoreData.getPath())));
+          new BlsArtifactSignerArgs(keyPair, SignerOrigin.FILE_KEYSTORE, keyStoreData.path()));
     } catch (final KeyStoreValidationException e) {
       throw new SigningMetadataException(e.getMessage(), e);
     }

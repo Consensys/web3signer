@@ -15,12 +15,18 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
-import tech.pegasys.web3signer.signing.FileValidatorManager;
+import tech.pegasys.web3signer.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.signing.DefaultValidatorManager;
+import tech.pegasys.web3signer.signing.KeystoreFileRecord;
+import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
 import db.DatabaseSetupExtension;
@@ -35,10 +41,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 @ExtendWith(DatabaseSetupExtension.class)
 class DbValidatorManagerTest {
-  @Mock private FileValidatorManager fileValidatorManager;
+  @Mock private DefaultValidatorManager fileValidatorManager;
   @Mock private RegisteredValidators registeredValidators;
-  private static final Bytes PUBLIC_KEY =
-      BLSTestUtil.randomKeyPair(1).getPublicKey().toBytesCompressed();
+  private static final BLSKeyPair BLS_KEY_PAIR = BLSTestUtil.randomKeyPair(1);
+  private static final Bytes PUBLIC_KEY = BLS_KEY_PAIR.getPublicKey().toBytesCompressed();
+  private static final BlsArtifactSigner SIGNER =
+      new BlsArtifactSigner(BLS_KEY_PAIR, SignerOrigin.FILE_KEYSTORE);
 
   @Test
   public void disablesValidatorWhenDeleting(final Jdbi jdbi, final Handle handle) {
@@ -76,26 +84,23 @@ class DbValidatorManagerTest {
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     final DbValidatorManager dbValidatorManager =
         new DbValidatorManager(fileValidatorManager, registeredValidators, jdbi, validatorsDao);
-    dbValidatorManager.addValidator(PUBLIC_KEY, "keystore", "password");
+    dbValidatorManager.addValidator(SIGNER, null);
     assertThat(validatorsDao.isEnabled(handle, 1)).isTrue();
-    verify(fileValidatorManager).addValidator(PUBLIC_KEY, "keystore", "password");
+    verify(fileValidatorManager).addValidator(eq(SIGNER), isNull(KeystoreFileRecord.class));
   }
 
   @Test
   public void doesNotEnableValidatorWhenDeletingIfFileErrorOccurs(
       final Jdbi jdbi, final Handle handle) {
     insertValidator(handle, 1, PUBLIC_KEY, false);
-    doThrow(new RuntimeException("error"))
-        .when(fileValidatorManager)
-        .addValidator(any(), any(), any());
+    doThrow(new RuntimeException("error")).when(fileValidatorManager).addValidator(any(), any());
 
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     final DbValidatorManager dbValidatorManager =
         new DbValidatorManager(fileValidatorManager, registeredValidators, jdbi, validatorsDao);
-    assertThatThrownBy(() -> dbValidatorManager.addValidator(PUBLIC_KEY, "keystore", "password"))
-        .hasMessage("error");
+    assertThatThrownBy(() -> dbValidatorManager.addValidator(SIGNER, null)).hasMessage("error");
     assertThat(validatorsDao.isEnabled(handle, 1)).isFalse();
-    verify(fileValidatorManager).addValidator(PUBLIC_KEY, "keystore", "password");
+    verify(fileValidatorManager).addValidator(eq(SIGNER), isNull(KeystoreFileRecord.class));
   }
 
   private void insertValidator(

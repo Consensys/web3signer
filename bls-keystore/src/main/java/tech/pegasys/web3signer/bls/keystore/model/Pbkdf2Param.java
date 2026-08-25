@@ -12,85 +12,77 @@
  */
 package tech.pegasys.web3signer.bls.keystore.model;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.crypto.generators.PKCS5S2ParametersGenerator;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.util.DigestFactory;
 
-public class Pbkdf2Param extends KdfParam {
-
-  private final Integer c;
-  private final Pbkdf2PseudoRandomFunction prf;
+/**
+ * PBKDF2 Key Derivation Function parameters (EIP-2335).
+ *
+ * <p>This is an immutable record. All parameter validation — including the common {@code dklen} and
+ * {@code salt} checks that previously lived in the abstract {@code KdfParam} base class - is
+ * performed eagerly in the compact constructor. Instances are therefore always valid; no separate
+ * {@code validate()} call is needed.
+ *
+ * @param dklen desired key length in bytes; must be &gt;= 32
+ * @param c iteration count; must be &gt;= 1
+ * @param prf pseudo-random function (hash digest) to use; must not be null
+ * @param salt KDF salt; must not be null
+ */
+public record Pbkdf2Param(
+    @JsonProperty("dklen") int dklen,
+    @JsonProperty("c") int c,
+    @JsonProperty("prf") Pbkdf2PseudoRandomFunction prf,
+    @JsonProperty("salt") Bytes salt)
+    implements KdfParam {
 
   /**
-   * PBKDF2 Key Derivation Function
+   * Compact constructor: validates all parameters eagerly for both Jackson deserialisation and
+   * programmatic construction, producing clear {@link KeyStoreValidationException} messages in both
+   * cases.
    *
-   * @param dklen The length of key to generate
-   * @param c The iteration count
-   * @param prf The pseudo random function i.e. hash digest to use.
-   * @param salt The salt to use
+   * <p>Absent JSON fields for primitives default to {@code 0} when {@code required} is not set; the
+   * range checks below catch those cases with the same clear messages.
    */
-  @JsonCreator
-  public Pbkdf2Param(
-      @JsonProperty(value = "dklen", required = true) final int dklen,
-      @JsonProperty(value = "c", required = true) final int c,
-      @JsonProperty(value = "prf", required = true) final Pbkdf2PseudoRandomFunction prf,
-      @JsonProperty(value = "salt", required = true) final Bytes salt) {
-    super(dklen, salt);
-    this.c = c;
-    this.prf = prf;
-  }
+  public Pbkdf2Param {
+    if (salt == null) {
+      throw new KeyStoreValidationException(
+          "Invalid KeyStore: Missing 'crypto.kdf.params.salt' property");
+    }
+    if (prf == null) {
+      throw new KeyStoreValidationException(
+          "Invalid KeyStore: Missing 'crypto.kdf.params.prf' property");
+    }
 
-  @Override
-  public void validate() throws KeyStoreValidationException {
-    super.validate();
+    if (dklen < 32) {
+      throw new KeyStoreValidationException("Generated key length parameter dklen must be >= 32.");
+    }
+
     if (c < 1) {
       throw new KeyStoreValidationException("Iteration Count parameter c must be >= 1");
     }
   }
 
-  @JsonProperty(value = "c")
-  public Integer getC() {
-    return c;
-  }
-
-  @JsonProperty(value = "prf")
-  public Pbkdf2PseudoRandomFunction getPrf() {
-    return prf;
-  }
-
   @Override
   @JsonIgnore
-  public KdfFunction getKdfFunction() {
+  public KdfFunction kdfFunction() {
     return KdfFunction.PBKDF2;
   }
 
   @Override
-  protected Bytes generateDecryptionKey(final Bytes password) {
-    checkNotNull(password, "Password cannot be null");
+  public Bytes generateDecryptionKey(final Bytes password) {
+    if (password == null) {
+      throw new KeyStoreValidationException("Password cannot be null");
+    }
     final PKCS5S2ParametersGenerator gen =
         new PKCS5S2ParametersGenerator(DigestFactory.createSHA256());
-    gen.init(password.toArrayUnsafe(), getSalt().toArrayUnsafe(), c);
-    final int keySizeInBits = getDkLen() * 8;
-    final byte[] key = ((KeyParameter) gen.generateDerivedParameters(keySizeInBits)).getKey();
+    gen.init(password.toArrayUnsafe(), salt().toArrayUnsafe(), c());
+    final byte[] key = ((KeyParameter) gen.generateDerivedParameters(dklen() * 8)).getKey();
     return Bytes.wrap(key);
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("dklen", getDkLen())
-        .add("c", c)
-        .add("prf", prf)
-        .add("salt", getSalt())
-        .toString();
   }
 }

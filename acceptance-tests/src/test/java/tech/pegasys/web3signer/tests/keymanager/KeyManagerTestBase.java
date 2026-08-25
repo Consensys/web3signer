@@ -126,7 +126,7 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
     final Path keystoreFilePath =
         Path.of(new File(Resources.getResource(keystoreFile).toURI()).getAbsolutePath());
     final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFilePath.toUri());
-    final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
+    final Bytes privateKey = KeyStore.decrypt(password, keyStoreData).getSecretKey().toBytes();
     return createKeystoreYamlFile(signerKeystoreDirectory, privateKey.toHexString());
   }
 

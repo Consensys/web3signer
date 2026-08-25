@@ -14,24 +14,20 @@ package tech.pegasys.web3signer.signing.config.metadata;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 
-import java.util.Optional;
-
 public class BlsArtifactSignerArgs {
   private final BLSKeyPair keyPair;
   private final SignerOrigin origin;
-  private final Optional<String> path;
+  private final String path;
 
   public BlsArtifactSignerArgs(
-      final BLSKeyPair keyPair, final SignerOrigin origin, final Optional<String> path) {
+      final BLSKeyPair keyPair, final SignerOrigin origin, final String path) {
     this.keyPair = keyPair;
     this.origin = origin;
     this.path = path;
   }
 
   public BlsArtifactSignerArgs(final BLSKeyPair keyPair, final SignerOrigin origin) {
-    this.keyPair = keyPair;
-    this.origin = origin;
-    this.path = Optional.empty();
+    this(keyPair, origin, null);
   }
 
   public BLSKeyPair getKeyPair() {
@@ -42,7 +38,7 @@ public class BlsArtifactSignerArgs {
     return origin;
   }
 
-  public Optional<String> getPath() {
+  public String getPath() {
     return path;
   }
 }

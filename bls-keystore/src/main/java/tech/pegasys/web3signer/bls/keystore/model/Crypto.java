@@ -12,51 +12,30 @@
  */
 package tech.pegasys.web3signer.bls.keystore.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import tech.pegasys.web3signer.bls.keystore.KeyStoreValidationException;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.MoreObjects;
 
-public class Crypto {
-  private final Kdf kdf;
-  private final Checksum checksum;
-  private final Cipher cipher;
+public record Crypto(
+    @JsonProperty(value = "kdf") Kdf kdf,
+    @JsonProperty(value = "checksum") Checksum checksum,
+    @JsonProperty(value = "cipher") Cipher cipher) {
 
-  @JsonCreator
-  public Crypto(
-      @JsonProperty(value = "kdf", required = true) final Kdf kdf,
-      @JsonProperty(value = "checksum", required = true) final Checksum checksum,
-      @JsonProperty(value = "cipher", required = true) final Cipher cipher) {
-    this.kdf = kdf;
-    this.checksum = checksum;
-    this.cipher = cipher;
-  }
+  /**
+   * Compact Constructor: Automatically executes validation for BOTH Jackson deserialization and
+   * manually invoked constructors.
+   */
+  public Crypto {
+    if (kdf == null) {
+      throw new KeyStoreValidationException("Invalid KeyStore: Missing 'crypto.kdf' property");
+    }
 
-  @JsonProperty(value = "kdf")
-  public Kdf getKdf() {
-    return kdf;
-  }
+    if (checksum == null) {
+      throw new KeyStoreValidationException("Invalid KeyStore: Missing 'crypto.checksum' property");
+    }
 
-  @JsonProperty(value = "checksum")
-  public Checksum getChecksum() {
-    return checksum;
-  }
-
-  @JsonProperty(value = "cipher")
-  public Cipher getCipher() {
-    return cipher;
-  }
-
-  public void validate() {
-    kdf.validate();
-    cipher.validate();
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("kdf", kdf)
-        .add("checksum", checksum)
-        .add("cipher", cipher)
-        .toString();
+    if (cipher == null) {
+      throw new KeyStoreValidationException("Invalid KeyStore: Missing 'crypto.cipher' property");
+    }
   }
 }

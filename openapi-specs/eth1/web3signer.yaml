@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: 'Web3Signer ETH1 API'
   description: 'Sign ETH1 Artifacts'
-  version: '1.1.0'
+  version: '1.2.0'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -17,7 +17,7 @@ paths:
       tags:
         - 'Signing'
       summary: 'Signs data for ETH1 SECP256K1 public key'
-      description: 'Signs data for the ETH1 SECP256K1 public key specified as part of the URL and returns the signature'
+      description: 'Signs data for the ETH1 SECP256K1 public key specified as part of the URL and returns the signature. By default, Web3Signer applies Keccak-256 to the data before signing. Set applyHash to false to sign a caller-supplied 32-byte digest as-is.'
       operationId: 'ETH1_SIGN'
       parameters:
         - name: 'identifier'
@@ -35,12 +35,17 @@ paths:
               properties:
                 data:
                   type: string
+                applyHash:
+                  type: boolean
+                  default: true
+                  description: 'Whether to apply Keccak-256 to data before signing. If false, data must be exactly 32 bytes.'
               required:
                 - data
               additionalProperties:
                 type: string
             example:
               data: 0x48656c6c6f2c20776f726c6421
+              applyHash: true
 
       responses:
         '200':

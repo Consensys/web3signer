@@ -16,7 +16,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import tech.pegasys.web3signer.bls.keystore.model.Cipher;
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.web3signer.bls.keystore.model.CipherFunction;
+import tech.pegasys.web3signer.bls.keystore.model.CipherParam;
+import tech.pegasys.web3signer.bls.keystore.model.CipherSpec;
 import tech.pegasys.web3signer.bls.keystore.model.KdfParam;
 import tech.pegasys.web3signer.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.bls.keystore.model.Pbkdf2Param;
@@ -50,20 +54,22 @@ class KeyStoreTest {
 
   private static final String PASSWORD =
       "\uD835\uDD31\uD835\uDD22\uD835\uDD30\uD835\uDD31\uD835\uDD2D\uD835\uDD1E\uD835\uDD30\uD835\uDD30\uD835\uDD34\uD835\uDD2C\uD835\uDD2F\uD835\uDD21\uD83D\uDD11";
-  private static final Bytes BLS_PRIVATE_KEY =
-      Bytes.fromHexString("0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
+  private static final Bytes32 BLS_PRIVATE_KEY =
+      Bytes32.fromHexString("0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
+  private static final BLSKeyPair BLS_KEY_PAIR =
+      new BLSKeyPair(BLSSecretKey.fromBytes(BLS_PRIVATE_KEY));
   private static final Bytes BLS_PUB_KEY =
       Bytes.fromHexString(
           "9612d7a727c9d0a22e185a1c768478dfe919cada9266988cb32359c11f2b7b27f4ae4040902382ae2910c15e2b420d07");
   private static final Bytes32 SALT =
       Bytes32.fromHexString("d4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3");
-  private static final Bytes AES_IV_PARAM = Bytes.fromHexString("264daa3f303d7259501c93d997d84fe6");
+  private static final CipherParam AES_IV_PARAM =
+      new CipherParam(Bytes.fromHexString("264daa3f303d7259501c93d997d84fe6"));
 
   private static final String SCRYPT_KEYSTORE_RESOURCE = "scryptTestVector.json";
   private static final String SCRYPT_EXTRA_FIELD_KEYSTORE_RESOURCE =
       "scryptExtraFieldTestVector.json";
-  private static final String SCRYPT_MISSING_UUID_PATH_KEYSTORE_RESOURCE =
-      "scryptTestVectorWithMissingPathAndUUID.json";
+
   private static final String PBKDF2_KEYSTORE_RESOURCE = "pbkdf2TestVector.json";
   private static final String MISSING_SECTION_KEYSTORE_RESOURCE =
       "missingKdfSectionTestVector.json";
@@ -74,7 +80,11 @@ class KeyStoreTest {
   private static final String UNSUPPORTED_KDF_FUNCTION_JSON = "unsupportedKdfFunction.json";
   private static final String UNSUPPORTED_PBKDF2_PRF_FUNCTION_JSON = "unsupportedPBKDF2Prf.json";
   private static final String UNSUPPORTED_DKLEN_FUNCTION_JSON = "unsupportedDkLen.json";
-  private static final Cipher CIPHER = new Cipher(AES_IV_PARAM);
+  private static final CipherSpec CIPHER_SPEC =
+      new CipherSpec(CipherFunction.AES_128_CTR, AES_IV_PARAM);
+
+  private static final String MISSING_CRYPTO = "missingCrypto.json";
+  private static final String MISSING_VERSION = "missingVersion.json";
 
   public static Stream<Arguments> encryptWithKdfAndCipherArguments() {
     // KdfParam, expected checksum, expected encrypted cipher message
@@ -100,7 +110,7 @@ class KeyStoreTest {
         Arguments.of(
             "Unsupported version",
             UNSUPPORTED_VERSION_JSON_RESOURCE,
-            "The KeyStore version 3 is not supported"),
+            "KeyStore version not supported: 3"),
         Arguments.of(
             "Unsupported checksum fn",
             UNSUPPORTED_CHECKSUM_FUNCTION_JSON,
@@ -120,7 +130,13 @@ class KeyStoreTest {
         Arguments.of(
             "Unsupported dklen fn",
             UNSUPPORTED_DKLEN_FUNCTION_JSON,
-            "Generated key length parameter dklen must be >= 32."));
+            "Generated key length parameter dklen must be >= 32."),
+
+        // required attributes
+        Arguments.of(
+            "Missing crypto", MISSING_CRYPTO, "Invalid KeyStore: Missing 'crypto' property"),
+        Arguments.of(
+            "Missing version", MISSING_VERSION, "Invalid KeyStore: Missing 'version' property"));
   }
 
   @ParameterizedTest(name = "{index} - Load And Decrypt Keystore with {0}")
@@ -128,13 +144,12 @@ class KeyStoreTest {
       strings = {
         SCRYPT_KEYSTORE_RESOURCE,
         PBKDF2_KEYSTORE_RESOURCE,
-        SCRYPT_EXTRA_FIELD_KEYSTORE_RESOURCE,
-        SCRYPT_MISSING_UUID_PATH_KEYSTORE_RESOURCE
+        SCRYPT_EXTRA_FIELD_KEYSTORE_RESOURCE
       })
   void loadAndDecryptKeystore(final String resourcePath) {
     final KeyStoreData keyStoreData = loadKeyStoreFromResource(resourcePath);
-    final Bytes decryptedBlsPrivateKey = KeyStore.decrypt(PASSWORD, keyStoreData);
-    assertThat(decryptedBlsPrivateKey).isEqualTo(BLS_PRIVATE_KEY);
+    final BLSKeyPair decryptedBlsPrivateKey = KeyStore.decrypt(PASSWORD, keyStoreData);
+    assertThat(decryptedBlsPrivateKey.getSecretKey().toBytes()).isEqualTo(BLS_PRIVATE_KEY);
   }
 
   @ParameterizedTest(name = "{index} - Invalid Password with {0}")
@@ -148,7 +163,7 @@ class KeyStoreTest {
   void shouldLoadKeystoreDataFromStringInput() throws IOException {
     assertThat(loadKeystoreFromString(SCRYPT_KEYSTORE_RESOURCE))
         .isNotNull()
-        .extracting(KeyStoreData::getPubkey)
+        .extracting(KeyStoreData::pubkey)
         .isEqualTo(BLS_PUB_KEY);
   }
 
@@ -157,12 +172,12 @@ class KeyStoreTest {
   void encryptWithKdfAndCipherFunction(
       final KdfParam kdfParam, final Bytes expectedChecksum, final Bytes encryptedCipherMessage) {
     final KeyStoreData keyStoreData =
-        KeyStore.encrypt(BLS_PRIVATE_KEY, BLS_PUB_KEY, PASSWORD, "", kdfParam, CIPHER);
-    assertThat(keyStoreData.getCrypto().getChecksum().getMessage()).isEqualTo(expectedChecksum);
-    assertThat(keyStoreData.getCrypto().getCipher().getMessage()).isEqualTo(encryptedCipherMessage);
-    assertThat(keyStoreData.getVersion()).isEqualTo(KeyStoreData.KEYSTORE_VERSION);
-    assertThat(keyStoreData.getPubkey()).isEqualTo(BLS_PUB_KEY);
-    assertThat(keyStoreData.getUuid()).isNotNull();
+        KeyStore.encrypt(BLS_KEY_PAIR, PASSWORD, "", kdfParam, CIPHER_SPEC);
+    assertThat(keyStoreData.crypto().checksum().message()).isEqualTo(expectedChecksum);
+    assertThat(keyStoreData.crypto().cipher().message()).isEqualTo(encryptedCipherMessage);
+    assertThat(keyStoreData.version()).isEqualTo(KeyStoreData.KEYSTORE_VERSION);
+    assertThat(keyStoreData.pubkey()).isEqualTo(BLS_PUB_KEY);
+    assertThat(keyStoreData.uuid()).isNotNull();
   }
 
   @ParameterizedTest(name = "{index} - Encrypt and Reload with KdfParam {0}")
@@ -175,17 +190,16 @@ class KeyStoreTest {
       throws IOException {
 
     final KeyStoreData keyStoreData =
-        KeyStore.encrypt(BLS_PRIVATE_KEY, BLS_PUB_KEY, PASSWORD, "", kdfParam, CIPHER);
+        KeyStore.encrypt(BLS_KEY_PAIR, PASSWORD, "", kdfParam, CIPHER_SPEC);
     final Path tempKeyStoreFile = Files.createTempFile(tempDir, "keystore", ".json");
     assertThatCode(() -> KeyStoreLoader.saveToFile(tempKeyStoreFile, keyStoreData))
         .doesNotThrowAnyException();
 
     // reload it back
     final KeyStoreData loadedKeyStore = KeyStoreLoader.loadFromFile(tempKeyStoreFile.toUri());
-    assertThat(loadedKeyStore.getUuid()).isEqualByComparingTo(keyStoreData.getUuid());
-    assertThat(loadedKeyStore.getCrypto().getChecksum().getMessage()).isEqualTo(expectedChecksum);
-    assertThat(loadedKeyStore.getCrypto().getCipher().getMessage())
-        .isEqualTo(encryptedCipherMessage);
+    assertThat(loadedKeyStore.uuid()).isEqualByComparingTo(keyStoreData.uuid());
+    assertThat(loadedKeyStore.crypto().checksum().message()).isEqualTo(expectedChecksum);
+    assertThat(loadedKeyStore.crypto().cipher().message()).isEqualTo(encryptedCipherMessage);
   }
 
   @ParameterizedTest(name = "{0} should result in an error")
@@ -213,6 +227,46 @@ class KeyStoreTest {
         .isThrownBy(() -> KeyStoreLoader.loadFromFile(keyStoreFile.toUri()))
         .withMessageStartingWith("Failed to read keystore file:")
         .withMessageEndingWith(keyStoreFile.getFileName().toString());
+  }
+
+  @Test
+  void decryptSucceedsWhenPubkeyIsAbsent() {
+    final KeyStoreData withoutPubkey =
+        new KeyStoreData(
+            KeyStore.encrypt(
+                    BLS_KEY_PAIR,
+                    PASSWORD,
+                    "",
+                    new SCryptParam(DKLEN, MEMORY_CPU_COST, PARALLELIZATION, BLOCKSIZE, SALT),
+                    CIPHER_SPEC)
+                .crypto(),
+            null,
+            "");
+    final BLSKeyPair result = KeyStore.decrypt(PASSWORD, withoutPubkey);
+    assertThat(result.getSecretKey().toBytes()).isEqualTo(BLS_PRIVATE_KEY);
+  }
+
+  @Test
+  void decryptThrowsExceptionWhenPubkeyMismatches() {
+    final BLSKeyPair otherPair =
+        new BLSKeyPair(
+            BLSSecretKey.fromBytes(
+                Bytes32.fromHexString(
+                    "0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26e")));
+    final KeyStoreData tampered =
+        new KeyStoreData(
+            KeyStore.encrypt(
+                    BLS_KEY_PAIR,
+                    PASSWORD,
+                    "",
+                    new SCryptParam(DKLEN, MEMORY_CPU_COST, PARALLELIZATION, BLOCKSIZE, SALT),
+                    CIPHER_SPEC)
+                .crypto(),
+            otherPair.getPublicKey().toBytesCompressed(),
+            "");
+    assertThatExceptionOfType(KeyStoreValidationException.class)
+        .isThrownBy(() -> KeyStore.decrypt(PASSWORD, tampered))
+        .withMessage("Keystore pubkey does not match decrypted key");
   }
 
   private KeyStoreData loadKeyStoreFromResource(final String resourcePath) {

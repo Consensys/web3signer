@@ -18,9 +18,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnection;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpException;
 import tech.pegasys.web3signer.keystorage.hashicorp.TrustStoreType;
+import tech.pegasys.web3signer.keystorage.hashicorp.VaultAuthMethod;
 import tech.pegasys.web3signer.keystorage.hashicorp.config.ConnectionParameters;
 import tech.pegasys.web3signer.keystorage.hashicorp.config.KeyDefinition;
+import tech.pegasys.web3signer.keystorage.hashicorp.config.KubernetesAuthOptions;
 import tech.pegasys.web3signer.keystorage.hashicorp.config.TlsOptions;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
@@ -75,13 +78,36 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
       final HashicorpConnection connection =
           hashicorpConnectionFactory.create(connectionParameters);
 
+      final String token;
+      if (metadata.getAuthMethod() == VaultAuthMethod.KUBERNETES) {
+        if (metadata.getKubernetesRole() == null || metadata.getKubernetesRole().isBlank()) {
+          throw new SigningMetadataException(
+              "kubernetesRole must be provided when using KUBERNETES auth method");
+        }
+        final Path resolvedTokenPath =
+            metadata.getKubernetesServiceAccountTokenPath() != null
+                ? makeRelativePathAbsolute(metadata.getKubernetesServiceAccountTokenPath())
+                : null;
+        final KubernetesAuthOptions kubernetesAuthOptions =
+            new KubernetesAuthOptions(
+                metadata.getKubernetesRole(), resolvedTokenPath, metadata.getKubernetesAuthPath());
+        token = connection.authenticateWithKubernetes(kubernetesAuthOptions);
+      } else {
+        if (metadata.getToken() == null || metadata.getToken().isBlank()) {
+          throw new SigningMetadataException("token must be provided when using TOKEN auth method");
+        }
+        token = metadata.getToken();
+      }
+
       final String secret =
           connection.fetchKey(
               new KeyDefinition(
-                  metadata.getKeyPath(),
-                  Optional.ofNullable(metadata.getKeyName()),
-                  metadata.getToken()));
+                  metadata.getKeyPath(), Optional.ofNullable(metadata.getKeyName()), token));
       return Bytes.fromHexString(secret);
+    } catch (final SigningMetadataException e) {
+      throw e;
+    } catch (final HashicorpException e) {
+      throw new SigningMetadataException(e.getMessage(), e);
     } catch (final Exception e) {
       throw new SigningMetadataException("Failed to fetch secret from hashicorp vault", e);
     }
