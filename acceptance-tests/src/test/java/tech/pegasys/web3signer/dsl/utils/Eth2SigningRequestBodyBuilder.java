@@ -27,6 +27,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.At
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.BeaconBlock;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.VoluntaryExit;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.altair.ContributionAndProof;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.BuilderRequestAuth;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ExecutionPayloadBid;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ExecutionPayloadEnvelope;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.PayloadAttestationData;
@@ -54,6 +55,7 @@ public final class Eth2SigningRequestBodyBuilder {
   private ExecutionPayloadEnvelope executionPayloadEnvelope;
   private PayloadAttestationData payloadAttestationMessage;
   private ProposerPreferences proposerPreferences;
+  private BuilderRequestAuth builderRequestAuth;
 
   private Eth2SigningRequestBodyBuilder() {}
 
@@ -165,6 +167,12 @@ public final class Eth2SigningRequestBodyBuilder {
     return this;
   }
 
+  public Eth2SigningRequestBodyBuilder withBuilderRequestAuth(
+      BuilderRequestAuth builderRequestAuth) {
+    this.builderRequestAuth = builderRequestAuth;
+    return this;
+  }
+
   public Eth2SigningRequestBody build() {
     return new Eth2SigningRequestBody(
         type,
@@ -185,6 +193,7 @@ public final class Eth2SigningRequestBodyBuilder {
         executionPayloadBid,
         executionPayloadEnvelope,
         payloadAttestationMessage,
-        proposerPreferences);
+        proposerPreferences,
+        builderRequestAuth);
   }
 }

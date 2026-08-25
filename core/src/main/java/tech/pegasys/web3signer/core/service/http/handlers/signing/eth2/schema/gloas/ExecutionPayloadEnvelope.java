@@ -28,6 +28,7 @@ public class ExecutionPayloadEnvelope {
   private final ExecutionRequests executionRequests;
   private final UInt64 builderIndex;
   private final Bytes32 beaconBlockRoot;
+  private final Bytes32 parentBeaconBlockRoot;
 
   @JsonCreator
   public ExecutionPayloadEnvelope(
@@ -35,11 +36,14 @@ public class ExecutionPayloadEnvelope {
       @JsonProperty(value = "execution_requests", required = true)
           final ExecutionRequests executionRequests,
       @JsonProperty(value = "builder_index", required = true) final UInt64 builderIndex,
-      @JsonProperty(value = "beacon_block_root", required = true) final Bytes32 beaconBlockRoot) {
+      @JsonProperty(value = "beacon_block_root", required = true) final Bytes32 beaconBlockRoot,
+      @JsonProperty(value = "parent_beacon_block_root", required = true)
+          final Bytes32 parentBeaconBlockRoot) {
     this.payload = payload;
     this.executionRequests = executionRequests;
     this.builderIndex = builderIndex;
     this.beaconBlockRoot = beaconBlockRoot;
+    this.parentBeaconBlockRoot = parentBeaconBlockRoot;
   }
 
   @JsonProperty("payload")
@@ -62,6 +66,11 @@ public class ExecutionPayloadEnvelope {
     return beaconBlockRoot;
   }
 
+  @JsonProperty("parent_beacon_block_root")
+  public Bytes32 getParentBeaconBlockRoot() {
+    return parentBeaconBlockRoot;
+  }
+
   /** The slot lives on the inner payload in Glamsterdam (ePBS); delegated for handler use. */
   public UInt64 getSlot() {
     return payload.slotNumber;
@@ -75,10 +84,11 @@ public class ExecutionPayloadEnvelope {
         .getExecutionPayloadEnvelopeSchema()
         .create(
             payload.asInternalExecutionPayload(specVersion),
-            executionRequests.asInternalConsolidationRequest(
+            executionRequests.asInternalExecutionRequests(
                 SchemaDefinitionsElectra.required(specVersion.getSchemaDefinitions())
                     .getExecutionRequestsSchema()),
             builderIndex,
-            beaconBlockRoot);
+            beaconBlockRoot,
+            parentBeaconBlockRoot);
   }
 }

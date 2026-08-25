@@ -17,6 +17,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.At
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.BeaconBlock;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.VoluntaryExit;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.altair.ContributionAndProof;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.BuilderRequestAuth;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ExecutionPayloadBid;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ExecutionPayloadEnvelope;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.PayloadAttestationData;
@@ -46,4 +47,5 @@ public record Eth2SigningRequestBody(
     @JsonProperty("execution_payload_bid") ExecutionPayloadBid executionPayloadBid,
     @JsonProperty("execution_payload_envelope") ExecutionPayloadEnvelope executionPayloadEnvelope,
     @JsonProperty("payload_attestation_message") PayloadAttestationData payloadAttestationMessage,
-    @JsonProperty("proposer_preferences") ProposerPreferences proposerPreferences) {}
+    @JsonProperty("proposer_preferences") ProposerPreferences proposerPreferences,
+    @JsonProperty("builder_request_auth") BuilderRequestAuth builderRequestAuth) {}

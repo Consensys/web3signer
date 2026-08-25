@@ -282,7 +282,8 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.executionPayloadBid(),
             request.executionPayloadEnvelope(),
             request.payloadAttestationMessage(),
-            request.proposerPreferences());
+            request.proposerPreferences(),
+            request.builderRequestAuth());
 
     final Response response =
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), requestWithMismatchedSigningRoot);
@@ -324,7 +325,8 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.executionPayloadBid(),
             request.executionPayloadEnvelope(),
             request.payloadAttestationMessage(),
-            request.proposerPreferences());
+            request.proposerPreferences(),
+            request.builderRequestAuth());
 
     final Response response =
         signer.eth2Sign(

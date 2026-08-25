@@ -1,0 +1,53 @@
+/*
+ * Copyright 2026 ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas;
+
+import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.teku.spec.schemas.ApiSchemas;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
+
+/**
+ * Proposer-signed builder-API auth message (builder-specs, Gloas), domain
+ * DOMAIN_BUILDER_REQUEST_AUTH (0x0B000001). Genesis-fork domain, like ValidatorRegistrationV1.
+ */
+public class BuilderRequestAuth {
+
+  private final Bytes data;
+  private final UInt64 slot;
+
+  @JsonCreator
+  public BuilderRequestAuth(
+      @JsonProperty(value = "data", required = true) final Bytes data,
+      @JsonProperty(value = "slot", required = true) final UInt64 slot) {
+    this.data = data;
+    this.slot = slot;
+  }
+
+  @JsonProperty("data")
+  public Bytes getData() {
+    return data;
+  }
+
+  @JsonProperty("slot")
+  public UInt64 getSlot() {
+    return slot;
+  }
+
+  public tech.pegasys.teku.spec.datastructures.builder.versions.gloas.RequestAuth
+      asInternalBuilderRequestAuth() {
+    return ApiSchemas.REQUEST_AUTH_SCHEMA.create(data, slot);
+  }
+}

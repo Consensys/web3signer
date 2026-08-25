@@ -35,6 +35,7 @@ post:
             - $ref: '../schemas.yaml#/components/schemas/ExecutionPayloadEnvelopeSigning'
             - $ref: '../schemas.yaml#/components/schemas/PayloadAttestationMessageSigning'
             - $ref: '../schemas.yaml#/components/schemas/ProposerPreferencesSigning'
+            - $ref: '../schemas.yaml#/components/schemas/BuilderRequestAuthSigning'
           discriminator:
             propertyName: type
             mapping:
@@ -55,6 +56,7 @@ post:
               EXECUTION_PAYLOAD_ENVELOPE: '../schemas.yaml#/components/schemas/ExecutionPayloadEnvelopeSigning'
               PAYLOAD_ATTESTATION_MESSAGE: '../schemas.yaml#/components/schemas/PayloadAttestationMessageSigning'
               PROPOSER_PREFERENCES: '../schemas.yaml#/components/schemas/ProposerPreferencesSigning'
+              BUILDER_REQUEST_AUTH: '../schemas.yaml#/components/schemas/BuilderRequestAuthSigning'
         examples:
           BLOCK_V2 (FULU):
             value:

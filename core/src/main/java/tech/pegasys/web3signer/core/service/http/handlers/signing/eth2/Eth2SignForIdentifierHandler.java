@@ -30,6 +30,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdent
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.AttestationData;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.altair.ContributionAndProof;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.altair.SyncCommitteeContribution;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.BuilderRequestAuth;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ExecutionPayloadBid;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ExecutionPayloadEnvelope;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.PayloadAttestationData;
@@ -352,6 +353,17 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
             proposerPreferences.asInternalProposerPreferences(
                 eth2Spec.atSlot(proposerPreferences.getProposalSlot())),
             body.forkInfo().asInternalForkInfo());
+      }
+      case BUILDER_REQUEST_AUTH -> {
+        final BuilderRequestAuth builderRequestAuth = body.builderRequestAuth();
+        checkArgument(builderRequestAuth != null, "builderRequestAuth is required");
+        // Genesis-fork domain (like ValidatorRegistrationV1), not the proposer's fork info.
+        final Bytes32 domain =
+            eth2Spec.getGenesisSpec().miscHelpers().computeDomain(Domain.REQUEST_AUTH);
+        return eth2Spec
+            .getGenesisSpec()
+            .miscHelpers()
+            .computeSigningRoot(builderRequestAuth.asInternalBuilderRequestAuth(), domain);
       }
       default ->
           throw new IllegalStateException("Signing root unimplemented for type " + body.type());

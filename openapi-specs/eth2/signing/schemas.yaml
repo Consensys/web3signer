@@ -401,6 +401,23 @@ components:
           required:
             - type
             - proposer_preferences
+    BuilderRequestAuthSigning:
+      allOf:
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              enum:
+                - 'BUILDER_REQUEST_AUTH'
+            signingRoot:
+              type: "string"
+              description: 'signing root for optional verification if field present'
+            builder_request_auth:
+              "$ref": "#/components/schemas/BuilderRequestAuth"
+          required:
+            - type
+            - builder_request_auth
     RandaoReveal:
       type: "object"
       properties:
@@ -746,12 +763,17 @@ components:
           description: 'Execution payload (Glamsterdam shape, see ExecutionPayloadGloas)'
           $ref: '#/components/schemas/ExecutionPayloadGloas'
         execution_requests:
-          description: 'Execution requests (deposits, withdrawals, consolidations)'
+          description: >-
+            Execution requests (deposits, withdrawals, consolidations; plus
+            builder_deposits/builder_exits from Gloas, EIP-8282)
           type: object
         builder_index:
           type: string
           format: uint64
         beacon_block_root:
+          type: string
+          description: Bytes32 hexadecimal
+        parent_beacon_block_root:
           type: string
           description: Bytes32 hexadecimal
     ExecutionPayloadGloas:
@@ -855,13 +877,29 @@ components:
         blob_data_available:
           type: boolean
           description: Whether blob data is available for this slot
+    BuilderRequestAuth:
+      type: object
+      description: >-
+        Proposer-signed builder-API auth message (builder-specs, Gloas) using
+        DOMAIN_BUILDER_REQUEST_AUTH (0x0B000001), analogous to the deprecated
+        ValidatorRegistrationV1 flow (genesis fork version, no fork_info needed).
+      properties:
+        data:
+          type: string
+          description: variable-length bytes (opaque per-builder authorization data)
+        slot:
+          type: string
+          format: uint64
     ProposerPreferences:
       type: object
       description: >-
         Container signed by a proposer using DOMAIN_PROPOSER_PREFERENCES
-        (0x0D000000) to advertise their preferences (fee_recipient, gas_limit)
-        for an upcoming proposal slot.
+        (0x0D000000) to advertise their preferences (fee_recipient,
+        target_gas_limit) for an upcoming proposal slot.
       properties:
+        dependent_root:
+          type: string
+          description: Bytes32 hexadecimal
         proposal_slot:
           type: string
           format: uint64
@@ -871,7 +909,7 @@ components:
         fee_recipient:
           type: string
           description: Bytes20 hexadecimal
-        gas_limit:
+        target_gas_limit:
           type: string
           format: uint64
     BeaconBlockSigning:

@@ -19,24 +19,33 @@ import tech.pegasys.teku.spec.schemas.SchemaDefinitionsGloas;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class ProposerPreferences {
 
+  private final Bytes32 dependentRoot;
   private final UInt64 proposalSlot;
   private final UInt64 validatorIndex;
   private final Eth1Address feeRecipient;
-  private final UInt64 gasLimit;
+  private final UInt64 targetGasLimit;
 
   @JsonCreator
   public ProposerPreferences(
+      @JsonProperty(value = "dependent_root", required = true) final Bytes32 dependentRoot,
       @JsonProperty(value = "proposal_slot", required = true) final UInt64 proposalSlot,
       @JsonProperty(value = "validator_index", required = true) final UInt64 validatorIndex,
       @JsonProperty(value = "fee_recipient", required = true) final Eth1Address feeRecipient,
-      @JsonProperty(value = "gas_limit", required = true) final UInt64 gasLimit) {
+      @JsonProperty(value = "target_gas_limit", required = true) final UInt64 targetGasLimit) {
+    this.dependentRoot = dependentRoot;
     this.proposalSlot = proposalSlot;
     this.validatorIndex = validatorIndex;
     this.feeRecipient = feeRecipient;
-    this.gasLimit = gasLimit;
+    this.targetGasLimit = targetGasLimit;
+  }
+
+  @JsonProperty("dependent_root")
+  public Bytes32 getDependentRoot() {
+    return dependentRoot;
   }
 
   @JsonProperty("proposal_slot")
@@ -54,15 +63,15 @@ public class ProposerPreferences {
     return feeRecipient;
   }
 
-  @JsonProperty("gas_limit")
-  public UInt64 getGasLimit() {
-    return gasLimit;
+  @JsonProperty("target_gas_limit")
+  public UInt64 getTargetGasLimit() {
+    return targetGasLimit;
   }
 
   public tech.pegasys.teku.spec.datastructures.epbs.versions.gloas.ProposerPreferences
       asInternalProposerPreferences(final SpecVersion specVersion) {
     return SchemaDefinitionsGloas.required(specVersion.getSchemaDefinitions())
         .getProposerPreferencesSchema()
-        .create(proposalSlot, validatorIndex, feeRecipient, gasLimit);
+        .create(dependentRoot, proposalSlot, validatorIndex, feeRecipient, targetGasLimit);
   }
 }

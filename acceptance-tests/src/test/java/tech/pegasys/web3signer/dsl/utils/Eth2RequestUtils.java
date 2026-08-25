@@ -51,6 +51,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.Fo
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.KZGCommitment;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.VoluntaryExit;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.electra.ExecutionRequests;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.BuilderRequestAuth;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ExecutionPayloadBid;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ExecutionPayloadEnvelope;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.gloas.ExecutionPayloadGloas;
@@ -138,6 +139,8 @@ public class Eth2RequestUtils {
       case PAYLOAD_ATTESTATION_MESSAGE -> createPayloadAttestationMessageRequest();
 
       case PROPOSER_PREFERENCES -> createProposerPreferencesRequest();
+
+      case BUILDER_REQUEST_AUTH -> createBuilderRequestAuthRequest();
     };
   }
 
@@ -490,7 +493,8 @@ public class Eth2RequestUtils {
             new ExecutionPayloadGloas(randomEnvelope.getPayload()),
             new ExecutionRequests(randomEnvelope.getExecutionRequests()),
             randomEnvelope.getBuilderIndex(),
-            randomEnvelope.getBeaconBlockRoot());
+            randomEnvelope.getBeaconBlockRoot(),
+            randomEnvelope.getParentBeaconBlockRoot());
     final Bytes signingRoot =
         GLOAS_SIGNING_ROOT_UTIL.signingRootForSignExecutionPayloadEnvelope(
             randomEnvelope, forkInfo.asInternalForkInfo());
@@ -529,10 +533,11 @@ public class Eth2RequestUtils {
         randomPreferences = GLOAS_DATA_STRUCTURE_UTIL.randomProposerPreferences();
     final ProposerPreferences proposerPreferences =
         new ProposerPreferences(
+            randomPreferences.getDependentRoot(),
             randomPreferences.getProposalSlot(),
             randomPreferences.getValidatorIndex(),
             randomPreferences.getFeeRecipient(),
-            randomPreferences.getGasLimit());
+            randomPreferences.getTargetGasLimit());
     final Bytes signingRoot =
         GLOAS_SIGNING_ROOT_UTIL.signingRootForSignProposerPreferences(
             randomPreferences, forkInfo.asInternalForkInfo());
@@ -541,6 +546,22 @@ public class Eth2RequestUtils {
         .withSigningRoot(signingRoot)
         .withForkInfo(forkInfo)
         .withProposerPreferences(proposerPreferences)
+        .build();
+  }
+
+  private static Eth2SigningRequestBody createBuilderRequestAuthRequest() {
+    final tech.pegasys.teku.spec.datastructures.builder.versions.gloas.RequestAuth
+        randomRequestAuth = GLOAS_DATA_STRUCTURE_UTIL.randomRequestAuth();
+    final BuilderRequestAuth builderRequestAuth =
+        new BuilderRequestAuth(randomRequestAuth.getData().getBytes(), randomRequestAuth.getSlot());
+    final Bytes32 domain =
+        GLOAS_SPEC.getGenesisSpec().miscHelpers().computeDomain(Domain.REQUEST_AUTH);
+    final Bytes signingRoot =
+        GLOAS_SPEC.getGenesisSpec().miscHelpers().computeSigningRoot(randomRequestAuth, domain);
+    return Eth2SigningRequestBodyBuilder.anEth2SigningRequestBody()
+        .withType(ArtifactType.BUILDER_REQUEST_AUTH)
+        .withSigningRoot(signingRoot)
+        .withBuilderRequestAuth(builderRequestAuth)
         .build();
   }
 
