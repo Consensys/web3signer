@@ -42,13 +42,12 @@ public class BesuNodeFactory {
       params.add("--genesis-file");
       params.add(Resources.getResource(config.getGenesisFile().get()).getPath());
     }
+    params.add("--node-private-key-file");
+    params.add(Resources.getResource("besu/nodekey").getPath());
     params.add("--data-path");
     params.add(config.getDataPath().toString());
     params.add("--logging");
     params.add("DEBUG");
-    params.add("--miner-enabled");
-    params.add("--miner-coinbase");
-    params.add("1b23ba34ca45bb56aa67bc78be89ac00ca00da00");
     params.add("--host-allowlist");
     params.add("*");
     params.add("--p2p-port");

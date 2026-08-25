@@ -160,6 +160,10 @@ tasks.register('extractVault', Copy) {
 tasks.register('acceptanceTest', Test) {
   dependsOn rootProject.installDist, tasks.named('extractBesu'), tasks.named('extractVault')
 
+  // Gradle 9 dropped implicit convention-based wiring for custom Test tasks; must be explicit.
+  testClassesDirs = sourceSets.test.output.classesDirs
+  classpath = sourceSets.test.runtimeClasspath
+
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   mustRunAfter rootProject.subprojects*.test
   description = 'Runs Web3Signer acceptance tests.'
