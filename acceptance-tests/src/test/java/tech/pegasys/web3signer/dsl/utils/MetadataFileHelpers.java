@@ -29,7 +29,7 @@ import tech.pegasys.web3signer.bls.keystore.model.SCryptParam;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
-import tech.pegasys.web3signer.keystore.hashicorp.dsl.certificates.CertificateHelpers;
+import tech.pegasys.web3signer.keystore.dsl.certificates.CertificateHelpers;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKmsMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKmsMetadataDeserializer;

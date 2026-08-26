@@ -13,8 +13,8 @@
 package tech.pegasys.web3signer.dsl.azure;
 
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
-import tech.pegasys.web3signer.keystore.hashicorp.dsl.certificates.CertificateHelpers;
-import tech.pegasys.web3signer.keystore.hashicorp.dsl.certificates.SelfSignedCertificate;
+import tech.pegasys.web3signer.keystore.dsl.certificates.CertificateHelpers;
+import tech.pegasys.web3signer.keystore.dsl.certificates.SelfSignedCertificate;
 
 import java.io.InputStream;
 import java.nio.file.Files;
