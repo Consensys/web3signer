@@ -16,6 +16,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.nio.file.Path;
 import java.util.Optional;
 
 public class AzureHttpClientParameters {
@@ -23,6 +24,7 @@ public class AzureHttpClientParameters {
   private final long timeoutMs;
   private final HttpClient.Version httpProtocolVersion;
   private final URI vaultURI;
+  private final Optional<Path> trustCertificateOverride;
 
   public static Builder newBuilder() {
     return new Builder();
@@ -32,10 +34,12 @@ public class AzureHttpClientParameters {
   private AzureHttpClientParameters(
       final String serverHost,
       final Optional<Long> timeoutMs,
-      final Optional<HttpClient.Version> httpProtocolVersion) {
+      final Optional<HttpClient.Version> httpProtocolVersion,
+      final Optional<Path> trustCertificateOverride) {
     this.timeoutMs = timeoutMs.orElse(DEFAULT_TIMEOUT_MILLISECONDS);
     this.httpProtocolVersion = httpProtocolVersion.orElse(HttpClient.Version.HTTP_2);
     this.vaultURI = URI.create(serverHost);
+    this.trustCertificateOverride = trustCertificateOverride;
   }
 
   public long getTimeoutMilliseconds() {
@@ -50,10 +54,15 @@ public class AzureHttpClientParameters {
     return httpProtocolVersion;
   }
 
+  public Optional<Path> getTrustCertificateOverride() {
+    return trustCertificateOverride;
+  }
+
   public static final class Builder {
     private String serverHost;
     private Optional<Long> timeoutMs = Optional.empty();
     private Optional<HttpClient.Version> httpProtocolVersion = Optional.empty();
+    private Optional<Path> trustCertificateOverride = Optional.empty();
 
     Builder() {}
 
@@ -62,9 +71,15 @@ public class AzureHttpClientParameters {
       return this;
     }
 
+    public Builder withTrustCertificateOverride(final Optional<Path> trustCertificateOverride) {
+      this.trustCertificateOverride = trustCertificateOverride;
+      return this;
+    }
+
     public AzureHttpClientParameters build() {
       checkNotNull(serverHost, "Azure host cannot be null");
-      return new AzureHttpClientParameters(serverHost, timeoutMs, httpProtocolVersion);
+      return new AzureHttpClientParameters(
+          serverHost, timeoutMs, httpProtocolVersion, trustCertificateOverride);
     }
   }
 }

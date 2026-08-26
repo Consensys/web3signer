@@ -35,6 +35,7 @@ import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
+import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
 import tech.pegasys.web3signer.keystore.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.tests.bulkloading.AzureKeyVaultAcceptanceTest;
@@ -175,10 +176,13 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
         keyConfigFile,
         "unused",
         "unused",
-        "unused",
+        AzureKeyVaultEmulator.TENANT_ID,
         "unused",
         azureSecret.name(),
-        Optional.of(URI.create(emulator.getVaultUrl())));
+        new AzureOverrides(
+            Optional.of(URI.create(emulator.getVaultUrl())),
+            Optional.of(URI.create(emulator.getAuthorityHostUrl())),
+            Optional.of(emulator.getTrustCertificatePath())));
 
     final BLSSecretKey azurePrivateKey =
         BLSSecretKey.fromBytes(

@@ -60,7 +60,7 @@ public class AzureKeyVaultSignerFactory {
               config.getTenantId(),
               AzureAuthenticationMode.CLIENT_SECRET,
               config.getTimeout(),
-              config.getEndpointOverride());
+              config.getAzureOverrides());
     } catch (final Exception e) {
       LOG.error("Failed to connect to vault", e);
       throw new SignerInitializationException(INACCESSIBLE_KEY_ERROR, e);
@@ -98,7 +98,7 @@ public class AzureKeyVaultSignerFactory {
                 config.getClientSecret(),
                 config.getTenantId(),
                 config.getTimeout(),
-                config.getEndpointOverride())
+                config.getAzureOverrides())
             : config;
 
     return new AzureKeyVaultSigner(

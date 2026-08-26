@@ -99,9 +99,11 @@ public class AzureKeyVaultSigner implements Signer {
         AzureHttpClientParameters.newBuilder()
             .withServerHost(
                 azureConfig
-                    .getEndpointOverride()
+                    .getAzureOverrides()
+                    .endpointOverride()
                     .map(URI::toString)
                     .orElseGet(() -> constructAzureKeyVaultUrl(vaultName)))
+            .withTrustCertificateOverride(azureConfig.getAzureOverrides().trustCertificateOverride())
             .build();
 
     final AzureHttpClient azureHttpClient =

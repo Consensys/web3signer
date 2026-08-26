@@ -193,7 +193,7 @@ public class Eth1Runner extends Runner {
             azureKeyVaultConfig.getTenantId(),
             azureKeyVaultConfig.getAuthenticationMode(),
             azureKeyVaultConfig.getTimeout(),
-            azureKeyVaultConfig.getEndpointOverride());
+            azureKeyVaultConfig.getAzureOverrides());
     final SecpAzureBulkLoader secpAzureBulkLoader =
         new SecpAzureBulkLoader(azureKeyVault, azureSignerFactory);
     final MappedResults<ArtifactSigner> azureResult = secpAzureBulkLoader.load(azureKeyVaultConfig);

@@ -28,6 +28,7 @@ import tech.pegasys.web3signer.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.web3signer.bls.keystore.model.SCryptParam;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
+import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
 import tech.pegasys.web3signer.keystore.hashicorp.dsl.certificates.CertificateHelpers;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKmsMetadata;
@@ -146,7 +147,7 @@ public class MetadataFileHelpers {
       final String tenantId,
       final String keyVaultName,
       final String secretName,
-      final Optional<URI> endpointOverride) {
+      final AzureOverrides azureOverrides) {
     try {
       final Map<String, String> signingMetadata = new HashMap<>();
 
@@ -156,8 +157,7 @@ public class MetadataFileHelpers {
       signingMetadata.put("tenantId", tenantId);
       signingMetadata.put("vaultName", keyVaultName);
       signingMetadata.put("secretName", secretName);
-      endpointOverride.ifPresent(
-          endpoint -> signingMetadata.put("endpointOverride", endpoint.toString()));
+      putAzureOverrides(signingMetadata, azureOverrides);
 
       createYamlFile(metadataFilePath, signingMetadata);
     } catch (final Exception e) {
@@ -172,7 +172,7 @@ public class MetadataFileHelpers {
       final String keyVaultName,
       final String tenantId,
       final String keyName,
-      final Optional<URI> endpointOverride) {
+      final AzureOverrides azureOverrides) {
     try {
       final Map<String, String> signingMetadata = new HashMap<>();
       signingMetadata.put("type", "azure-key");
@@ -181,12 +181,26 @@ public class MetadataFileHelpers {
       signingMetadata.put("clientId", clientId);
       signingMetadata.put("clientSecret", clientSecret);
       signingMetadata.put("tenantId", tenantId);
-      endpointOverride.ifPresent(
-          endpoint -> signingMetadata.put("endpointOverride", endpoint.toString()));
+      putAzureOverrides(signingMetadata, azureOverrides);
       createYamlFile(metadataFilePath, signingMetadata);
     } catch (final Exception e) {
       throw new RuntimeException("Unable to construct hashicorp yaml file", e);
     }
+  }
+
+  private static void putAzureOverrides(
+      final Map<String, String> signingMetadata, final AzureOverrides azureOverrides) {
+    azureOverrides
+        .endpointOverride()
+        .ifPresent(endpoint -> signingMetadata.put("endpointOverride", endpoint.toString()));
+    azureOverrides
+        .authorityHostOverride()
+        .ifPresent(authority -> signingMetadata.put("authorityHostOverride", authority.toString()));
+    azureOverrides
+        .trustCertificateOverride()
+        .ifPresent(
+            certificate ->
+                signingMetadata.put("trustCertificateOverride", certificate.toString()));
   }
 
   public void createAwsYamlFileAt(

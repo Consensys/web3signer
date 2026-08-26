@@ -13,9 +13,9 @@
 package tech.pegasys.web3signer.signing.config;
 
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
+import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
 
 import java.io.Closeable;
-import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -35,7 +35,7 @@ public class AzureKeyVaultFactory implements Closeable {
         azureKeyVaultParameters.getTenantId(),
         azureKeyVaultParameters.getAuthenticationMode(),
         azureKeyVaultParameters.getTimeout(),
-        azureKeyVaultParameters.getEndpointOverride());
+        azureKeyVaultParameters.getAzureOverrides());
   }
 
   public AzureKeyVault createAzureKeyVault(
@@ -45,14 +45,14 @@ public class AzureKeyVaultFactory implements Closeable {
       final String tenantId,
       final AzureAuthenticationMode mode,
       final long httpClientTimeout,
-      final Optional<URI> endpointOverride) {
+      final AzureOverrides azureOverrides) {
     return switch (mode) {
       case USER_ASSIGNED_MANAGED_IDENTITY ->
           AzureKeyVault.createUsingManagedIdentity(
-              Optional.of(clientId), keyVaultName, httpClientTimeout);
+              Optional.of(clientId), keyVaultName, httpClientTimeout, azureOverrides);
       case SYSTEM_ASSIGNED_MANAGED_IDENTITY ->
           AzureKeyVault.createUsingManagedIdentity(
-              Optional.empty(), keyVaultName, httpClientTimeout);
+              Optional.empty(), keyVaultName, httpClientTimeout, azureOverrides);
       case CLIENT_SECRET ->
           AzureKeyVault.createUsingClientSecretCredentials(
               clientId,
@@ -61,7 +61,7 @@ public class AzureKeyVaultFactory implements Closeable {
               keyVaultName,
               getOrCreateExecutor(),
               httpClientTimeout,
-              endpointOverride);
+              azureOverrides);
     };
   }
 

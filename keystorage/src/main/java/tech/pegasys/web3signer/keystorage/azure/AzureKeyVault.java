@@ -15,11 +15,15 @@ package tech.pegasys.web3signer.keystorage.azure;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpRequest;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -33,11 +37,14 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.net.ssl.TrustManagerFactory;
+
 import com.azure.core.credential.AccessToken;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.credential.TokenRequestContext;
 import com.azure.core.exception.ResourceNotFoundException;
 import com.azure.core.http.HttpClient;
+import com.azure.core.http.netty.NettyAsyncHttpClientBuilder;
 import com.azure.core.http.rest.PagedIterable;
 import com.azure.core.util.HttpClientOptions;
 import com.azure.identity.ClientSecretCredentialBuilder;
@@ -52,15 +59,15 @@ import com.azure.security.keyvault.keys.models.KeyProperties;
 import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
-import com.azure.security.keyvault.secrets.SecretServiceVersion;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
 import com.google.common.annotations.VisibleForTesting;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import reactor.core.publisher.Mono;
 
 public class AzureKeyVault {
 
@@ -68,8 +75,8 @@ public class AzureKeyVault {
   private final TokenCredential tokenCredential;
   private final SecretClient secretClient;
   private final KeyClient keyClient;
+  private final HttpClient httpClient;
   private final String vaultUrl;
-  private final boolean emulatorMode;
   private static final List<String> SCOPE = List.of("https://vault.azure.net/.default");
   private final TokenRequestContext tokenRequestContext =
       new TokenRequestContext().setScopes(SCOPE);
@@ -83,70 +90,110 @@ public class AzureKeyVault {
       final String vaultName,
       final ExecutorService executorService,
       final long timeout,
-      final Optional<URI> endpointOverride) {
+      final AzureOverrides azureOverrides) {
     final String vaultUrl =
-        endpointOverride
+        azureOverrides
+            .endpointOverride()
             .map(URI::toString)
             .orElseGet(() -> constructAzureKeyVaultUrl(vaultName));
-    final TokenCredential tokenCredential =
-        endpointOverride.isPresent()
-            ? new AzureEmulatorTokenCredential()
-            : new ClientSecretCredentialBuilder()
-                .clientId(clientId)
-                .clientSecret(clientSecret)
-                .tenantId(tenantId)
-                .executorService(executorService)
-                .build();
-    return new AzureKeyVault(tokenCredential, vaultUrl, timeout, endpointOverride.isPresent());
+    // Shared by the credential (MSAL token requests) and the vault clients below: Azure Identity
+    // otherwise builds its own separate default HTTP client (its own connection pool/event
+    // loop) for the token request if none is supplied, independent of the one used for the
+    // vault calls.
+    final HttpClient httpClient = buildHttpClient(timeout, azureOverrides.trustCertificateOverride());
+    final ClientSecretCredentialBuilder credentialBuilder =
+        new ClientSecretCredentialBuilder()
+            .clientId(clientId)
+            .clientSecret(clientSecret)
+            .tenantId(tenantId)
+            .executorService(executorService)
+            .httpClient(httpClient)
+            // The token endpoint is always the one explicitly configured below (or the real
+            // default); no need to re-validate it against Microsoft's known-authority list.
+            .disableInstanceDiscovery();
+    azureOverrides
+        .authorityHostOverride()
+        .ifPresent(uri -> credentialBuilder.authorityHost(uri.toString()));
+    return new AzureKeyVault(credentialBuilder.build(), vaultUrl, httpClient);
   }
 
   public static AzureKeyVault createUsingManagedIdentity(
-      final Optional<String> clientId, final String vaultName, final long timeout) {
+      final Optional<String> clientId,
+      final String vaultName,
+      final long timeout,
+      final AzureOverrides azureOverrides) {
     final ManagedIdentityCredentialBuilder managedIdentityCredentialBuilder =
         new ManagedIdentityCredentialBuilder();
     clientId.ifPresent(managedIdentityCredentialBuilder::clientId);
     return new AzureKeyVault(
         managedIdentityCredentialBuilder.build(),
         constructAzureKeyVaultUrl(vaultName),
-        timeout,
-        false);
+        buildHttpClient(timeout, azureOverrides.trustCertificateOverride()));
+  }
+
+  /**
+   * The platform default trust store is used unless a trust certificate override is configured.
+   * Building the client via a raw {@code SslContextBuilder} (rather than relying on ambient
+   * {@code javax.net.ssl.trustStore} JVM properties) is required because the Netty transport used
+   * here prefers its own BoringSSL (netty-tcnative) engine when available, which does not consult
+   * those properties.
+   */
+  private static HttpClient buildHttpClient(
+      final long timeoutSeconds, final Optional<Path> trustCertificateOverride) {
+    if (trustCertificateOverride.isEmpty()) {
+      return HttpClient.createDefault(
+          new HttpClientOptions().setResponseTimeout(Duration.ofSeconds(timeoutSeconds)));
+    }
+
+    final Path certificatePath = trustCertificateOverride.get();
+    try {
+      final X509Certificate certificate;
+      try (InputStream in = Files.newInputStream(certificatePath)) {
+        certificate = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(in);
+      }
+      final KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+      trustStore.load(null, null);
+      trustStore.setCertificateEntry("azure-trust-override", certificate);
+      final TrustManagerFactory trustManagerFactory =
+          TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+      trustManagerFactory.init(trustStore);
+
+      final SslContext sslContext =
+          SslContextBuilder.forClient().trustManager(trustManagerFactory).build();
+      final reactor.netty.http.client.HttpClient reactorHttpClient =
+          reactor.netty.http.client.HttpClient.create()
+              .secure(spec -> spec.sslContext(sslContext))
+              .responseTimeout(Duration.ofSeconds(timeoutSeconds));
+      return new NettyAsyncHttpClientBuilder(reactorHttpClient).build();
+    } catch (final Exception e) {
+      throw new IllegalStateException(
+          "Unable to build Azure HTTP client trusting " + certificatePath, e);
+    }
   }
 
   private AzureKeyVault(
-      final TokenCredential tokenCredential,
-      final String vaultUrl,
-      final long timeout,
-      final boolean disableChallengeResourceVerification) {
+      final TokenCredential tokenCredential, final String vaultUrl, final HttpClient httpClient) {
     this.tokenCredential = tokenCredential;
     this.vaultUrl = vaultUrl;
-    this.emulatorMode = disableChallengeResourceVerification;
+    this.httpClient = httpClient;
 
-    final HttpClient customisedHttpClient =
-        HttpClient.createDefault(
-            new HttpClientOptions().setResponseTimeout(Duration.ofSeconds(timeout)));
-
-    final SecretClientBuilder secretClientBuilder =
+    // The challenge-response resource is only guaranteed to match *.vault.azure.net; the
+    // vaultUrl above is already explicitly configured and trusted by the caller, so this check
+    // adds no safety here regardless of which endpoint it resolves to.
+    secretClient =
         new SecretClientBuilder()
-            .httpClient(customisedHttpClient)
+            .httpClient(httpClient)
             .vaultUrl(vaultUrl)
-            .credential(tokenCredential);
-    final KeyClientBuilder keyClientBuilder =
+            .credential(tokenCredential)
+            .disableChallengeResourceVerification()
+            .buildClient();
+    keyClient =
         new KeyClientBuilder()
-            .httpClient(customisedHttpClient)
+            .httpClient(httpClient)
             .vaultUrl(vaultUrl)
-            .credential(tokenCredential);
-    if (disableChallengeResourceVerification) {
-      secretClientBuilder.disableChallengeResourceVerification();
-      keyClientBuilder.disableChallengeResourceVerification();
-      // the emulator's response payloads are missing some fields (e.g. secret "enabled"
-      // attribute) that the SDK's default (latest) service version expects to be present;
-      // pin to an older, well-supported version for the emulator-only code path.
-      secretClientBuilder.serviceVersion(SecretServiceVersion.V7_4);
-      keyClientBuilder.serviceVersion(KeyServiceVersion.V7_4);
-    }
-
-    secretClient = secretClientBuilder.buildClient();
-    keyClient = keyClientBuilder.buildClient();
+            .credential(tokenCredential)
+            .disableChallengeResourceVerification()
+            .buildClient();
   }
 
   public Optional<String> fetchSecret(final String secretName) {
@@ -162,6 +209,7 @@ public class AzureKeyVault {
     final String keyId = key.getId();
 
     return new CryptographyClientBuilder()
+        .httpClient(httpClient)
         .credential(tokenCredential)
         .keyIdentifier(keyId)
         .buildClient();
@@ -173,15 +221,13 @@ public class AzureKeyVault {
       final String azureKeyName,
       final String azureKeyVersion) {
 
-    final String apiVersion =
-        emulatorMode ? KeyServiceVersion.V7_4.getVersion() : KeyServiceVersion.getLatest().getVersion();
+    final String apiVersion = KeyServiceVersion.getLatest().getVersion();
 
     final JsonObject jsonBody = new JsonObject();
     jsonBody.put("alg", signingAlgo);
     jsonBody.put("value", Bytes.of(data).toBase64String());
 
-    final String uriString =
-        constructAzureSignApiUri(azureKeyName, azureKeyVersion, apiVersion);
+    final String uriString = constructAzureSignApiUri(azureKeyName, azureKeyVersion, apiVersion);
 
     final HttpRequest httpRequest =
         HttpRequest.newBuilder(URI.create(uriString))
@@ -388,30 +434,4 @@ public class AzureKeyVault {
 
   @VisibleForTesting
   public record AzureKey(String name, String publicKeyHex, Map<String, String> tags) {}
-
-  /**
-   * Token credential used against an Azure Key Vault emulator, whose {@code JwtBearer} handler
-   * accepts any syntactically valid JWT without verifying signature, issuer, audience, or
-   * lifetime. Never valid against real Azure endpoints.
-   */
-  public static final class AzureEmulatorTokenCredential implements TokenCredential {
-    private static final String EMULATOR_TOKEN =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-            + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNzM1Njg5NjAwLCJleHAiOjQxMDI0NDQ4MDAsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0LyJ9."
-            + "42D_zJ3qM02NM_ExWU9S9jvNGMfpop3YuWT9lFqJ5yU";
-
-    @Override
-    public Mono<AccessToken> getToken(final TokenRequestContext request) {
-      return Mono.just(emulatorAccessToken());
-    }
-
-    @Override
-    public AccessToken getTokenSync(final TokenRequestContext request) {
-      return emulatorAccessToken();
-    }
-
-    private static AccessToken emulatorAccessToken() {
-      return new AccessToken(EMULATOR_TOKEN, OffsetDateTime.now(ZoneOffset.UTC).plusYears(10));
-    }
-  }
 }

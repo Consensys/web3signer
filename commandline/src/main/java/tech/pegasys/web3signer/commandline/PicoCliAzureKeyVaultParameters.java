@@ -12,10 +12,12 @@
  */
 package tech.pegasys.web3signer.commandline;
 
+import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
 import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +27,11 @@ import picocli.CommandLine.Option;
 
 public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
-  public static final String AZURE_ENDPOINT_OVERRIDE_OPTION = "--azure-endpoint-override";
+  public static final String AZURE_ENDPOINT_OVERRIDE_OPTION = "--Xazure-endpoint-override";
+  public static final String AZURE_AUTHORITY_HOST_OVERRIDE_OPTION =
+      "--Xazure-authority-host-override";
+  public static final String AZURE_TRUST_CERTIFICATE_OVERRIDE_OPTION =
+      "--Xazure-trust-certificate-override";
 
   @Option(
       names = {"--azure-vault-enabled"},
@@ -86,9 +92,27 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
   @Option(
       names = {AZURE_ENDPOINT_OVERRIDE_OPTION},
-      description = "Override Azure Key Vault endpoint.",
-      paramLabel = "<URI>")
+      description = "EXPERIMENTAL: Override Azure Key Vault endpoint.",
+      paramLabel = "<URI>",
+      hidden = true)
   private Optional<URI> endpointOverride;
+
+  @Option(
+      names = {AZURE_AUTHORITY_HOST_OVERRIDE_OPTION},
+      description = "EXPERIMENTAL: Override the Microsoft Entra ID (Azure AD) authority host.",
+      paramLabel = "<URI>",
+      hidden = true)
+  private Optional<URI> authorityHostOverride;
+
+  @Option(
+      names = {AZURE_TRUST_CERTIFICATE_OVERRIDE_OPTION},
+      description =
+          "EXPERIMENTAL: Trust the given X.509 certificate file for TLS connections to the "
+              + "Azure Key Vault endpoint and Microsoft Entra ID authority, in place of the "
+              + "platform default trust store.",
+      paramLabel = "<FILE>",
+      hidden = true)
+  private Optional<Path> trustCertificateOverride;
 
   @Override
   public boolean isAzureKeyVaultEnabled() {
@@ -131,7 +155,7 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
   }
 
   @Override
-  public Optional<URI> getEndpointOverride() {
-    return endpointOverride;
+  public AzureOverrides getAzureOverrides() {
+    return new AzureOverrides(endpointOverride, authorityHostOverride, trustCertificateOverride);
   }
 }

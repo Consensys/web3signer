@@ -14,11 +14,13 @@ package tech.pegasys.web3signer.signing.config.metadata;
 
 import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
 
+import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +42,8 @@ public class AzureSecretSigningMetadataDeserializer
   private static final String KEY_TYPE = "keyType";
   private static final String TIMEOUT = "timeout";
   private static final String ENDPOINT_OVERRIDE = "endpointOverride";
+  private static final String AUTHORITY_HOST_OVERRIDE = "authorityHostOverride";
+  private static final String TRUST_CERTIFICATE_OVERRIDE = "trustCertificateOverride";
 
   @SuppressWarnings("Unused")
   public AzureSecretSigningMetadataDeserializer() {
@@ -61,6 +65,8 @@ public class AzureSecretSigningMetadataDeserializer
     String secretName = null;
     long timeout = 60;
     Optional<URI> endpointOverride = Optional.empty();
+    Optional<URI> authorityHostOverride = Optional.empty();
+    Optional<Path> trustCertificateOverride = Optional.empty();
 
     AzureAuthenticationMode authenticationMode = null;
 
@@ -108,6 +114,13 @@ public class AzureSecretSigningMetadataDeserializer
     if (node.get(ENDPOINT_OVERRIDE) != null) {
       endpointOverride = Optional.of(URI.create(node.get(ENDPOINT_OVERRIDE).asText()));
     }
+    if (node.get(AUTHORITY_HOST_OVERRIDE) != null) {
+      authorityHostOverride = Optional.of(URI.create(node.get(AUTHORITY_HOST_OVERRIDE).asText()));
+    }
+    if (node.get(TRUST_CERTIFICATE_OVERRIDE) != null) {
+      trustCertificateOverride =
+          Optional.of(Path.of(node.get(TRUST_CERTIFICATE_OVERRIDE).asText()));
+    }
 
     final AzureSecretSigningMetadata azureSecretSigningMetadata =
         new AzureSecretSigningMetadata(
@@ -119,7 +132,7 @@ public class AzureSecretSigningMetadataDeserializer
             authenticationMode,
             keyType,
             timeout,
-            endpointOverride);
+            new AzureOverrides(endpointOverride, authorityHostOverride, trustCertificateOverride));
 
     validate(parser, azureSecretSigningMetadata);
 

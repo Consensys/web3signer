@@ -14,7 +14,8 @@ package tech.pegasys.web3signer.signing.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Optional;
+import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
+
 import java.util.concurrent.ExecutorService;
 
 import org.junit.jupiter.api.AfterEach;
@@ -36,78 +37,36 @@ class AzureKeyVaultFactoryTest {
 
   @Test
   void createsExecutorWhenUsingClientSecretMode() {
-    azureKeyVaultFactory.createAzureKeyVault(
-        "clientId",
-        "clientSecret",
-        "keyVaultName",
-        "tenantId",
-        AzureAuthenticationMode.CLIENT_SECRET,
-        DEFAULT_AZURE_TIMEOUT,
-        Optional.empty());
+    azureKeyVaultFactory.createAzureKeyVault("clientId", "clientSecret", "keyVaultName", "tenantId", AzureAuthenticationMode.CLIENT_SECRET, DEFAULT_AZURE_TIMEOUT, AzureOverrides.NONE);
     assertThat(azureKeyVaultFactory.getExecutorServiceCache().get()).isNotNull();
   }
 
   @Test
   void reusesExecutorWhenUsingClientSecretMode() {
-    azureKeyVaultFactory.createAzureKeyVault(
-        "clientId",
-        "clientSecret",
-        "keyVaultName",
-        "tenantId",
-        AzureAuthenticationMode.CLIENT_SECRET,
-        DEFAULT_AZURE_TIMEOUT,
-        Optional.empty());
+    azureKeyVaultFactory.createAzureKeyVault("clientId", "clientSecret", "keyVaultName", "tenantId", AzureAuthenticationMode.CLIENT_SECRET, DEFAULT_AZURE_TIMEOUT, AzureOverrides.NONE);
     final ExecutorService executorService = azureKeyVaultFactory.getExecutorServiceCache().get();
     assertThat(executorService).isNotNull();
 
-    azureKeyVaultFactory.createAzureKeyVault(
-        "clientId",
-        "clientSecret",
-        "keyVaultName",
-        "tenantId",
-        AzureAuthenticationMode.CLIENT_SECRET,
-        DEFAULT_AZURE_TIMEOUT,
-        Optional.empty());
+    azureKeyVaultFactory.createAzureKeyVault("clientId", "clientSecret", "keyVaultName", "tenantId", AzureAuthenticationMode.CLIENT_SECRET, DEFAULT_AZURE_TIMEOUT, AzureOverrides.NONE);
     final ExecutorService executorService2 = azureKeyVaultFactory.getExecutorServiceCache().get();
     assertThat(executorService).isSameAs(executorService2);
   }
 
   @Test
   void doesNotCreateExecutorWhenUsingUserAssignedMode() {
-    azureKeyVaultFactory.createAzureKeyVault(
-        "clientId",
-        "clientSecret",
-        "keyVaultName",
-        "tenantId",
-        AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY,
-        DEFAULT_AZURE_TIMEOUT,
-        Optional.empty());
+    azureKeyVaultFactory.createAzureKeyVault("clientId", "clientSecret", "keyVaultName", "tenantId", AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY, DEFAULT_AZURE_TIMEOUT, AzureOverrides.NONE);
     assertThat(azureKeyVaultFactory.getExecutorServiceCache().get()).isNull();
   }
 
   @Test
   void doesNotCreateExecutorWhenUsingSystemAssignedMode() {
-    azureKeyVaultFactory.createAzureKeyVault(
-        "clientId",
-        "clientSecret",
-        "keyVaultName",
-        "tenantId",
-        AzureAuthenticationMode.SYSTEM_ASSIGNED_MANAGED_IDENTITY,
-        DEFAULT_AZURE_TIMEOUT,
-        Optional.empty());
+    azureKeyVaultFactory.createAzureKeyVault("clientId", "clientSecret", "keyVaultName", "tenantId", AzureAuthenticationMode.SYSTEM_ASSIGNED_MANAGED_IDENTITY, DEFAULT_AZURE_TIMEOUT, AzureOverrides.NONE);
     assertThat(azureKeyVaultFactory.getExecutorServiceCache().get()).isNull();
   }
 
   @Test
   void closeShutdownsExecutor() {
-    azureKeyVaultFactory.createAzureKeyVault(
-        "clientId",
-        "clientSecret",
-        "keyVaultName",
-        "tenantId",
-        AzureAuthenticationMode.CLIENT_SECRET,
-        DEFAULT_AZURE_TIMEOUT,
-        Optional.empty());
+    azureKeyVaultFactory.createAzureKeyVault("clientId", "clientSecret", "keyVaultName", "tenantId", AzureAuthenticationMode.CLIENT_SECRET, DEFAULT_AZURE_TIMEOUT, AzureOverrides.NONE);
     final ExecutorService executorService = azureKeyVaultFactory.getExecutorServiceCache().get();
     assertThat(executorService).isNotNull();
 

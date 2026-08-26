@@ -23,6 +23,7 @@ import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.dsl.azure.AzureKeyVaultEmulator;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
+import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
 import tech.pegasys.web3signer.keystore.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
@@ -151,9 +152,12 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
         "unused",
         "unused",
         "unused",
-        "unused",
+        AzureKeyVaultEmulator.TENANT_ID,
         azureKey.name(),
-        Optional.of(URI.create(emulator.getVaultUrl())));
+        new AzureOverrides(
+            Optional.of(URI.create(emulator.getVaultUrl())),
+            Optional.of(URI.create(emulator.getAuthorityHostUrl())),
+            Optional.of(emulator.getTrustCertificatePath())));
 
     final SignerConfigurationBuilder builder =
         new SignerConfigurationBuilder()

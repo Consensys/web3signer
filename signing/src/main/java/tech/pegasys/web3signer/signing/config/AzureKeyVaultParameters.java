@@ -12,9 +12,9 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
-import java.net.URI;
+import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
+
 import java.util.Map;
-import java.util.Optional;
 
 public interface AzureKeyVaultParameters {
 
@@ -35,9 +35,8 @@ public interface AzureKeyVaultParameters {
   long getTimeout();
 
   /**
-   * Can be used to override Azure Key Vault endpoint (e.g. for testing against an emulator)
-   *
-   * @return optional URI
+   * Experimental Azure client overrides (endpoint, authority host, trust certificate); see {@link
+   * AzureOverrides}.
    */
-  Optional<URI> getEndpointOverride();
+  AzureOverrides getAzureOverrides();
 }

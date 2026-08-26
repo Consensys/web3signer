@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.createUsingClientSecretCredentials;
 
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
+import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
@@ -25,7 +26,6 @@ import tech.pegasys.web3signer.signing.secp256k1.Signer;
 
 import java.math.BigInteger;
 import java.security.SignatureException;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -67,7 +67,7 @@ public class AzureKeyVaultSignerTest {
             AZURE_KEY_VAULT_NAME,
             azureExecutor,
             AZURE_DEFAULT_TIMEOUT,
-            Optional.empty());
+            AzureOverrides.NONE);
 
     // obtain list of secret names. Then validate mapping function works as expected.
     return azureKeyVault.getAzureKeys().stream()

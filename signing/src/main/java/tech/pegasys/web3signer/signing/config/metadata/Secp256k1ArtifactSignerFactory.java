@@ -101,7 +101,7 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
             azureSigningMetadata.getClientSecret(),
             azureSigningMetadata.getTenantId(),
             azureSigningMetadata.getTimeout(),
-            azureSigningMetadata.getEndpointOverride());
+            azureSigningMetadata.getAzureOverrides());
 
     return signerFactory.apply(azureCloudSignerFactory.createSigner(config));
   }

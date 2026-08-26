@@ -32,6 +32,7 @@ import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.dsl.azure.AzureKeyVaultEmulator;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
+import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.tests.bulkloading.AzureKeyVaultAcceptanceTest;
 
@@ -219,9 +220,12 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
         "unused",
         "unused",
         "unused",
-        "unused",
+        AzureKeyVaultEmulator.TENANT_ID,
         azureKey.name(),
-        Optional.of(URI.create(emulator.getVaultUrl())));
+        new AzureOverrides(
+            Optional.of(URI.create(emulator.getVaultUrl())),
+            Optional.of(URI.create(emulator.getAuthorityHostUrl())),
+            Optional.of(emulator.getTrustCertificatePath())));
 
     final SignerConfigurationBuilder builder =
         new SignerConfigurationBuilder()

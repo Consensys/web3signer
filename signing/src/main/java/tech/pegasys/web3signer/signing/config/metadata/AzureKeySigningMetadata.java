@@ -12,10 +12,12 @@
  */
 package tech.pegasys.web3signer.signing.config.metadata;
 
+import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,7 +31,7 @@ public class AzureKeySigningMetadata extends SigningMetadata {
   private final String vaultName;
   private final String keyName;
   private final long timeout;
-  private final Optional<URI> endpointOverride;
+  private final AzureOverrides azureOverrides;
 
   @JsonCreator
   public AzureKeySigningMetadata(
@@ -40,7 +42,9 @@ public class AzureKeySigningMetadata extends SigningMetadata {
       @JsonProperty("keyName") final String keyName,
       @JsonProperty(value = "keyType") final KeyType keyType,
       @JsonProperty(value = "timeout") final long timeout,
-      @JsonProperty("endpointOverride") final String endpointOverride) {
+      @JsonProperty("endpointOverride") final String endpointOverride,
+      @JsonProperty("authorityHostOverride") final String authorityHostOverride,
+      @JsonProperty("trustCertificateOverride") final String trustCertificateOverride) {
     super(TYPE, keyType != null ? keyType : KeyType.SECP256K1);
     this.clientId = clientId;
     this.clientSecret = clientSecret;
@@ -48,8 +52,15 @@ public class AzureKeySigningMetadata extends SigningMetadata {
     this.vaultName = vaultName;
     this.keyName = keyName;
     this.timeout = (timeout != 0) ? timeout : 60;
-    this.endpointOverride =
-        endpointOverride == null ? Optional.empty() : Optional.of(URI.create(endpointOverride));
+    this.azureOverrides =
+        new AzureOverrides(
+            endpointOverride == null ? Optional.empty() : Optional.of(URI.create(endpointOverride)),
+            authorityHostOverride == null
+                ? Optional.empty()
+                : Optional.of(URI.create(authorityHostOverride)),
+            trustCertificateOverride == null
+                ? Optional.empty()
+                : Optional.of(Path.of(trustCertificateOverride)));
   }
 
   public String getClientId() {
@@ -76,8 +87,8 @@ public class AzureKeySigningMetadata extends SigningMetadata {
     return timeout;
   }
 
-  public Optional<URI> getEndpointOverride() {
-    return endpointOverride;
+  public AzureOverrides getAzureOverrides() {
+    return azureOverrides;
   }
 
   @Override

@@ -16,9 +16,18 @@ import tech.pegasys.web3signer.keystorage.azure.AzureHttpClient;
 import tech.pegasys.web3signer.keystorage.azure.AzureHttpClientParameters;
 
 import java.io.Closeable;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -43,12 +52,38 @@ public class AzureHttpClientFactory implements Closeable {
                   .followRedirects(HttpClient.Redirect.NORMAL)
                   .version(connectionParameters.getHttpProtocolVersion())
                   .connectTimeout(Duration.ofMillis(connectionParameters.getTimeoutMilliseconds()));
+          connectionParameters
+              .getTrustCertificateOverride()
+              .ifPresent(
+                  certificate -> httpClientBuilder.sslContext(buildSslContext(certificate)));
           try {
             return new AzureHttpClient(httpClientBuilder.build());
           } catch (final Exception e) {
             throw new RuntimeException("Unable to initialise connection to azure vault.", e);
           }
         });
+  }
+
+  private static SSLContext buildSslContext(final Path trustCertificate) {
+    try {
+      final X509Certificate certificate;
+      try (InputStream in = Files.newInputStream(trustCertificate)) {
+        certificate = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(in);
+      }
+      final KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+      trustStore.load(null, null);
+      trustStore.setCertificateEntry("azure-trust-override", certificate);
+      final TrustManagerFactory trustManagerFactory =
+          TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+      trustManagerFactory.init(trustStore);
+
+      final SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
+      return sslContext;
+    } catch (final Exception e) {
+      throw new IllegalStateException(
+          "Unable to build Azure HTTP client trusting " + trustCertificate, e);
+    }
   }
 
   @VisibleForTesting

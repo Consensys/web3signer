@@ -25,6 +25,7 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.dsl.azure.AzureKeyVaultEmulator;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
+import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultAzureKeyVaultParameters;
@@ -45,8 +46,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
-
   private static final AzureKeyVaultEmulator EMULATOR = AzureKeyVaultEmulator.getInstance();
+  private static final AzureOverrides EMULATOR_OVERRIDES =
+      new AzureOverrides(
+          Optional.of(URI.create(EMULATOR.getVaultUrl())),
+          Optional.of(URI.create(EMULATOR.getAuthorityHostUrl())),
+          Optional.of(EMULATOR.getTrustCertificatePath()));
 
   /**
    * These keys are expected to be pre-seeded in the Azure Key Vault emulator. The first secret is
@@ -105,11 +110,11 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
           createUsingClientSecretCredentials(
               "unused",
               "unused",
-              "unused",
+              AzureKeyVaultEmulator.TENANT_ID,
               "unused",
               executor,
               60,
-              Optional.of(URI.create(EMULATOR.getVaultUrl())));
+              EMULATOR_OVERRIDES);
 
       final var azureKeys = azureKeyVault.getAzureKeys();
       assertThat(azureKeys).isNotEmpty();
@@ -123,11 +128,11 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
           createUsingClientSecretCredentials(
               "unused",
               "unused",
-              "unused",
+              AzureKeyVaultEmulator.TENANT_ID,
               "unused",
               executor,
               60,
-              Optional.of(URI.create(EMULATOR.getVaultUrl())));
+              EMULATOR_OVERRIDES);
 
       return azureKeyVault.getAzureSecrets();
     }
@@ -143,12 +148,12 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         new DefaultAzureKeyVaultParameters(
             "unused",
             "unused",
-            "unused",
+            AzureKeyVaultEmulator.TENANT_ID,
             "unused",
             Map.of(),
             60,
             true,
-            Optional.of(URI.create(EMULATOR.getVaultUrl())));
+            EMULATOR_OVERRIDES);
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
@@ -185,12 +190,12 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         new DefaultAzureKeyVaultParameters(
             "unused",
             "unused",
-            "unused",
+            AzureKeyVaultEmulator.TENANT_ID,
             "unused",
             Map.of("ENV", "TEST"),
             60,
             true,
-            Optional.of(URI.create(EMULATOR.getVaultUrl())));
+            EMULATOR_OVERRIDES);
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
@@ -237,18 +242,22 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         new DefaultAzureKeyVaultParameters(
             "unused",
             "unused",
-            "unused",
+            AzureKeyVaultEmulator.TENANT_ID,
             "unused",
             Map.of(),
             60,
             true,
-            Optional.of(URI.create("https://localhost:1")));
+            new AzureOverrides(
+                Optional.of(URI.create("https://localhost:1")),
+                Optional.of(URI.create(EMULATOR.getAuthorityHostUrl())),
+                Optional.of(EMULATOR.getTrustCertificatePath())));
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
             .withMode(calculateMode(keyType))
             .withAzureKeyVaultParameters(azureParams)
-            .withUseConfigFile(true);
+            .withUseConfigFile(true)
+            .withOverriddenCA(EMULATOR.getTlsCertificateDefinition());
 
     startSigner(configBuilder.build());
 
@@ -274,8 +283,11 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
             envPrefix + "AZURE_VAULT_NAME", "unused",
             envPrefix + "AZURE_CLIENT_ID", "unused",
             envPrefix + "AZURE_CLIENT_SECRET", "unused",
-            envPrefix + "AZURE_TENANT_ID", "unused",
-            envPrefix + "AZURE_ENDPOINT_OVERRIDE", EMULATOR.getVaultUrl());
+            envPrefix + "AZURE_TENANT_ID", AzureKeyVaultEmulator.TENANT_ID,
+            envPrefix + "XAZURE_ENDPOINT_OVERRIDE", EMULATOR.getVaultUrl(),
+            envPrefix + "XAZURE_AUTHORITY_HOST_OVERRIDE", EMULATOR.getAuthorityHostUrl(),
+            envPrefix + "XAZURE_TRUST_CERTIFICATE_OVERRIDE",
+                EMULATOR.getTrustCertificatePath().toString());
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
