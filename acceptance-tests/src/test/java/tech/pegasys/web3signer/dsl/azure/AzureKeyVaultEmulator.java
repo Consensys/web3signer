@@ -83,9 +83,10 @@ public final class AzureKeyVaultEmulator {
   // signature, issuer, audience or lifetime, so this is accepted regardless of its source.
   // Package-private: also used by MockAzureAuthorityExtension to answer token requests.
   static final String EMULATOR_JWT = // NOSONAR - not a real/hard-coded secret
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." // NOSONAR
-          + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNzM1Njg5NjAwLCJleHAiOjQxMDI0NDQ4MDAsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0LyJ9." // NOSONAR
-          + "42D_zJ3qM02NM_ExWU9S9jvNGMfpop3YuWT9lFqJ5yU"; // NOSONAR
+      """
+      eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.\
+      eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNzM1Njg5NjAwLCJleHAiOjQxMDI0NDQ4MDAsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0LyJ9.\
+      42D_zJ3qM02NM_ExWU9S9jvNGMfpop3YuWT9lFqJ5yU""";
 
   public static final String BLS_SECRET_NAME = "BLS-TEST-KEYS";
   public static final String BLS_TAGGED_SECRET_NAME = "BLS-TEST-TAGGED-KEY";
