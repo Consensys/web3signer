@@ -21,6 +21,7 @@ import tech.pegasys.web3signer.AwsKmsUtil;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.dsl.azure.AzureKeyVaultEmulator;
+import tech.pegasys.web3signer.dsl.azure.MockAzureAuthorityExtension;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
@@ -48,6 +49,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.web3j.crypto.Hash;
 import org.web3j.crypto.Sign;
 import org.web3j.crypto.Sign.SignatureData;
@@ -61,6 +63,9 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
       "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
 
   private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
+
+  @RegisterExtension
+  static final MockAzureAuthorityExtension MOCK_AUTHORITY = new MockAzureAuthorityExtension();
 
   @Test
   public void signDataWithFileBasedKey() throws URISyntaxException {
@@ -144,8 +149,15 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @Test
   public void signDataWithKeyInAzure() {
     final AzureKeyVaultEmulator emulator = AzureKeyVaultEmulator.getInstance();
+    final AzureOverrides azureOverrides =
+        new AzureOverrides(
+            Optional.of(URI.create(emulator.getVaultUrl())),
+            Optional.of(URI.create(MOCK_AUTHORITY.getAuthorityHostUrl())),
+            Optional.of(emulator.getTrustCertificatePath()));
     final var azureKey =
-        AzureKeyVaultAcceptanceTest.getSECPKeysFromEmulator().stream().findAny().orElseThrow();
+        AzureKeyVaultAcceptanceTest.getSECPKeysFromEmulator(azureOverrides).stream()
+            .findAny()
+            .orElseThrow();
 
     METADATA_FILE_HELPERS.createAzureKeyYamlFileAt(
         testDirectory.resolve("azure_key.yaml"),
@@ -154,10 +166,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
         "unused",
         AzureKeyVaultEmulator.TENANT_ID,
         azureKey.name(),
-        new AzureOverrides(
-            Optional.of(URI.create(emulator.getVaultUrl())),
-            Optional.of(URI.create(emulator.getAuthorityHostUrl())),
-            Optional.of(emulator.getTrustCertificatePath())));
+        azureOverrides);
 
     final SignerConfigurationBuilder builder =
         new SignerConfigurationBuilder()

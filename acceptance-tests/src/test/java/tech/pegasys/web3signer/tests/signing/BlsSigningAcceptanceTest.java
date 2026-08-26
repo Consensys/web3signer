@@ -31,6 +31,7 @@ import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.dsl.azure.AzureKeyVaultEmulator;
+import tech.pegasys.web3signer.dsl.azure.MockAzureAuthorityExtension;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
@@ -54,6 +55,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -63,6 +65,10 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
   private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
+
+  @RegisterExtension
+  static final MockAzureAuthorityExtension MOCK_AUTHORITY = new MockAzureAuthorityExtension();
+
   private static final BLSSecretKey KEY =
       BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
   private static final BLSKeyPair KEY_PAIR = new BLSKeyPair(KEY);
@@ -166,7 +172,12 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     // fetch secret which only has single value containing the private key. The metadata file
     // approach is not able to cater for multiple values in azure secret at present.
     final AzureKeyVault.AzureSecret azureSecret =
-        AzureKeyVaultAcceptanceTest.getBLSSecretsFromEmulator().stream()
+        AzureKeyVaultAcceptanceTest.getBLSSecretsFromEmulator(
+                new AzureOverrides(
+                    Optional.of(URI.create(emulator.getVaultUrl())),
+                    Optional.of(URI.create(MOCK_AUTHORITY.getAuthorityHostUrl())),
+                    Optional.of(emulator.getTrustCertificatePath())))
+            .stream()
             .filter(entry -> entry.values().size() == 1)
             .findFirst()
             .orElseThrow();
@@ -181,7 +192,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
         azureSecret.name(),
         new AzureOverrides(
             Optional.of(URI.create(emulator.getVaultUrl())),
-            Optional.of(URI.create(emulator.getAuthorityHostUrl())),
+            Optional.of(URI.create(MOCK_AUTHORITY.getAuthorityHostUrl())),
             Optional.of(emulator.getTrustCertificatePath())));
 
     final BLSSecretKey azurePrivateKey =

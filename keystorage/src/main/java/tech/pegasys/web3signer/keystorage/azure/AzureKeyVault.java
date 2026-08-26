@@ -36,7 +36,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import javax.net.ssl.TrustManagerFactory;
 
 import com.azure.core.credential.AccessToken;
@@ -100,7 +99,8 @@ public class AzureKeyVault {
     // otherwise builds its own separate default HTTP client (its own connection pool/event
     // loop) for the token request if none is supplied, independent of the one used for the
     // vault calls.
-    final HttpClient httpClient = buildHttpClient(timeout, azureOverrides.trustCertificateOverride());
+    final HttpClient httpClient =
+        buildHttpClient(timeout, azureOverrides.trustCertificateOverride());
     final ClientSecretCredentialBuilder credentialBuilder =
         new ClientSecretCredentialBuilder()
             .clientId(clientId)
@@ -133,10 +133,10 @@ public class AzureKeyVault {
 
   /**
    * The platform default trust store is used unless a trust certificate override is configured.
-   * Building the client via a raw {@code SslContextBuilder} (rather than relying on ambient
-   * {@code javax.net.ssl.trustStore} JVM properties) is required because the Netty transport used
-   * here prefers its own BoringSSL (netty-tcnative) engine when available, which does not consult
-   * those properties.
+   * Building the client via a raw {@code SslContextBuilder} (rather than relying on ambient {@code
+   * javax.net.ssl.trustStore} JVM properties) is required because the Netty transport used here
+   * prefers its own BoringSSL (netty-tcnative) engine when available, which does not consult those
+   * properties.
    */
   private static HttpClient buildHttpClient(
       final long timeoutSeconds, final Optional<Path> trustCertificateOverride) {
@@ -149,7 +149,8 @@ public class AzureKeyVault {
     try {
       final X509Certificate certificate;
       try (InputStream in = Files.newInputStream(certificatePath)) {
-        certificate = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(in);
+        certificate =
+            (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(in);
       }
       final KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
       trustStore.load(null, null);

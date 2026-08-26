@@ -23,6 +23,7 @@ import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.createUsing
 
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.dsl.azure.AzureKeyVaultEmulator;
+import tech.pegasys.web3signer.dsl.azure.MockAzureAuthorityExtension;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
@@ -42,16 +43,22 @@ import com.google.common.annotations.VisibleForTesting;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   private static final AzureKeyVaultEmulator EMULATOR = AzureKeyVaultEmulator.getInstance();
-  private static final AzureOverrides EMULATOR_OVERRIDES =
-      new AzureOverrides(
-          Optional.of(URI.create(EMULATOR.getVaultUrl())),
-          Optional.of(URI.create(EMULATOR.getAuthorityHostUrl())),
-          Optional.of(EMULATOR.getTrustCertificatePath()));
+
+  @RegisterExtension
+  static final MockAzureAuthorityExtension MOCK_AUTHORITY = new MockAzureAuthorityExtension();
+
+  private static AzureOverrides emulatorOverrides() {
+    return new AzureOverrides(
+        Optional.of(URI.create(EMULATOR.getVaultUrl())),
+        Optional.of(URI.create(MOCK_AUTHORITY.getAuthorityHostUrl())),
+        Optional.of(EMULATOR.getTrustCertificatePath()));
+  }
 
   /**
    * These keys are expected to be pre-seeded in the Azure Key Vault emulator. The first secret is
@@ -61,7 +68,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
    * @return list of expected BLS public keys in hex format
    */
   static List<String> expectedBLSPubKeys() {
-    return getBLSSecretsFromEmulator().stream()
+    return getBLSSecretsFromEmulator(emulatorOverrides()).stream()
         .flatMap(azureSecret -> azureSecret.values().stream())
         .map(
             secret ->
@@ -70,7 +77,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   }
 
   static List<String> expectedBLSPubKeyWithTag(final String tagKey, final String tagValue) {
-    return getBLSSecretsFromEmulator().stream()
+    return getBLSSecretsFromEmulator(emulatorOverrides()).stream()
         .filter(
             azureSecret ->
                 azureSecret.tags() != null
@@ -89,11 +96,13 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
    * @return list of expected SECP256K1 public keys in hex format
    */
   static List<String> expectedSECPPubKeys() {
-    return getSECPKeysFromEmulator().stream().map(AzureKeyVault.AzureKey::publicKeyHex).toList();
+    return getSECPKeysFromEmulator(emulatorOverrides()).stream()
+        .map(AzureKeyVault.AzureKey::publicKeyHex)
+        .toList();
   }
 
   static List<String> expectedSECPPubKeyWithTag(final String tagKey, final String tagValue) {
-    return getSECPKeysFromEmulator().stream()
+    return getSECPKeysFromEmulator(emulatorOverrides()).stream()
         .filter(
             azureSecret ->
                 azureSecret.tags() != null
@@ -104,7 +113,8 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   }
 
   @VisibleForTesting
-  public static List<AzureKeyVault.AzureKey> getSECPKeysFromEmulator() {
+  public static List<AzureKeyVault.AzureKey> getSECPKeysFromEmulator(
+      final AzureOverrides azureOverrides) {
     try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
       final AzureKeyVault azureKeyVault =
           createUsingClientSecretCredentials(
@@ -114,7 +124,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
               "unused",
               executor,
               60,
-              EMULATOR_OVERRIDES);
+              azureOverrides);
 
       final var azureKeys = azureKeyVault.getAzureKeys();
       assertThat(azureKeys).isNotEmpty();
@@ -122,7 +132,8 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     }
   }
 
-  public static List<AzureKeyVault.AzureSecret> getBLSSecretsFromEmulator() {
+  public static List<AzureKeyVault.AzureSecret> getBLSSecretsFromEmulator(
+      final AzureOverrides azureOverrides) {
     try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
       final AzureKeyVault azureKeyVault =
           createUsingClientSecretCredentials(
@@ -132,7 +143,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
               "unused",
               executor,
               60,
-              EMULATOR_OVERRIDES);
+              azureOverrides);
 
       return azureKeyVault.getAzureSecrets();
     }
@@ -153,7 +164,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
             Map.of(),
             60,
             true,
-            EMULATOR_OVERRIDES);
+            emulatorOverrides());
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
@@ -195,7 +206,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
             Map.of("ENV", "TEST"),
             60,
             true,
-            EMULATOR_OVERRIDES);
+            emulatorOverrides());
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
@@ -249,7 +260,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
             true,
             new AzureOverrides(
                 Optional.of(URI.create("https://localhost:1")),
-                Optional.of(URI.create(EMULATOR.getAuthorityHostUrl())),
+                Optional.of(URI.create(MOCK_AUTHORITY.getAuthorityHostUrl())),
                 Optional.of(EMULATOR.getTrustCertificatePath())));
 
     final SignerConfigurationBuilder configBuilder =
@@ -279,15 +290,22 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     final String envPrefix = keyType == KeyType.BLS ? "WEB3SIGNER_ETH2_" : "WEB3SIGNER_ETH1_";
     final Map<String, String> env =
         Map.of(
-            envPrefix + "AZURE_VAULT_ENABLED", "true",
-            envPrefix + "AZURE_VAULT_NAME", "unused",
-            envPrefix + "AZURE_CLIENT_ID", "unused",
-            envPrefix + "AZURE_CLIENT_SECRET", "unused",
-            envPrefix + "AZURE_TENANT_ID", AzureKeyVaultEmulator.TENANT_ID,
-            envPrefix + "XAZURE_ENDPOINT_OVERRIDE", EMULATOR.getVaultUrl(),
-            envPrefix + "XAZURE_AUTHORITY_HOST_OVERRIDE", EMULATOR.getAuthorityHostUrl(),
+            envPrefix + "AZURE_VAULT_ENABLED",
+            "true",
+            envPrefix + "AZURE_VAULT_NAME",
+            "unused",
+            envPrefix + "AZURE_CLIENT_ID",
+            "unused",
+            envPrefix + "AZURE_CLIENT_SECRET",
+            "unused",
+            envPrefix + "AZURE_TENANT_ID",
+            AzureKeyVaultEmulator.TENANT_ID,
+            envPrefix + "XAZURE_ENDPOINT_OVERRIDE",
+            EMULATOR.getVaultUrl(),
+            envPrefix + "XAZURE_AUTHORITY_HOST_OVERRIDE",
+            MOCK_AUTHORITY.getAuthorityHostUrl(),
             envPrefix + "XAZURE_TRUST_CERTIFICATE_OVERRIDE",
-                EMULATOR.getTrustCertificatePath().toString());
+            EMULATOR.getTrustCertificatePath().toString());
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()

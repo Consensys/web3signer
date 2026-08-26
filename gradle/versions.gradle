@@ -196,5 +196,7 @@ dependencyManagement {
           |    +--- io.github.java-diff-utils:java-diff-utils:4.0
      */
     dependency 'io.github.java-diff-utils:java-diff-utils:4.16'
+
+    dependency 'org.wiremock:wiremock:3.13.2'
   }
 }

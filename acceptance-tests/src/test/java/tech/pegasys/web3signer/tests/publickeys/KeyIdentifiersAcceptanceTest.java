@@ -31,6 +31,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.dsl.azure.AzureKeyVaultEmulator;
+import tech.pegasys.web3signer.dsl.azure.MockAzureAuthorityExtension;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.keystorage.azure.AzureOverrides;
 import tech.pegasys.web3signer.signing.KeyType;
@@ -46,10 +47,14 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
+
+  @RegisterExtension
+  static final MockAzureAuthorityExtension MOCK_AUTHORITY = new MockAzureAuthorityExtension();
 
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
@@ -210,9 +215,16 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   @Test
   public void azureKeysReturnAppropriatePublicKey() {
     final AzureKeyVaultEmulator emulator = AzureKeyVaultEmulator.getInstance();
+    final AzureOverrides azureOverrides =
+        new AzureOverrides(
+            Optional.of(URI.create(emulator.getVaultUrl())),
+            Optional.of(URI.create(MOCK_AUTHORITY.getAuthorityHostUrl())),
+            Optional.of(emulator.getTrustCertificatePath()));
 
     final var azureKey =
-        AzureKeyVaultAcceptanceTest.getSECPKeysFromEmulator().stream().findAny().orElseThrow();
+        AzureKeyVaultAcceptanceTest.getSECPKeysFromEmulator(azureOverrides).stream()
+            .findAny()
+            .orElseThrow();
 
     // single key loading via metadata file
     METADATA_FILE_HELPERS.createAzureKeyYamlFileAt(
@@ -222,10 +234,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
         "unused",
         AzureKeyVaultEmulator.TENANT_ID,
         azureKey.name(),
-        new AzureOverrides(
-            Optional.of(URI.create(emulator.getVaultUrl())),
-            Optional.of(URI.create(emulator.getAuthorityHostUrl())),
-            Optional.of(emulator.getTrustCertificatePath())));
+        azureOverrides);
 
     final SignerConfigurationBuilder builder =
         new SignerConfigurationBuilder()

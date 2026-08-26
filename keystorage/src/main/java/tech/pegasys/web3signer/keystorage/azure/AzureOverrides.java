@@ -23,10 +23,10 @@ import java.util.Optional;
  * @param endpointOverride overrides the Azure Key Vault endpoint (e.g. for testing against an
  *     emulator)
  * @param authorityHostOverride overrides the Microsoft Entra ID (Azure AD) authority host used to
- *     acquire tokens for client-secret authentication (e.g. sovereign clouds, or testing against
- *     an emulator that provides its own authority endpoint)
- * @param trustCertificateOverride trusts the given X.509 certificate file for TLS connections
- *     made by the Azure clients, in place of the platform's default trust store
+ *     acquire tokens for client-secret authentication (e.g. sovereign clouds, or testing against an
+ *     emulator that provides its own authority endpoint)
+ * @param trustCertificateOverride trusts the given X.509 certificate file for TLS connections made
+ *     by the Azure clients, in place of the platform's default trust store
  */
 public record AzureOverrides(
     Optional<URI> endpointOverride,

@@ -13,29 +13,20 @@
 package tech.pegasys.web3signer.dsl.azure;
 
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
+import tech.pegasys.web3signer.keystore.hashicorp.dsl.certificates.CertificateHelpers;
+import tech.pegasys.web3signer.keystore.hashicorp.dsl.certificates.SelfSignedCertificate;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
 import com.azure.core.credential.AccessToken;
@@ -53,9 +44,6 @@ import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import com.azure.security.keyvault.secrets.SecretServiceVersion;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpsConfigurator;
-import com.sun.net.httpserver.HttpsServer;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -73,6 +61,9 @@ import reactor.core.publisher.Mono;
  * fixtures previously required to be imported by hand into a real Azure Key Vault. Consumed by
  * every Azure-related acceptance test class in place of live Azure. Never explicitly stopped;
  * Testcontainers' Ryuk reaper removes the container at JVM exit.
+ *
+ * <p>Does not itself serve the mock Microsoft Entra ID (Azure AD) authority; see {@link
+ * MockAzureAuthorityExtension} for that, registered separately by each test class.
  */
 public final class AzureKeyVaultEmulator {
 
@@ -90,7 +81,8 @@ public final class AzureKeyVaultEmulator {
   // azure-keyvault-emulator's own documented default authentication token. The emulator's
   // JwtBearer handler only validates that a bearer token is well-formed; it never verifies
   // signature, issuer, audience or lifetime, so this is accepted regardless of its source.
-  private static final String EMULATOR_JWT = // NOSONAR - not a real/hard-coded secret
+  // Package-private: also used by MockAzureAuthorityExtension to answer token requests.
+  static final String EMULATOR_JWT = // NOSONAR - not a real/hard-coded secret
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." // NOSONAR
           + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNzM1Njg5NjAwLCJleHAiOjQxMDI0NDQ4MDAsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0LyJ9." // NOSONAR
           + "42D_zJ3qM02NM_ExWU9S9jvNGMfpop3YuWT9lFqJ5yU"; // NOSONAR
@@ -134,33 +126,40 @@ public final class AzureKeyVaultEmulator {
 
   private final GenericContainer<?> container;
   private final TlsCertificateDefinition tlsCertificateDefinition;
-  private final HttpsServer mockAuthorityServer;
   private final Path certificatePath;
 
   private AzureKeyVaultEmulator() {
     try {
+      final SelfSignedCertificate selfSignedCertificate =
+          SelfSignedCertificate.generate(List.of("localhost.vault.azure.net"));
       final Path certDir = Files.createTempDirectory("azure-keyvault-emulator-cert");
-      final Path keyFile = certDir.resolve("emulator.key");
       final Path crtFile = certDir.resolve("emulator.crt");
-      final Path pfxFile = certDir.resolve("emulator.pfx");
-      generateCertificate(keyFile, crtFile, pfxFile);
+      selfSignedCertificate.writeCertificateToFile(crtFile);
       this.certificatePath = crtFile;
+
+      final Path pfxFile =
+          CertificateHelpers.createPkcs12TrustStore(certDir, selfSignedCertificate, CERT_PASSWORD);
+      // The emulator container process runs as a different (non-root) uid and needs read access
+      // to the copied file.
+      if (!pfxFile.toFile().setReadable(true, false)) {
+        throw new IllegalStateException("Unable to make " + pfxFile + " world-readable");
+      }
       this.tlsCertificateDefinition = new TlsCertificateDefinition(pfxFile.toFile(), CERT_PASSWORD);
 
       this.container =
           new GenericContainer<>(IMAGE)
               .withExposedPorts(EMULATOR_PORT)
-              .withCopyFileToContainer(MountableFile.forHostPath(pfxFile), "/app/.certs/emulator.pfx")
+              .withCopyFileToContainer(
+                  MountableFile.forHostPath(pfxFile), "/app/.certs/emulator.pfx")
               .withEnv("ASPNETCORE_Kestrel__Certificates__Default__Password", CERT_PASSWORD)
-              .withEnv("ASPNETCORE_Kestrel__Certificates__Default__Path", "/app/.certs/emulator.pfx")
+              .withEnv(
+                  "ASPNETCORE_Kestrel__Certificates__Default__Path", "/app/.certs/emulator.pfx")
               .withEnv("AUTH__TENANTID", TENANT_ID)
               .waitingFor(Wait.forListeningPort());
-      LOG.info("Starting Azure Key Vault emulator container ({})...", IMAGE.asCanonicalNameString());
+      LOG.info(
+          "Starting Azure Key Vault emulator container ({})...", IMAGE.asCanonicalNameString());
       container.start();
       LOG.info("Azure Key Vault emulator listening at {}", getVaultUrl());
-
-      this.mockAuthorityServer = startMockAuthorityServer(pfxFile);
-      LOG.info("Mock Microsoft Entra ID authority listening at {}", getAuthorityHostUrl());
 
       seedFixtures(crtFile);
     } catch (final Exception e) {
@@ -182,73 +181,13 @@ public final class AzureKeyVaultEmulator {
   }
 
   /**
-   * URL of the in-JVM mock Microsoft Entra ID (Azure AD) authority that answers client-credential
-   * token requests for {@link #TENANT_ID} with the same well-formed dummy JWT the emulator itself
-   * documents as its default authentication token. Real Azure AD is never contacted by tests.
-   */
-  public String getAuthorityHostUrl() {
-    final InetSocketAddress address = mockAuthorityServer.getAddress();
-    return "https://127.0.0.1:" + address.getPort();
-  }
-
-  /**
-   * Path to the emulator's self-signed X.509 certificate, suitable for use as a Azure client
-   * trust certificate override (see {@code AzureOverrides}); covers both the vault endpoint and
-   * the mock authority above, since both are served with the same certificate.
+   * Path to the emulator's self-signed X.509 certificate, suitable for use as an Azure client trust
+   * certificate override (see {@code AzureOverrides}). Also trusted by {@link
+   * MockAzureAuthorityExtension}'s mock authority server, which reuses this same certificate (via
+   * {@link #getTlsCertificateDefinition()}), so a single trust override covers both endpoints.
    */
   public Path getTrustCertificatePath() {
     return certificatePath;
-  }
-
-  private static void generateCertificate(
-      final Path keyFile, final Path crtFile, final Path pfxFile)
-      throws IOException, InterruptedException {
-    runOpenSsl(
-        "req",
-        "-x509",
-        "-newkey",
-        "rsa:2048",
-        "-sha256",
-        "-days",
-        "3560",
-        "-noenc",
-        "-keyout",
-        keyFile.toString(),
-        "-out",
-        crtFile.toString(),
-        "-subj",
-        "/CN=localhost",
-        "-addext",
-        "subjectAltName=DNS:localhost,DNS:localhost.vault.azure.net,IP:127.0.0.1");
-    runOpenSsl(
-        "pkcs12",
-        "-export",
-        "-out",
-        pfxFile.toString(),
-        "-inkey",
-        keyFile.toString(),
-        "-in",
-        crtFile.toString(),
-        "-passout",
-        "pass:" + CERT_PASSWORD);
-    // openssl restricts the exported pfx to owner-only permissions; the emulator container
-    // process runs as a different (non-root) uid and needs read access to the copied file.
-    if (!pfxFile.toFile().setReadable(true, false)) {
-      throw new IllegalStateException("Unable to make " + pfxFile + " world-readable");
-    }
-  }
-
-  private static void runOpenSsl(final String... args) throws IOException, InterruptedException {
-    final List<String> command = new ArrayList<>();
-    command.add("openssl");
-    command.addAll(List.of(args));
-    final Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
-    final String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-    final int exitCode = process.waitFor();
-    if (exitCode != 0) {
-      throw new IllegalStateException(
-          "openssl " + args[0] + " failed (exit " + exitCode + "): " + output);
-    }
   }
 
   private void seedFixtures(final Path certFile) {
@@ -336,59 +275,8 @@ public final class AzureKeyVaultEmulator {
   }
 
   /**
-   * Starts a minimal HTTPS server, using the same self-signed certificate as the emulator
-   * container, that answers any client-credential token request with the {@link #EMULATOR_JWT}
-   * dummy token. Lets production {@code ClientSecretCredentialBuilder} code acquire a token the
-   * normal way (a real HTTPS POST to a configured authority) without needing live Azure AD.
-   */
-  private static HttpsServer startMockAuthorityServer(final Path pfxFile)
-      throws IOException, GeneralSecurityException {
-    final KeyStore keyStore = KeyStore.getInstance("PKCS12");
-    try (InputStream in = Files.newInputStream(pfxFile)) {
-      keyStore.load(in, CERT_PASSWORD.toCharArray());
-    }
-    final KeyManagerFactory keyManagerFactory =
-        KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-    keyManagerFactory.init(keyStore, CERT_PASSWORD.toCharArray());
-    final SSLContext sslContext = SSLContext.getInstance("TLS");
-    sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
-
-    final HttpsServer server =
-        HttpsServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
-    server.setHttpsConfigurator(new HttpsConfigurator(sslContext));
-    server.createContext("/", AzureKeyVaultEmulator::handleTokenRequest);
-    server.setExecutor(
-        Executors.newSingleThreadExecutor(
-            r -> {
-              final Thread thread = new Thread(r, "mock-authority-server");
-              thread.setDaemon(true);
-              return thread;
-            }));
-    server.start();
-    return server;
-  }
-
-  private static void handleTokenRequest(final HttpExchange exchange) throws IOException {
-    try (exchange) {
-      exchange.getRequestBody().readAllBytes();
-      final String body =
-          "{\"token_type\":\"Bearer\",\"expires_in\":315360000,\"ext_expires_in\":315360000,"
-              + "\"access_token\":\""
-              + EMULATOR_JWT
-              + "\"}";
-      final byte[] responseBytes = body.getBytes(StandardCharsets.UTF_8);
-      exchange.getResponseHeaders().add("Content-Type", "application/json");
-      exchange.sendResponseHeaders(200, responseBytes.length);
-      try (OutputStream out = exchange.getResponseBody()) {
-        out.write(responseBytes);
-      }
-    }
-  }
-
-  /**
-   * Token credential used to seed fixtures directly from this test DSL (not via production
-   * signing code), returning the emulator's own well-formed default JWT without any network
-   * call.
+   * Token credential used to seed fixtures directly from this test DSL (not via production signing
+   * code), returning the emulator's own well-formed default JWT without any network call.
    */
   private static TokenCredential emulatorTokenCredential() {
     return request ->

@@ -199,8 +199,7 @@ public class MetadataFileHelpers {
     azureOverrides
         .trustCertificateOverride()
         .ifPresent(
-            certificate ->
-                signingMetadata.put("trustCertificateOverride", certificate.toString()));
+            certificate -> signingMetadata.put("trustCertificateOverride", certificate.toString()));
   }
 
   public void createAwsYamlFileAt(
