@@ -59,7 +59,8 @@ public class AzureKeyVaultSignerFactory {
               config.getKeyVaultName(),
               config.getTenantId(),
               AzureAuthenticationMode.CLIENT_SECRET,
-              config.getTimeout());
+              config.getTimeout(),
+              config.getEndpointOverride());
     } catch (final Exception e) {
       LOG.error("Failed to connect to vault", e);
       throw new SignerInitializationException(INACCESSIBLE_KEY_ERROR, e);
@@ -83,7 +84,24 @@ public class AzureKeyVaultSignerFactory {
         Bytes.concatenate(Bytes.wrap(jsonWebKey.getX()), Bytes.wrap(jsonWebKey.getY()));
     final boolean useDeprecatedCurveName = DEPRECATED_CURVE_NAME.equals(curveName);
 
+    // Pin the exact key version resolved above for the subsequent raw-REST sign call. An empty
+    // "latest" placeholder relies on Azure's own resolution of an empty version path segment,
+    // which real Azure tolerates but is not guaranteed elsewhere (e.g. Key Vault emulators used
+    // for testing); pinning also avoids a race against a key rotation between fetch and sign.
+    final AzureConfig resolvedConfig =
+        config.getKeyVersion().isEmpty()
+            ? new AzureConfig(
+                config.getKeyVaultName(),
+                config.getKeyName(),
+                cryptoClient.getKey().getProperties().getVersion(),
+                config.getClientId(),
+                config.getClientSecret(),
+                config.getTenantId(),
+                config.getTimeout(),
+                config.getEndpointOverride())
+            : config;
+
     return new AzureKeyVaultSigner(
-        config, rawPublicKey, true, useDeprecatedCurveName, vault, azureHttpClientFactory);
+        resolvedConfig, rawPublicKey, true, useDeprecatedCurveName, vault, azureHttpClientFactory);
   }
 }

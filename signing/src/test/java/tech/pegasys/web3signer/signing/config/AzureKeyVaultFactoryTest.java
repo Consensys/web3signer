@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.signing.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 import org.junit.jupiter.api.AfterEach;
@@ -41,7 +42,8 @@ class AzureKeyVaultFactoryTest {
         "keyVaultName",
         "tenantId",
         AzureAuthenticationMode.CLIENT_SECRET,
-        DEFAULT_AZURE_TIMEOUT);
+        DEFAULT_AZURE_TIMEOUT,
+        Optional.empty());
     assertThat(azureKeyVaultFactory.getExecutorServiceCache().get()).isNotNull();
   }
 
@@ -53,7 +55,8 @@ class AzureKeyVaultFactoryTest {
         "keyVaultName",
         "tenantId",
         AzureAuthenticationMode.CLIENT_SECRET,
-        DEFAULT_AZURE_TIMEOUT);
+        DEFAULT_AZURE_TIMEOUT,
+        Optional.empty());
     final ExecutorService executorService = azureKeyVaultFactory.getExecutorServiceCache().get();
     assertThat(executorService).isNotNull();
 
@@ -63,7 +66,8 @@ class AzureKeyVaultFactoryTest {
         "keyVaultName",
         "tenantId",
         AzureAuthenticationMode.CLIENT_SECRET,
-        DEFAULT_AZURE_TIMEOUT);
+        DEFAULT_AZURE_TIMEOUT,
+        Optional.empty());
     final ExecutorService executorService2 = azureKeyVaultFactory.getExecutorServiceCache().get();
     assertThat(executorService).isSameAs(executorService2);
   }
@@ -76,7 +80,8 @@ class AzureKeyVaultFactoryTest {
         "keyVaultName",
         "tenantId",
         AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY,
-        DEFAULT_AZURE_TIMEOUT);
+        DEFAULT_AZURE_TIMEOUT,
+        Optional.empty());
     assertThat(azureKeyVaultFactory.getExecutorServiceCache().get()).isNull();
   }
 
@@ -88,7 +93,8 @@ class AzureKeyVaultFactoryTest {
         "keyVaultName",
         "tenantId",
         AzureAuthenticationMode.SYSTEM_ASSIGNED_MANAGED_IDENTITY,
-        DEFAULT_AZURE_TIMEOUT);
+        DEFAULT_AZURE_TIMEOUT,
+        Optional.empty());
     assertThat(azureKeyVaultFactory.getExecutorServiceCache().get()).isNull();
   }
 
@@ -100,7 +106,8 @@ class AzureKeyVaultFactoryTest {
         "keyVaultName",
         "tenantId",
         AzureAuthenticationMode.CLIENT_SECRET,
-        DEFAULT_AZURE_TIMEOUT);
+        DEFAULT_AZURE_TIMEOUT,
+        Optional.empty());
     final ExecutorService executorService = azureKeyVaultFactory.getExecutorServiceCache().get();
     assertThat(executorService).isNotNull();
 

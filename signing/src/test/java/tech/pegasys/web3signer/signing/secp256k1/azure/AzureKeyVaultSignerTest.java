@@ -25,6 +25,7 @@ import tech.pegasys.web3signer.signing.secp256k1.Signer;
 
 import java.math.BigInteger;
 import java.security.SignatureException;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -65,7 +66,8 @@ public class AzureKeyVaultSignerTest {
             AZURE_TENANT_ID,
             AZURE_KEY_VAULT_NAME,
             azureExecutor,
-            AZURE_DEFAULT_TIMEOUT);
+            AZURE_DEFAULT_TIMEOUT,
+            Optional.empty());
 
     // obtain list of secret names. Then validate mapping function works as expected.
     return azureKeyVault.getAzureKeys().stream()

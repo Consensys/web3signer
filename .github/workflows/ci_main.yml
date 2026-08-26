@@ -50,11 +50,6 @@ jobs:
         id: build-test
         uses: ./.github/actions/build-test
         env:
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          AZURE_INVALID_KEY_VAULT_NAME: ${{ secrets.AZURE_INVALID_KEY_VAULT_NAME }}
-          AZURE_KEY_VAULT_NAME: ${{ secrets.AZURE_KEY_VAULT_NAME }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         with:
           disable-test: 'false'

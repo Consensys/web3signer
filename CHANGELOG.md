@@ -2,9 +2,9 @@
 
 ## Upcoming Release
 ### Features Added
+- Azure Key Vault acceptance tests now run against a local `ghcr.io/usmansaleem/azure-keyvault-emulator` Testcontainers instance instead of live Azure, requiring no external credentials or an Azure subscription.
 
 ### Bugs Fixed
-
 
 ---
 ## 26.7.0

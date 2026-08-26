@@ -16,14 +16,17 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.crypto.Sign.signedMessageToKey;
-import static tech.pegasys.web3signer.tests.bulkloading.AzureKeyVaultAcceptanceTest.getSECPKeysFromAzureVault;
 
 import tech.pegasys.web3signer.AwsKmsUtil;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
+import tech.pegasys.web3signer.dsl.azure.AzureKeyVaultEmulator;
+import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.keystore.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
+import tech.pegasys.web3signer.tests.bulkloading.AzureKeyVaultAcceptanceTest;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -49,11 +52,6 @@ import org.web3j.crypto.Sign;
 import org.web3j.crypto.Sign.SignatureData;
 
 public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
-
-  private static final String CLIENT_ID = System.getenv("AZURE_CLIENT_ID");
-  private static final String CLIENT_SECRET = System.getenv("AZURE_CLIENT_SECRET");
-  private static final String KEY_VAULT_NAME = System.getenv("AZURE_KEY_VAULT_NAME");
-  private static final String TENANT_ID = System.getenv("AZURE_TENANT_ID");
 
   private static final Bytes DATA = Bytes.wrap("42".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
@@ -143,24 +141,31 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @Test
-  @EnabledIfEnvironmentVariables({
-    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".+"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".+"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".+"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".+")
-  })
   public void signDataWithKeyInAzure() {
-    final var azureKey = getSECPKeysFromAzureVault().stream().findAny().orElseThrow();
+    final AzureKeyVaultEmulator emulator = AzureKeyVaultEmulator.getInstance();
+    final var azureKey =
+        AzureKeyVaultAcceptanceTest.getSECPKeysFromEmulator().stream().findAny().orElseThrow();
 
     METADATA_FILE_HELPERS.createAzureKeyYamlFileAt(
         testDirectory.resolve("azure_key.yaml"),
-        CLIENT_ID,
-        CLIENT_SECRET,
-        KEY_VAULT_NAME,
-        TENANT_ID,
-        azureKey.name());
+        "unused",
+        "unused",
+        "unused",
+        "unused",
+        azureKey.name(),
+        Optional.of(URI.create(emulator.getVaultUrl())));
 
-    signAndVerifySignature(azureKey.publicKeyHex());
+    final SignerConfigurationBuilder builder =
+        new SignerConfigurationBuilder()
+            .withKeyStoreDirectory(testDirectory)
+            .withMode("eth1")
+            .withChainIdProvider(new ConfigurationChainId(DEFAULT_CHAIN_ID))
+            .withOverriddenCA(emulator.getTlsCertificateDefinition());
+    startSigner(builder.build());
+
+    final Response response = signer.eth1Sign(azureKey.publicKeyHex(), DATA);
+    final Bytes signature = verifyAndGetSignatureResponse(response);
+    verifySignature(signature, azureKey.publicKeyHex());
   }
 
   @Test

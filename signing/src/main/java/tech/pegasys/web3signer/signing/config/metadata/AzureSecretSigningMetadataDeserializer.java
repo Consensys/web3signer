@@ -18,8 +18,10 @@ import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -37,6 +39,7 @@ public class AzureSecretSigningMetadataDeserializer
   private static final String AUTH_MODE = "authenticationMode";
   private static final String KEY_TYPE = "keyType";
   private static final String TIMEOUT = "timeout";
+  private static final String ENDPOINT_OVERRIDE = "endpointOverride";
 
   @SuppressWarnings("Unused")
   public AzureSecretSigningMetadataDeserializer() {
@@ -57,6 +60,7 @@ public class AzureSecretSigningMetadataDeserializer
     String vaultName = null;
     String secretName = null;
     long timeout = 60;
+    Optional<URI> endpointOverride = Optional.empty();
 
     AzureAuthenticationMode authenticationMode = null;
 
@@ -101,6 +105,10 @@ public class AzureSecretSigningMetadataDeserializer
       timeout = node.get(TIMEOUT).asLong();
     }
 
+    if (node.get(ENDPOINT_OVERRIDE) != null) {
+      endpointOverride = Optional.of(URI.create(node.get(ENDPOINT_OVERRIDE).asText()));
+    }
+
     final AzureSecretSigningMetadata azureSecretSigningMetadata =
         new AzureSecretSigningMetadata(
             clientId,
@@ -110,7 +118,8 @@ public class AzureSecretSigningMetadataDeserializer
             secretName,
             authenticationMode,
             keyType,
-            timeout);
+            timeout,
+            endpointOverride);
 
     validate(parser, azureSecretSigningMetadata);
 

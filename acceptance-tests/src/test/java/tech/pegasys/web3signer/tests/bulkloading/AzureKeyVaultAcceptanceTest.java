@@ -16,13 +16,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
 import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealtcheckKeysLoaded;
 import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthcheckErrorCount;
 import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.createUsingClientSecretCredentials;
 
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.web3signer.dsl.azure.AzureKeyVaultEmulator;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.signing.KeyType;
@@ -30,43 +30,33 @@ import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultAzureKeyVaultParameters;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
 
-  private static final String CLIENT_ID = System.getenv("AZURE_CLIENT_ID");
-  private static final String CLIENT_SECRET = System.getenv("AZURE_CLIENT_SECRET");
-  private static final String TENANT_ID = System.getenv("AZURE_TENANT_ID");
-  private static final String VAULT_NAME = System.getenv("AZURE_KEY_VAULT_NAME");
-
-  @BeforeAll
-  public static void setup() {
-    assumeTrue(!StringUtils.isEmpty(CLIENT_ID), "Set AZURE_CLIENT_ID environment variable");
-    assumeTrue(!StringUtils.isEmpty(CLIENT_SECRET), "Set AZURE_CLIENT_SECRET environment variable");
-    assumeTrue(!StringUtils.isEmpty(TENANT_ID), "Set AZURE_TENANT_ID environment variable");
-    assumeTrue(!StringUtils.isEmpty(VAULT_NAME), "Set AZURE_KEY_VAULT_NAME environment variable");
-  }
+  private static final AzureKeyVaultEmulator EMULATOR = AzureKeyVaultEmulator.getInstance();
 
   /**
-   * These keys are expected to be pre-created in Azure keystore. The first secret is multivalue
-   * with 10 keys. The second secret is created with single value/key and tagged with ENV:TEST.
+   * These keys are expected to be pre-seeded in the Azure Key Vault emulator. The first secret is
+   * multivalue with 10 keys. The second secret is created with single value/key and tagged with
+   * ENV:TEST.
    *
    * @return list of expected BLS public keys in hex format
    */
   static List<String> expectedBLSPubKeys() {
-    return getBLSSecretsFromAzureVault().stream()
+    return getBLSSecretsFromEmulator().stream()
         .flatMap(azureSecret -> azureSecret.values().stream())
         .map(
             secret ->
@@ -75,7 +65,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   }
 
   static List<String> expectedBLSPubKeyWithTag(final String tagKey, final String tagValue) {
-    return getBLSSecretsFromAzureVault().stream()
+    return getBLSSecretsFromEmulator().stream()
         .filter(
             azureSecret ->
                 azureSecret.tags() != null
@@ -89,16 +79,16 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   }
 
   /**
-   * Expected SECP256K1 public keys pre-created in Azure keystore.
+   * Expected SECP256K1 public keys pre-seeded in the Azure Key Vault emulator.
    *
    * @return list of expected SECP256K1 public keys in hex format
    */
   static List<String> expectedSECPPubKeys() {
-    return getSECPKeysFromAzureVault().stream().map(AzureKeyVault.AzureKey::publicKeyHex).toList();
+    return getSECPKeysFromEmulator().stream().map(AzureKeyVault.AzureKey::publicKeyHex).toList();
   }
 
   static List<String> expectedSECPPubKeyWithTag(final String tagKey, final String tagValue) {
-    return getSECPKeysFromAzureVault().stream()
+    return getSECPKeysFromEmulator().stream()
         .filter(
             azureSecret ->
                 azureSecret.tags() != null
@@ -109,11 +99,17 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   }
 
   @VisibleForTesting
-  public static List<AzureKeyVault.AzureKey> getSECPKeysFromAzureVault() {
+  public static List<AzureKeyVault.AzureKey> getSECPKeysFromEmulator() {
     try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
       final AzureKeyVault azureKeyVault =
           createUsingClientSecretCredentials(
-              CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, executor, 60);
+              "unused",
+              "unused",
+              "unused",
+              "unused",
+              executor,
+              60,
+              Optional.of(URI.create(EMULATOR.getVaultUrl())));
 
       final var azureKeys = azureKeyVault.getAzureKeys();
       assertThat(azureKeys).isNotEmpty();
@@ -121,11 +117,17 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     }
   }
 
-  public static List<AzureKeyVault.AzureSecret> getBLSSecretsFromAzureVault() {
+  public static List<AzureKeyVault.AzureSecret> getBLSSecretsFromEmulator() {
     try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
       final AzureKeyVault azureKeyVault =
           createUsingClientSecretCredentials(
-              CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, executor, 60);
+              "unused",
+              "unused",
+              "unused",
+              "unused",
+              executor,
+              60,
+              Optional.of(URI.create(EMULATOR.getVaultUrl())));
 
       return azureKeyVault.getAzureSecrets();
     }
@@ -138,13 +140,22 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         keyType == KeyType.BLS ? expectedBLSPubKeys() : expectedSECPPubKeys();
 
     final AzureKeyVaultParameters azureParams =
-        new DefaultAzureKeyVaultParameters(VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET);
+        new DefaultAzureKeyVaultParameters(
+            "unused",
+            "unused",
+            "unused",
+            "unused",
+            Map.of(),
+            60,
+            true,
+            Optional.of(URI.create(EMULATOR.getVaultUrl())));
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
             .withMode(calculateMode(keyType))
             .withAzureKeyVaultParameters(azureParams)
-            .withUseConfigFile(true);
+            .withUseConfigFile(true)
+            .withOverriddenCA(EMULATOR.getTlsCertificateDefinition());
 
     startSigner(configBuilder.build());
 
@@ -172,13 +183,21 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   void azureSecretsViaTag(final KeyType keyType) {
     final AzureKeyVaultParameters azureParams =
         new DefaultAzureKeyVaultParameters(
-            VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET, Map.of("ENV", "TEST"));
+            "unused",
+            "unused",
+            "unused",
+            "unused",
+            Map.of("ENV", "TEST"),
+            60,
+            true,
+            Optional.of(URI.create(EMULATOR.getVaultUrl())));
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
             .withMode(calculateMode(keyType))
             .withAzureKeyVaultParameters(azureParams)
-            .withUseConfigFile(true);
+            .withUseConfigFile(true)
+            .withOverriddenCA(EMULATOR.getTlsCertificateDefinition());
 
     startSigner(configBuilder.build());
 
@@ -212,8 +231,18 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   @ParameterizedTest
   @EnumSource(KeyType.class)
   void invalidVaultParametersFailsToLoadKeys(final KeyType keyType) {
+    // a definitely-unbound local port (requires root, never listening) gives a real, deterministic
+    // connection failure once "vault name" no longer drives routing.
     final AzureKeyVaultParameters azureParams =
-        new DefaultAzureKeyVaultParameters("nonExistentVault", CLIENT_ID, TENANT_ID, CLIENT_SECRET);
+        new DefaultAzureKeyVaultParameters(
+            "unused",
+            "unused",
+            "unused",
+            "unused",
+            Map.of(),
+            60,
+            true,
+            Optional.of(URI.create("https://localhost:1")));
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
@@ -242,16 +271,18 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     final Map<String, String> env =
         Map.of(
             envPrefix + "AZURE_VAULT_ENABLED", "true",
-            envPrefix + "AZURE_VAULT_NAME", VAULT_NAME,
-            envPrefix + "AZURE_CLIENT_ID", CLIENT_ID,
-            envPrefix + "AZURE_CLIENT_SECRET", CLIENT_SECRET,
-            envPrefix + "AZURE_TENANT_ID", TENANT_ID);
+            envPrefix + "AZURE_VAULT_NAME", "unused",
+            envPrefix + "AZURE_CLIENT_ID", "unused",
+            envPrefix + "AZURE_CLIENT_SECRET", "unused",
+            envPrefix + "AZURE_TENANT_ID", "unused",
+            envPrefix + "AZURE_ENDPOINT_OVERRIDE", EMULATOR.getVaultUrl());
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
             .withMode(calculateMode(keyType))
             .withEnvironment(env)
-            .withUseConfigFile(true);
+            .withUseConfigFile(true)
+            .withOverriddenCA(EMULATOR.getTlsCertificateDefinition());
 
     startSigner(configBuilder.build());
 

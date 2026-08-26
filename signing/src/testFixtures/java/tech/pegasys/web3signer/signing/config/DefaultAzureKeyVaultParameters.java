@@ -12,9 +12,11 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
@@ -29,6 +31,7 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
   private final Map<String, String> tags = new HashMap<>();
   private final long timeout;
   private final boolean enabled;
+  private final Optional<URI> endpointOverride;
 
   public DefaultAzureKeyVaultParameters(
       final String keyVaultName,
@@ -42,7 +45,8 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
         clientSecret,
         Collections.emptyMap(),
         AZURE_DEFAULT_TIMEOUT,
-        AZURE_DEFAULT_ENABLED);
+        AZURE_DEFAULT_ENABLED,
+        Optional.empty());
   }
 
   public DefaultAzureKeyVaultParameters(
@@ -58,7 +62,8 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
         clientSecret,
         tags,
         AZURE_DEFAULT_TIMEOUT,
-        AZURE_DEFAULT_ENABLED);
+        AZURE_DEFAULT_ENABLED,
+        Optional.empty());
   }
 
   public DefaultAzureKeyVaultParameters(
@@ -69,6 +74,18 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
       final Map<String, String> tags,
       final long timeout,
       final boolean enabled) {
+    this(keyVaultName, clientId, tenantId, clientSecret, tags, timeout, enabled, Optional.empty());
+  }
+
+  public DefaultAzureKeyVaultParameters(
+      final String keyVaultName,
+      final String clientId,
+      final String tenantId,
+      final String clientSecret,
+      final Map<String, String> tags,
+      final long timeout,
+      final boolean enabled,
+      final Optional<URI> endpointOverride) {
     this.keyVaultName = keyVaultName;
     this.clientId = clientId;
     this.tenantId = tenantId;
@@ -77,6 +94,7 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
     this.tags.putAll(tags);
     this.timeout = timeout;
     this.enabled = enabled;
+    this.endpointOverride = endpointOverride;
   }
 
   @Override
@@ -117,5 +135,10 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
   @Override
   public long getTimeout() {
     return timeout;
+  }
+
+  @Override
+  public Optional<URI> getEndpointOverride() {
+    return endpointOverride;
   }
 }

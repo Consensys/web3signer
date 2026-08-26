@@ -66,6 +66,8 @@ dependencies {
   testImplementation 'com.azure:azure-identity'
   testImplementation 'com.azure:azure-security-keyvault-keys'
   testImplementation 'com.azure:azure-security-keyvault-secrets'
+  testImplementation 'org.testcontainers:testcontainers'
+  testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
   testImplementation 'software.amazon.awssdk:auth'
   testImplementation 'software.amazon.awssdk:secretsmanager'
   testImplementation 'software.amazon.awssdk:kms'

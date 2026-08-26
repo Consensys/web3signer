@@ -15,13 +15,17 @@ package tech.pegasys.web3signer.commandline;
 import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 
+import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
+
+  public static final String AZURE_ENDPOINT_OVERRIDE_OPTION = "--azure-endpoint-override";
 
   @Option(
       names = {"--azure-vault-enabled"},
@@ -80,6 +84,12 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
       paramLabel = "<TAG_NAME>=<TAG_VALUE>")
   private Map<String, String> tags = new LinkedHashMap<>();
 
+  @Option(
+      names = {AZURE_ENDPOINT_OVERRIDE_OPTION},
+      description = "Override Azure Key Vault endpoint.",
+      paramLabel = "<URI>")
+  private Optional<URI> endpointOverride;
+
   @Override
   public boolean isAzureKeyVaultEnabled() {
     return azureKeyVaultEnabled;
@@ -118,5 +128,10 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
   @Override
   public Map<String, String> getTags() {
     return tags;
+  }
+
+  @Override
+  public Optional<URI> getEndpointOverride() {
+    return endpointOverride;
   }
 }

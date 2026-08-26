@@ -18,6 +18,8 @@ import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -50,6 +52,7 @@ import com.azure.security.keyvault.keys.models.KeyProperties;
 import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
+import com.azure.security.keyvault.secrets.SecretServiceVersion;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
 import com.google.common.annotations.VisibleForTesting;
@@ -57,6 +60,7 @@ import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import reactor.core.publisher.Mono;
 
 public class AzureKeyVault {
 
@@ -64,6 +68,8 @@ public class AzureKeyVault {
   private final TokenCredential tokenCredential;
   private final SecretClient secretClient;
   private final KeyClient keyClient;
+  private final String vaultUrl;
+  private final boolean emulatorMode;
   private static final List<String> SCOPE = List.of("https://vault.azure.net/.default");
   private final TokenRequestContext tokenRequestContext =
       new TokenRequestContext().setScopes(SCOPE);
@@ -76,15 +82,22 @@ public class AzureKeyVault {
       final String tenantId,
       final String vaultName,
       final ExecutorService executorService,
-      final long timeout) {
+      final long timeout,
+      final Optional<URI> endpointOverride) {
+    final String vaultUrl =
+        endpointOverride
+            .map(URI::toString)
+            .orElseGet(() -> constructAzureKeyVaultUrl(vaultName));
     final TokenCredential tokenCredential =
-        new ClientSecretCredentialBuilder()
-            .clientId(clientId)
-            .clientSecret(clientSecret)
-            .tenantId(tenantId)
-            .executorService(executorService)
-            .build();
-    return new AzureKeyVault(tokenCredential, vaultName, timeout);
+        endpointOverride.isPresent()
+            ? new AzureEmulatorTokenCredential()
+            : new ClientSecretCredentialBuilder()
+                .clientId(clientId)
+                .clientSecret(clientSecret)
+                .tenantId(tenantId)
+                .executorService(executorService)
+                .build();
+    return new AzureKeyVault(tokenCredential, vaultUrl, timeout, endpointOverride.isPresent());
   }
 
   public static AzureKeyVault createUsingManagedIdentity(
@@ -92,31 +105,48 @@ public class AzureKeyVault {
     final ManagedIdentityCredentialBuilder managedIdentityCredentialBuilder =
         new ManagedIdentityCredentialBuilder();
     clientId.ifPresent(managedIdentityCredentialBuilder::clientId);
-    return new AzureKeyVault(managedIdentityCredentialBuilder.build(), vaultName, timeout);
+    return new AzureKeyVault(
+        managedIdentityCredentialBuilder.build(),
+        constructAzureKeyVaultUrl(vaultName),
+        timeout,
+        false);
   }
 
   private AzureKeyVault(
-      final TokenCredential tokenCredential, final String vaultName, final long timeout) {
+      final TokenCredential tokenCredential,
+      final String vaultUrl,
+      final long timeout,
+      final boolean disableChallengeResourceVerification) {
     this.tokenCredential = tokenCredential;
-    final String vaultUrl = constructAzureKeyVaultUrl(vaultName);
+    this.vaultUrl = vaultUrl;
+    this.emulatorMode = disableChallengeResourceVerification;
 
     final HttpClient customisedHttpClient =
         HttpClient.createDefault(
             new HttpClientOptions().setResponseTimeout(Duration.ofSeconds(timeout)));
 
-    secretClient =
+    final SecretClientBuilder secretClientBuilder =
         new SecretClientBuilder()
             .httpClient(customisedHttpClient)
             .vaultUrl(vaultUrl)
-            .credential(tokenCredential)
-            .buildClient();
-
-    keyClient =
+            .credential(tokenCredential);
+    final KeyClientBuilder keyClientBuilder =
         new KeyClientBuilder()
             .httpClient(customisedHttpClient)
             .vaultUrl(vaultUrl)
-            .credential(tokenCredential)
-            .buildClient();
+            .credential(tokenCredential);
+    if (disableChallengeResourceVerification) {
+      secretClientBuilder.disableChallengeResourceVerification();
+      keyClientBuilder.disableChallengeResourceVerification();
+      // the emulator's response payloads are missing some fields (e.g. secret "enabled"
+      // attribute) that the SDK's default (latest) service version expects to be present;
+      // pin to an older, well-supported version for the emulator-only code path.
+      secretClientBuilder.serviceVersion(SecretServiceVersion.V7_4);
+      keyClientBuilder.serviceVersion(KeyServiceVersion.V7_4);
+    }
+
+    secretClient = secretClientBuilder.buildClient();
+    keyClient = keyClientBuilder.buildClient();
   }
 
   public Optional<String> fetchSecret(final String secretName) {
@@ -140,18 +170,18 @@ public class AzureKeyVault {
   public HttpRequest getRemoteSigningHttpRequest(
       final byte[] data,
       final SignatureAlgorithm signingAlgo,
-      final String vaultName,
       final String azureKeyName,
       final String azureKeyVersion) {
 
-    final String apiVersion = KeyServiceVersion.getLatest().getVersion();
+    final String apiVersion =
+        emulatorMode ? KeyServiceVersion.V7_4.getVersion() : KeyServiceVersion.getLatest().getVersion();
 
     final JsonObject jsonBody = new JsonObject();
     jsonBody.put("alg", signingAlgo);
     jsonBody.put("value", Bytes.of(data).toBase64String());
 
     final String uriString =
-        constructAzureSignApiUri(vaultName, azureKeyName, azureKeyVersion, apiVersion);
+        constructAzureSignApiUri(azureKeyName, azureKeyVersion, apiVersion);
 
     final HttpRequest httpRequest =
         HttpRequest.newBuilder(URI.create(uriString))
@@ -164,13 +194,9 @@ public class AzureKeyVault {
   }
 
   private String constructAzureSignApiUri(
-      final String keyVaultName,
-      final String keyName,
-      final String keyVersion,
-      final String apiVersion) {
+      final String keyName, final String keyVersion, final String apiVersion) {
     return String.format(
-        "https://%s.vault.azure.net/keys/%s/%s/sign?api-version=%s",
-        keyVaultName, keyName, keyVersion, apiVersion);
+        "%s/keys/%s/%s/sign?api-version=%s", vaultUrl, keyName, keyVersion, apiVersion);
   }
 
   public static String constructAzureKeyVaultUrl(final String keyVaultName) {
@@ -362,4 +388,30 @@ public class AzureKeyVault {
 
   @VisibleForTesting
   public record AzureKey(String name, String publicKeyHex, Map<String, String> tags) {}
+
+  /**
+   * Token credential used against an Azure Key Vault emulator, whose {@code JwtBearer} handler
+   * accepts any syntactically valid JWT without verifying signature, issuer, audience, or
+   * lifetime. Never valid against real Azure endpoints.
+   */
+  public static final class AzureEmulatorTokenCredential implements TokenCredential {
+    private static final String EMULATOR_TOKEN =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+            + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNzM1Njg5NjAwLCJleHAiOjQxMDI0NDQ4MDAsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0LyJ9."
+            + "42D_zJ3qM02NM_ExWU9S9jvNGMfpop3YuWT9lFqJ5yU";
+
+    @Override
+    public Mono<AccessToken> getToken(final TokenRequestContext request) {
+      return Mono.just(emulatorAccessToken());
+    }
+
+    @Override
+    public AccessToken getTokenSync(final TokenRequestContext request) {
+      return emulatorAccessToken();
+    }
+
+    private static AccessToken emulatorAccessToken() {
+      return new AccessToken(EMULATOR_TOKEN, OffsetDateTime.now(ZoneOffset.UTC).plusYears(10));
+    }
+  }
 }

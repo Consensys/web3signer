@@ -22,6 +22,7 @@ import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
 import tech.pegasys.web3signer.signing.secp256k1.util.Eth1SignatureUtil;
 
+import java.net.URI;
 import java.net.http.HttpRequest;
 import java.security.interfaces.ECPublicKey;
 import java.util.Map;
@@ -96,7 +97,11 @@ public class AzureKeyVaultSigner implements Signer {
 
     final AzureHttpClientParameters connectionParameters =
         AzureHttpClientParameters.newBuilder()
-            .withServerHost(constructAzureKeyVaultUrl(vaultName))
+            .withServerHost(
+                azureConfig
+                    .getEndpointOverride()
+                    .map(URI::toString)
+                    .orElseGet(() -> constructAzureKeyVaultUrl(vaultName)))
             .build();
 
     final AzureHttpClient azureHttpClient =
@@ -105,11 +110,7 @@ public class AzureKeyVaultSigner implements Signer {
     // Assemble httpRequest
     final HttpRequest httpRequest =
         vault.getRemoteSigningHttpRequest(
-            dataToSign,
-            signingAlgo,
-            vaultName,
-            azureConfig.getKeyName(),
-            azureConfig.getKeyVersion());
+            dataToSign, signingAlgo, azureConfig.getKeyName(), azureConfig.getKeyVersion());
 
     // execute
     final Map<String, Object> response = azureHttpClient.signViaHttpRequest(httpRequest);

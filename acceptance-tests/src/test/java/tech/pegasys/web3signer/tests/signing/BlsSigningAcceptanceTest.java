@@ -30,6 +30,8 @@ import tech.pegasys.web3signer.bls.keystore.model.KdfFunction;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
+import tech.pegasys.web3signer.dsl.azure.AzureKeyVaultEmulator;
+import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
@@ -157,36 +159,46 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @Test
-  @EnabledIfEnvironmentVariables({
-    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".+"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".+"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".+"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".+")
-  })
   public void ableToSignUsingAzure() throws JsonProcessingException {
-    final String clientId = System.getenv("AZURE_CLIENT_ID");
-    final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
-    final String tenantId = System.getenv("AZURE_TENANT_ID");
-    final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
+    final AzureKeyVaultEmulator emulator = AzureKeyVaultEmulator.getInstance();
 
     // fetch secret which only has single value containing the private key. The metadata file
     // approach is not able to cater for multiple values in azure secret at present.
     final AzureKeyVault.AzureSecret azureSecret =
-        AzureKeyVaultAcceptanceTest.getBLSSecretsFromAzureVault().stream()
+        AzureKeyVaultAcceptanceTest.getBLSSecretsFromEmulator().stream()
             .filter(entry -> entry.values().size() == 1)
             .findFirst()
             .orElseThrow();
 
     final Path keyConfigFile = testDirectory.resolve("azure_key.yaml");
     METADATA_FILE_HELPERS.createAzureYamlFileAt(
-        keyConfigFile, clientId, clientSecret, tenantId, keyVaultName, azureSecret.name());
+        keyConfigFile,
+        "unused",
+        "unused",
+        "unused",
+        "unused",
+        azureSecret.name(),
+        Optional.of(URI.create(emulator.getVaultUrl())));
 
     final BLSSecretKey azurePrivateKey =
         BLSSecretKey.fromBytes(
             Bytes32.fromHexString(azureSecret.values().stream().findFirst().orElseThrow()));
     final BLSKeyPair blsKeyPair = new BLSKeyPair(azurePrivateKey);
 
-    signAndVerifySignature(ArtifactType.BLOCK, blsKeyPair, TEXT);
+    final SignerConfigurationBuilder builder =
+        new SignerConfigurationBuilder()
+            .withKeyStoreDirectory(testDirectory)
+            .withMode("eth2")
+            .withNetwork(Eth2Network.MINIMAL.configName())
+            .withOverriddenCA(emulator.getTlsCertificateDefinition());
+    setForkEpochsAndStartSigner(builder, SpecMilestone.PHASE0);
+
+    final Eth2SigningRequestBody request = Eth2RequestUtils.createCannedRequest(ArtifactType.BLOCK);
+    final Response response = signer.eth2Sign(blsKeyPair.getPublicKey().toString(), request, TEXT);
+    final Bytes signature = verifyAndGetSignatureResponse(response, TEXT);
+    final BLSSignature expectedSignature =
+        BLS.sign(blsKeyPair.getSecretKey(), request.signingRoot());
+    assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 
   @Test

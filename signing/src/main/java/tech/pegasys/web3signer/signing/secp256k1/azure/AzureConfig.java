@@ -12,6 +12,9 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.azure;
 
+import java.net.URI;
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 public class AzureConfig {
@@ -24,6 +27,7 @@ public class AzureConfig {
   // empty string means latest in azure
   private static final String KEY_LATEST_VERSION = "";
   private final long timeout;
+  private final Optional<URI> endpointOverride;
 
   @JsonCreator
   public AzureConfig(
@@ -33,7 +37,8 @@ public class AzureConfig {
       final String clientId,
       final String clientSecret,
       final String tenantId,
-      final long timeout) {
+      final long timeout,
+      final Optional<URI> endpointOverride) {
     this.keyVaultName = keyVaultName;
     this.keyName = keyName;
     this.keyVersion = keyVersion;
@@ -41,6 +46,7 @@ public class AzureConfig {
     this.clientSecret = clientSecret;
     this.tenantId = tenantId;
     this.timeout = timeout;
+    this.endpointOverride = endpointOverride;
   }
 
   public AzureConfig(
@@ -50,7 +56,15 @@ public class AzureConfig {
       final String clientSecret,
       final String tenantId,
       final long timeout) {
-    this(keyVaultName, keyName, KEY_LATEST_VERSION, clientId, clientSecret, tenantId, timeout);
+    this(
+        keyVaultName,
+        keyName,
+        KEY_LATEST_VERSION,
+        clientId,
+        clientSecret,
+        tenantId,
+        timeout,
+        Optional.empty());
   }
 
   public String getKeyVaultName() {
@@ -79,5 +93,9 @@ public class AzureConfig {
 
   public long getTimeout() {
     return timeout;
+  }
+
+  public Optional<URI> getEndpointOverride() {
+    return endpointOverride;
   }
 }
