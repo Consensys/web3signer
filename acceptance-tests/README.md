@@ -5,5 +5,5 @@ Following instructions are required to setup environment for running acceptance 
 ### Azure Key Vault
 
 All Azure Key Vault acceptance tests run automatically against a local
-`ghcr.io/usmansaleem/azure-keyvault-emulator:v2.3.0` Testcontainers instance, requiring no manual
+`ghcr.io/usmansaleem/azure-keyvault-emulator:v2.3.4` Testcontainers instance, requiring no manual
 setup, credentials, or Azure subscription.
