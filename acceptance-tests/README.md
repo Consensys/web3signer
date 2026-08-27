@@ -4,6 +4,6 @@ Following instructions are required to setup environment for running acceptance 
 
 ### Azure Key Vault
 
-All Azure Key Vault acceptance tests run automatically against a local
-`ghcr.io/usmansaleem/azure-keyvault-emulator:v2.3.4` Testcontainers instance, requiring no manual
-setup, credentials, or Azure subscription.
+All Azure Key Vault acceptance tests run automatically against a local Testcontainers instance of
+the image pinned by `azureKeyVaultEmulatorImage` in the root `gradle.properties`, requiring no
+manual setup, credentials, or Azure subscription.

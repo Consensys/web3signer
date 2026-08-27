@@ -67,8 +67,10 @@ public final class AzureKeyVaultEmulator {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final DockerImageName IMAGE =
-      DockerImageName.parse("ghcr.io/usmansaleem/azure-keyvault-emulator:v2.3.4");
+  // Automatically set by the gradle acceptanceTest task from gradle.properties'
+  // azureKeyVaultEmulatorImage; a single property covering registry/repo/tag makes it a one-line
+  // change to migrate to an upstream image if/when our changes are incorporated there.
+  private static final DockerImageName IMAGE = dockerImageName();
   private static final int EMULATOR_PORT = 11001;
   private static final String CERT_PASSWORD = "emulator";
 
@@ -121,6 +123,14 @@ public final class AzureKeyVaultEmulator {
 
   public static AzureKeyVaultEmulator getInstance() {
     return Holder.INSTANCE;
+  }
+
+  private static DockerImageName dockerImageName() {
+    final String image = System.getProperty("azureKeyVaultEmulatorImage");
+    if (image == null) {
+      throw new IllegalStateException("System property [azureKeyVaultEmulatorImage] is missing.");
+    }
+    return DockerImageName.parse(image);
   }
 
   private final GenericContainer<?> container;
