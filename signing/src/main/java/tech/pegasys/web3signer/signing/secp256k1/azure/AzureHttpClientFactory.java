@@ -25,7 +25,6 @@ import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
-
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
@@ -54,8 +53,7 @@ public class AzureHttpClientFactory implements Closeable {
                   .connectTimeout(Duration.ofMillis(connectionParameters.getTimeoutMilliseconds()));
           connectionParameters
               .getTrustCertificateOverride()
-              .ifPresent(
-                  certificate -> httpClientBuilder.sslContext(buildSslContext(certificate)));
+              .ifPresent(certificate -> httpClientBuilder.sslContext(buildSslContext(certificate)));
           try {
             return new AzureHttpClient(httpClientBuilder.build());
           } catch (final Exception e) {
@@ -68,7 +66,8 @@ public class AzureHttpClientFactory implements Closeable {
     try {
       final X509Certificate certificate;
       try (InputStream in = Files.newInputStream(trustCertificate)) {
-        certificate = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(in);
+        certificate =
+            (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(in);
       }
       final KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
       trustStore.load(null, null);

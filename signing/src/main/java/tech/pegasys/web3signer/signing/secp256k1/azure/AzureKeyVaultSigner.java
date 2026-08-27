@@ -103,7 +103,8 @@ public class AzureKeyVaultSigner implements Signer {
                     .endpointOverride()
                     .map(URI::toString)
                     .orElseGet(() -> constructAzureKeyVaultUrl(vaultName)))
-            .withTrustCertificateOverride(azureConfig.getAzureOverrides().trustCertificateOverride())
+            .withTrustCertificateOverride(
+                azureConfig.getAzureOverrides().trustCertificateOverride())
             .build();
 
     final AzureHttpClient azureHttpClient =

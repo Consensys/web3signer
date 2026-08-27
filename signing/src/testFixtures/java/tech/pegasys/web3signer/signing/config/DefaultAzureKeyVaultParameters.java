@@ -75,7 +75,14 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
       final long timeout,
       final boolean enabled) {
     this(
-        keyVaultName, clientId, tenantId, clientSecret, tags, timeout, enabled, AzureOverrides.NONE);
+        keyVaultName,
+        clientId,
+        tenantId,
+        clientSecret,
+        tags,
+        timeout,
+        enabled,
+        AzureOverrides.NONE);
   }
 
   public DefaultAzureKeyVaultParameters(
