@@ -34,14 +34,12 @@ import com.azure.core.credential.TokenCredential;
 import com.azure.core.http.netty.NettyAsyncHttpClientBuilder;
 import com.azure.security.keyvault.keys.KeyClient;
 import com.azure.security.keyvault.keys.KeyClientBuilder;
-import com.azure.security.keyvault.keys.KeyServiceVersion;
 import com.azure.security.keyvault.keys.models.ImportKeyOptions;
 import com.azure.security.keyvault.keys.models.JsonWebKey;
 import com.azure.security.keyvault.keys.models.KeyCurveName;
 import com.azure.security.keyvault.keys.models.KeyType;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
-import com.azure.security.keyvault.secrets.SecretServiceVersion;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
 import io.netty.handler.ssl.SslContext;
@@ -198,7 +196,6 @@ public final class AzureKeyVaultEmulator {
             .vaultUrl(getVaultUrl())
             .credential(emulatorTokenCredential())
             .disableChallengeResourceVerification()
-            .serviceVersion(SecretServiceVersion.V7_4)
             .httpClient(trustingHttpClient)
             .buildClient();
     final KeyClient keyClient =
@@ -206,7 +203,6 @@ public final class AzureKeyVaultEmulator {
             .vaultUrl(getVaultUrl())
             .credential(emulatorTokenCredential())
             .disableChallengeResourceVerification()
-            .serviceVersion(KeyServiceVersion.V7_4)
             .httpClient(trustingHttpClient)
             .buildClient();
 
