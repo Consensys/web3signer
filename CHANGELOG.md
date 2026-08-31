@@ -3,8 +3,10 @@
 ## Upcoming Release
 ### Features Added
 - Azure Key Vault acceptance tests now run against a local `ghcr.io/usmansaleem/azure-keyvault-emulator` Testcontainers instance instead of live Azure, requiring no external credentials or an Azure subscription.
+- Azure Key Vault connections are now cached per credential/vault set instead of rebuilt on every key load, reducing bulk-load time.
 
 ### Bugs Fixed
+- Azure Key Vault SECP256K1 signing now uses the official Azure SDK `CryptographyClient` instead of a REST workaround, now that the upstream SDK bug requiring it is fixed.
 
 ---
 ## 26.7.0
