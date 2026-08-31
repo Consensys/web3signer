@@ -58,6 +58,7 @@ import com.azure.security.keyvault.secrets.models.SecretProperties;
 import com.google.common.annotations.VisibleForTesting;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -122,9 +123,12 @@ public class AzureKeyVault {
   /**
    * The platform default trust store is used unless a trust certificate override is configured.
    * Building the client via a raw {@code SslContextBuilder} (rather than relying on ambient {@code
-   * javax.net.ssl.trustStore} JVM properties) is required because the Netty transport used here
-   * prefers its own BoringSSL (netty-tcnative) engine when available, which does not consult those
-   * properties.
+   * javax.net.ssl.trustStore} JVM properties) is required because the Netty transport prefers its
+   * own BoringSSL (netty-tcnative) engine when available, which does not consult those properties.
+   *
+   * <p>The JDK SSL provider is pinned explicitly: the native BoringSSL engine, combined with Reactor
+   * Netty's native (io_uring) event loop on Linux, has been observed to stall HTTPS requests made
+   * by this client before they reach the server.
    */
   private static HttpClient buildHttpClient(
       final long timeoutSeconds, final Optional<Path> trustCertificateOverride) {
@@ -148,7 +152,10 @@ public class AzureKeyVault {
       trustManagerFactory.init(trustStore);
 
       final SslContext sslContext =
-          SslContextBuilder.forClient().trustManager(trustManagerFactory).build();
+          SslContextBuilder.forClient()
+              .sslProvider(SslProvider.JDK)
+              .trustManager(trustManagerFactory)
+              .build();
       final reactor.netty.http.client.HttpClient reactorHttpClient =
           reactor.netty.http.client.HttpClient.create()
               .secure(spec -> spec.sslContext(sslContext))
