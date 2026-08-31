@@ -126,9 +126,9 @@ public class AzureKeyVault {
    * javax.net.ssl.trustStore} JVM properties) is required because the Netty transport prefers its
    * own BoringSSL (netty-tcnative) engine when available, which does not consult those properties.
    *
-   * <p>The JDK SSL provider is pinned explicitly: the native BoringSSL engine, combined with Reactor
-   * Netty's native (io_uring) event loop on Linux, has been observed to stall HTTPS requests made
-   * by this client before they reach the server.
+   * <p>The JDK SSL provider is pinned explicitly: the native BoringSSL engine, combined with
+   * Reactor Netty's native (io_uring) event loop on Linux, has been observed to stall HTTPS
+   * requests made by this client before they reach the server.
    */
   private static HttpClient buildHttpClient(
       final long timeoutSeconds, final Optional<Path> trustCertificateOverride) {
