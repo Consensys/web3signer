@@ -15,13 +15,17 @@ package tech.pegasys.web3signer.dsl.azure;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 import tech.pegasys.web3signer.keystore.dsl.certificates.CertificateHelpers;
 import tech.pegasys.web3signer.keystore.dsl.certificates.SelfSignedCertificate;
+import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
@@ -94,6 +98,11 @@ public final class AzureKeyVaultEmulator {
   public static final String SECP_19_KEY_NAME = "SECP-19";
   public static final String SECP_20_TAGGED_KEY_NAME = "SECP-20-TAGGED";
 
+  // Tags every fixture below, so tests loading "everything" stay scoped even after bulk-load
+  // scale tests seed extra, differently-tagged keys into this same shared emulator instance.
+  public static final String FIXTURE_TAG_KEY = "FIXTURE_SET";
+  public static final String FIXTURE_TAG_VALUE = "core";
+
   // Values copied verbatim from the (now-removed) "Azure Key Vault BLS/SECP Test Keys" README
   // sections.
   private static final List<String> BLS_TEST_PRIVATE_KEYS =
@@ -136,6 +145,7 @@ public final class AzureKeyVaultEmulator {
   private final GenericContainer<?> container;
   private final TlsCertificateDefinition tlsCertificateDefinition;
   private final Path certificatePath;
+  private final KeyClient keyClient;
 
   private AzureKeyVaultEmulator() {
     try {
@@ -169,6 +179,14 @@ public final class AzureKeyVaultEmulator {
           "Starting Azure Key Vault emulator container ({})...", IMAGE.asCanonicalNameString());
       container.start();
       LOG.info("Azure Key Vault emulator listening at {}", getVaultUrl());
+
+      this.keyClient =
+          new KeyClientBuilder()
+              .vaultUrl(getVaultUrl())
+              .credential(emulatorTokenCredential())
+              .disableChallengeResourceVerification()
+              .httpClient(buildTrustingHttpClient(crtFile))
+              .buildClient();
 
       seedFixtures(crtFile);
     } catch (final Exception e) {
@@ -208,13 +226,6 @@ public final class AzureKeyVaultEmulator {
             .disableChallengeResourceVerification()
             .httpClient(trustingHttpClient)
             .buildClient();
-    final KeyClient keyClient =
-        new KeyClientBuilder()
-            .vaultUrl(getVaultUrl())
-            .credential(emulatorTokenCredential())
-            .disableChallengeResourceVerification()
-            .httpClient(trustingHttpClient)
-            .buildClient();
 
     // The emulator only echoes back the "enabled" secret attribute if the request explicitly
     // sets it; when omitted (e.g. via the bare setSecret(name, value) convenience overload) the
@@ -222,19 +233,57 @@ public final class AzureKeyVaultEmulator {
     // set it explicitly.
     secretClient.setSecret(
         new KeyVaultSecret(BLS_SECRET_NAME, String.join("\n", BLS_TEST_PRIVATE_KEYS))
-            .setProperties(new SecretProperties().setEnabled(true)));
+            .setProperties(
+                new SecretProperties()
+                    .setEnabled(true)
+                    .setTags(Map.of(FIXTURE_TAG_KEY, FIXTURE_TAG_VALUE))));
     secretClient.setSecret(
         new KeyVaultSecret(BLS_TAGGED_SECRET_NAME, BLS_TAGGED_PRIVATE_KEY)
-            .setProperties(new SecretProperties().setEnabled(true).setTags(Map.of("ENV", "TEST"))));
+            .setProperties(
+                new SecretProperties()
+                    .setEnabled(true)
+                    .setTags(Map.of("ENV", "TEST", FIXTURE_TAG_KEY, FIXTURE_TAG_VALUE))));
 
-    keyClient.importKey(SECP_18_KEY_NAME, toJsonWebKey(SECP_18_PRIVATE_KEY_HEX));
-    keyClient.importKey(SECP_19_KEY_NAME, toJsonWebKey(SECP_19_PRIVATE_KEY_HEX));
+    final ImportKeyOptions secp18Options =
+        new ImportKeyOptions(SECP_18_KEY_NAME, toJsonWebKey(SECP_18_PRIVATE_KEY_HEX));
+    secp18Options.setTags(Map.of(FIXTURE_TAG_KEY, FIXTURE_TAG_VALUE));
+    keyClient.importKey(secp18Options);
+    final ImportKeyOptions secp19Options =
+        new ImportKeyOptions(SECP_19_KEY_NAME, toJsonWebKey(SECP_19_PRIVATE_KEY_HEX));
+    secp19Options.setTags(Map.of(FIXTURE_TAG_KEY, FIXTURE_TAG_VALUE));
+    keyClient.importKey(secp19Options);
     final ImportKeyOptions taggedKeyOptions =
         new ImportKeyOptions(SECP_20_TAGGED_KEY_NAME, toJsonWebKey(SECP_20_PRIVATE_KEY_HEX));
-    taggedKeyOptions.setTags(Map.of("ENV", "TEST"));
+    taggedKeyOptions.setTags(Map.of("ENV", "TEST", FIXTURE_TAG_KEY, FIXTURE_TAG_VALUE));
     keyClient.importKey(taggedKeyOptions);
 
     LOG.info("Seeded Azure Key Vault emulator with BLS/SECP test fixtures");
+  }
+
+  /**
+   * Imports {@code count} extra SECP256K1 keys tagged with {@code tags}, for bulk-load scale
+   * tests. Use a tag distinct from {@link #FIXTURE_TAG_KEY}.
+   */
+  public void seedAdditionalSecpKeys(final int count, final Map<String, String> tags) {
+    for (int i = 0; i < count; i++) {
+      final ImportKeyOptions options =
+          new ImportKeyOptions(
+              "BULK-SECP-" + i, toJsonWebKey(EthPublicKeyUtils.generateK256KeyPair()));
+      options.setTags(tags);
+      keyClient.importKey(options);
+    }
+    LOG.info("Seeded {} additional SECP256K1 keys tagged {}", count, tags);
+  }
+
+  private static JsonWebKey toJsonWebKey(final KeyPair keyPair) {
+    final ECPrivateKey ecPrivateKey = (ECPrivateKey) keyPair.getPrivate();
+    final ECPublicKey ecPublicKey = (ECPublicKey) keyPair.getPublic();
+    return new JsonWebKey()
+        .setKeyType(KeyType.EC)
+        .setCurveName(KeyCurveName.P_256K)
+        .setD(Numeric.toBytesPadded(ecPrivateKey.getS(), 32))
+        .setX(Numeric.toBytesPadded(ecPublicKey.getW().getAffineX(), 32))
+        .setY(Numeric.toBytesPadded(ecPublicKey.getW().getAffineY(), 32));
   }
 
   private static JsonWebKey toJsonWebKey(final String privateKeyHex) {

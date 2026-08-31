@@ -33,6 +33,7 @@ import tech.pegasys.web3signer.signing.config.DefaultAzureKeyVaultParameters;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,11 +44,15 @@ import com.google.common.annotations.VisibleForTesting;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
+  private static final Logger LOG = LogManager.getLogger();
   private static final AzureKeyVaultEmulator EMULATOR = AzureKeyVaultEmulator.getInstance();
 
   @RegisterExtension
@@ -69,6 +74,11 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
    */
   static List<String> expectedBLSPubKeys() {
     return getBLSSecretsFromEmulator(emulatorOverrides()).stream()
+        .filter(
+            azureSecret ->
+                azureSecret.tags() != null
+                    && AzureKeyVaultEmulator.FIXTURE_TAG_VALUE.equals(
+                        azureSecret.tags().get(AzureKeyVaultEmulator.FIXTURE_TAG_KEY)))
         .flatMap(azureSecret -> azureSecret.values().stream())
         .map(
             secret ->
@@ -97,6 +107,11 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
    */
   static List<String> expectedSECPPubKeys() {
     return getSECPKeysFromEmulator(emulatorOverrides()).stream()
+        .filter(
+            azureKey ->
+                azureKey.tags() != null
+                    && AzureKeyVaultEmulator.FIXTURE_TAG_VALUE.equals(
+                        azureKey.tags().get(AzureKeyVaultEmulator.FIXTURE_TAG_KEY)))
         .map(AzureKeyVault.AzureKey::publicKeyHex)
         .toList();
   }
@@ -161,7 +176,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
             "unused",
             AzureKeyVaultEmulator.TENANT_ID,
             "unused",
-            Map.of(),
+            Map.of(AzureKeyVaultEmulator.FIXTURE_TAG_KEY, AzureKeyVaultEmulator.FIXTURE_TAG_VALUE),
             60,
             true,
             emulatorOverrides());
@@ -244,6 +259,62 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     assertThat(errorCount).isZero();
   }
 
+  /**
+   * Diagnostic: bulk-loads 500 SECP256K1 keys (own tag, so other tests here are unaffected) and
+   * logs elapsed time - {@code SecpAzureBulkLoader} creates a new {@code AzureKeyVault}/{@code
+   * HttpClient}/AAD token per key rather than caching per vault/credential set (unlike AWS'
+   * {@code CachedAwsKmsClientFactory}). Generous startup timeout keeps this a timing measurement,
+   * not a flaky gate.
+   */
+  @Test
+  void largeNumberOfSecpKeysCanBeBulkLoaded() {
+    final String tagKey = "BULK_LOAD_STRESS";
+    final String tagValue = "true";
+    final int keyCount = 500;
+    EMULATOR.seedAdditionalSecpKeys(keyCount, Map.of(tagKey, tagValue));
+
+    final AzureKeyVaultParameters azureParams =
+        new DefaultAzureKeyVaultParameters(
+            "unused",
+            "unused",
+            AzureKeyVaultEmulator.TENANT_ID,
+            "unused",
+            Map.of(tagKey, tagValue),
+            60,
+            true,
+            emulatorOverrides());
+
+    final SignerConfigurationBuilder configBuilder =
+        new SignerConfigurationBuilder()
+            .withMode(calculateMode(KeyType.SECP256K1))
+            .withAzureKeyVaultParameters(azureParams)
+            .withUseConfigFile(true)
+            .withOverriddenCA(EMULATOR.getTlsCertificateDefinition())
+            .withStartupTimeout(Duration.ofMinutes(5));
+
+    final long startNanos = System.nanoTime();
+    startSigner(configBuilder.build());
+    final Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+    LOG.info(
+        "Bulk-loaded {} Azure SECP256K1 keys in {} ms ({} ms/key)",
+        keyCount,
+        elapsed.toMillis(),
+        elapsed.toMillis() / (double) keyCount);
+
+    final Response healthcheckResponse = signer.healthcheck();
+    healthcheckResponse
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("status", equalTo("UP"));
+
+    final String jsonBody = healthcheckResponse.body().asString();
+    final int keysLoaded = getHealtcheckKeysLoaded(jsonBody, KEYS_CHECK_AZURE_BULK_LOADING);
+    final int errorCount = getHealthcheckErrorCount(jsonBody, KEYS_CHECK_AZURE_BULK_LOADING);
+    assertThat(errorCount).isZero();
+    assertThat(keysLoaded).isEqualTo(keyCount);
+  }
+
   @ParameterizedTest
   @EnumSource(KeyType.class)
   void invalidVaultParametersFailsToLoadKeys(final KeyType keyType) {
@@ -305,7 +376,9 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
             envPrefix + "XAZURE_AUTHORITY_HOST_OVERRIDE",
             MOCK_AUTHORITY.getAuthorityHostUrl(),
             envPrefix + "XAZURE_TRUST_CERTIFICATE_OVERRIDE",
-            EMULATOR.getTrustCertificatePath().toString());
+            EMULATOR.getTrustCertificatePath().toString(),
+            envPrefix + "AZURE_TAGS",
+            AzureKeyVaultEmulator.FIXTURE_TAG_KEY + "=" + AzureKeyVaultEmulator.FIXTURE_TAG_VALUE);
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
