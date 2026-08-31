@@ -88,8 +88,7 @@ public class AzureKeyVaultSignerTest {
             AZURE_DEFAULT_TIMEOUT);
 
     final Signer azureNonHashedDataSigner =
-        new AzureKeyVaultSignerFactory(new AzureKeyVaultFactory(), new AzureHttpClientFactory())
-            .createSigner(config);
+        new AzureKeyVaultSignerFactory(new AzureKeyVaultFactory()).createSigner(config);
     final BigInteger publicKey =
         EthPublicKeyUtils.ecPublicKeyToWeb3JPublicKey(azureNonHashedDataSigner.getPublicKey());
 

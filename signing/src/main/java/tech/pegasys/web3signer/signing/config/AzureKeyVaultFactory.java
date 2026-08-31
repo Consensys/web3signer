@@ -28,19 +28,12 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
 /**
- * Builds {@link AzureKeyVault} instances, one per distinct (credentials, vault, client-behaviour)
- * combination.
+ * Builds {@link AzureKeyVault} instances, caching one per distinct credentials/vault/behaviour
+ * combination. Building one is expensive (AAD login + new HTTP connection pool), and this is called
+ * once per loaded key/secret, so identical calls reuse the cached instance instead.
  *
- * <p>Each {@link AzureKeyVault} wraps an Azure AD {@code TokenCredential}, an HTTP client and Azure
- * Key Vault {@code SecretClient}/{@code KeyClient}. Building one is expensive (an AAD
- * client-credentials login plus a new HTTP connection pool) and this factory is invoked once per
- * loaded key/secret, so identical credential sets are cached rather than rebuilt on every call. The
- * bound keeps memory/connection use flat even if callers churn through many distinct credential
- * sets; the least-recently-used entry is simply evicted and, if needed again, rebuilt.
- *
- * <p>Cached {@link AzureKeyVault} instances hold no OS resources that require explicit release (the
- * Azure SDK clients are not {@link Closeable}), so eviction/{@link #close()} only need to drop
- * references, not close anything.
+ * <p>Cached instances hold no closeable resources, so eviction/{@link #close()} just drop
+ * references.
  */
 public class AzureKeyVaultFactory implements Closeable {
   private static final int CLIENT_CACHE_SIZE = 10;
@@ -85,8 +78,7 @@ public class AzureKeyVaultFactory implements Closeable {
             mode,
             httpClientTimeout,
             azureOverrides);
-    // getUnchecked is safe here: the loader (buildAzureKeyVault) never throws a checked
-    // exception, only unchecked ones from the Azure SDK, which getUnchecked propagates as-is.
+    // Safe: the loader only throws unchecked exceptions.
     return vaultCache.getUnchecked(key);
   }
 
@@ -122,8 +114,6 @@ public class AzureKeyVaultFactory implements Closeable {
 
   @Override
   public void close() {
-    // Cached AzureKeyVault instances hold no closeable resources (Azure SDK sync clients and
-    // TokenCredential are not Closeable); dropping the references is sufficient.
     vaultCache.invalidateAll();
 
     final ExecutorService executorService = executorServiceCache.get();

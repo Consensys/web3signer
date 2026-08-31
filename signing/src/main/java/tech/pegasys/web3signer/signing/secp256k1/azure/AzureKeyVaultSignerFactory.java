@@ -38,13 +38,9 @@ public class AzureKeyVaultSignerFactory {
   private static final Set<String> SUPPORTED_CURVE_NAMES = Set.of(DEPRECATED_CURVE_NAME, "P-256K");
   private static final Logger LOG = LogManager.getLogger();
   private final AzureKeyVaultFactory azureKeyVaultFactory;
-  private final AzureHttpClientFactory azureHttpClientFactory;
 
-  public AzureKeyVaultSignerFactory(
-      final AzureKeyVaultFactory azureKeyVaultFactory,
-      final AzureHttpClientFactory azureHttpClientFactory) {
+  public AzureKeyVaultSignerFactory(final AzureKeyVaultFactory azureKeyVaultFactory) {
     this.azureKeyVaultFactory = azureKeyVaultFactory;
-    this.azureHttpClientFactory = azureHttpClientFactory;
   }
 
   public Signer createSigner(final AzureConfig config) {
@@ -84,10 +80,7 @@ public class AzureKeyVaultSignerFactory {
         Bytes.concatenate(Bytes.wrap(jsonWebKey.getX()), Bytes.wrap(jsonWebKey.getY()));
     final boolean useDeprecatedCurveName = DEPRECATED_CURVE_NAME.equals(curveName);
 
-    // Pin the exact key version resolved above for the subsequent raw-REST sign call. An empty
-    // "latest" placeholder relies on Azure's own resolution of an empty version path segment,
-    // which real Azure tolerates but is not guaranteed elsewhere (e.g. Key Vault emulators used
-    // for testing); pinning also avoids a race against a key rotation between fetch and sign.
+    // Pin the resolved key version so a rotation between fetch and sign can't change it.
     final AzureConfig resolvedConfig =
         config.getKeyVersion().isEmpty()
             ? new AzureConfig(
@@ -102,6 +95,6 @@ public class AzureKeyVaultSignerFactory {
             : config;
 
     return new AzureKeyVaultSigner(
-        resolvedConfig, rawPublicKey, true, useDeprecatedCurveName, vault, azureHttpClientFactory);
+        resolvedConfig, rawPublicKey, true, useDeprecatedCurveName, vault);
   }
 }

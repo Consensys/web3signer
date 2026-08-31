@@ -17,7 +17,6 @@ import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.net.http.HttpRequest;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyStore;
@@ -38,9 +37,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.net.ssl.TrustManagerFactory;
 
-import com.azure.core.credential.AccessToken;
 import com.azure.core.credential.TokenCredential;
-import com.azure.core.credential.TokenRequestContext;
 import com.azure.core.exception.ResourceNotFoundException;
 import com.azure.core.http.HttpClient;
 import com.azure.core.http.netty.NettyAsyncHttpClientBuilder;
@@ -50,10 +47,8 @@ import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.identity.ManagedIdentityCredentialBuilder;
 import com.azure.security.keyvault.keys.KeyClient;
 import com.azure.security.keyvault.keys.KeyClientBuilder;
-import com.azure.security.keyvault.keys.KeyServiceVersion;
 import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
 import com.azure.security.keyvault.keys.cryptography.CryptographyClientBuilder;
-import com.azure.security.keyvault.keys.cryptography.models.SignatureAlgorithm;
 import com.azure.security.keyvault.keys.models.KeyProperties;
 import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import com.azure.security.keyvault.secrets.SecretClient;
@@ -63,7 +58,6 @@ import com.azure.security.keyvault.secrets.models.SecretProperties;
 import com.google.common.annotations.VisibleForTesting;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
-import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -75,12 +69,6 @@ public class AzureKeyVault {
   private final SecretClient secretClient;
   private final KeyClient keyClient;
   private final HttpClient httpClient;
-  private final String vaultUrl;
-  private static final List<String> SCOPE = List.of("https://vault.azure.net/.default");
-  private final TokenRequestContext tokenRequestContext =
-      new TokenRequestContext().setScopes(SCOPE);
-
-  private Optional<AccessToken> maybeToken = Optional.empty();
 
   public static AzureKeyVault createUsingClientSecretCredentials(
       final String clientId,
@@ -175,7 +163,6 @@ public class AzureKeyVault {
   private AzureKeyVault(
       final TokenCredential tokenCredential, final String vaultUrl, final HttpClient httpClient) {
     this.tokenCredential = tokenCredential;
-    this.vaultUrl = vaultUrl;
     this.httpClient = httpClient;
 
     // The challenge-response resource is only guaranteed to match *.vault.azure.net; the
@@ -214,36 +201,6 @@ public class AzureKeyVault {
         .credential(tokenCredential)
         .keyIdentifier(keyId)
         .buildClient();
-  }
-
-  public HttpRequest getRemoteSigningHttpRequest(
-      final byte[] data,
-      final SignatureAlgorithm signingAlgo,
-      final String azureKeyName,
-      final String azureKeyVersion) {
-
-    final String apiVersion = KeyServiceVersion.getLatest().getVersion();
-
-    final JsonObject jsonBody = new JsonObject();
-    jsonBody.put("alg", signingAlgo);
-    jsonBody.put("value", Bytes.of(data).toBase64String());
-
-    final String uriString = constructAzureSignApiUri(azureKeyName, azureKeyVersion, apiVersion);
-
-    final HttpRequest httpRequest =
-        HttpRequest.newBuilder(URI.create(uriString))
-            .header("Content-Type", "application/json")
-            .header("Authorization", "Bearer " + getOrRequestNewToken())
-            .POST(HttpRequest.BodyPublishers.ofString(jsonBody.toString()))
-            .build();
-
-    return httpRequest;
-  }
-
-  private String constructAzureSignApiUri(
-      final String keyName, final String keyVersion, final String apiVersion) {
-    return String.format(
-        "%s/keys/%s/%s/sign?api-version=%s", vaultUrl, keyName, keyVersion, apiVersion);
   }
 
   public static String constructAzureKeyVaultUrl(final String keyVaultName) {
@@ -420,14 +377,6 @@ public class AzureKeyVault {
 
     return keyProperties.getTags() != null // return false if remote secret doesn't have any tags
         && keyProperties.getTags().entrySet().containsAll(tags.entrySet());
-  }
-
-  private String getOrRequestNewToken() {
-    if (maybeToken.isEmpty() || maybeToken.get().isExpired()) {
-      maybeToken = Optional.of(tokenCredential.getTokenSync(tokenRequestContext));
-    }
-
-    return maybeToken.get().getToken();
   }
 
   @VisibleForTesting
