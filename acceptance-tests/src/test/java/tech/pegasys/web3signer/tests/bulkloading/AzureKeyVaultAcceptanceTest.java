@@ -43,9 +43,9 @@ import java.util.concurrent.Executors;
 import com.google.common.annotations.VisibleForTesting;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -262,9 +262,9 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   /**
    * Diagnostic: bulk-loads 500 SECP256K1 keys (own tag, so other tests here are unaffected) and
    * logs elapsed time - {@code SecpAzureBulkLoader} creates a new {@code AzureKeyVault}/{@code
-   * HttpClient}/AAD token per key rather than caching per vault/credential set (unlike AWS'
-   * {@code CachedAwsKmsClientFactory}). Generous startup timeout keeps this a timing measurement,
-   * not a flaky gate.
+   * HttpClient}/AAD token per key rather than caching per vault/credential set (unlike AWS' {@code
+   * CachedAwsKmsClientFactory}). Generous startup timeout keeps this a timing measurement, not a
+   * flaky gate.
    */
   @Test
   void largeNumberOfSecpKeysCanBeBulkLoaded() {

@@ -261,8 +261,8 @@ public final class AzureKeyVaultEmulator {
   }
 
   /**
-   * Imports {@code count} extra SECP256K1 keys tagged with {@code tags}, for bulk-load scale
-   * tests. Use a tag distinct from {@link #FIXTURE_TAG_KEY}.
+   * Imports {@code count} extra SECP256K1 keys tagged with {@code tags}, for bulk-load scale tests.
+   * Use a tag distinct from {@link #FIXTURE_TAG_KEY}.
    */
   public void seedAdditionalSecpKeys(final int count, final Map<String, String> tags) {
     for (int i = 0; i < count; i++) {
