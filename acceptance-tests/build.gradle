@@ -175,6 +175,9 @@ tasks.register('acceptanceTest', Test) {
   systemProperty 'besuInstallDir', layout.buildDirectory.dir("besu").get().asFile.absolutePath
   systemProperty 'vaultBinary', vaultBinary()
   systemProperty 'azureKeyVaultEmulatorImage', azureKeyVaultEmulatorImage
+  // netty#17049: io_uring multishot poll_add intermittently stalls HTTP responses on Linux;
+  // disable it for the Azure HTTP clients used by the test JVM (emulator seeding) and signer.
+  systemProperty 'io.netty.iouring.pollAddMultishotEnabled', 'false'
   // embedded pg initdb needs following
   environment "LC_CTYPE", "en_US.UTF-8"
   environment "LC_ALL", "en_US.UTF-8"
