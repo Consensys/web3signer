@@ -15,6 +15,8 @@ package tech.pegasys.web3signer.dsl.azure;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
 
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 
@@ -77,6 +79,21 @@ public final class MockAzureAuthorityExtension implements BeforeAllCallback, Aft
   @Override
   public void afterAll(final ExtensionContext context) throws Exception {
     wireMock.afterAll(context);
+  }
+
+  public void rejectCredentials(final String clientId, final String clientSecret) {
+    wireMock.stubFor(
+        post(anyUrl())
+            .atPriority(1)
+            .withRequestBody(containing("client_id=" + clientId))
+            .withRequestBody(containing("client_secret=" + clientSecret))
+            .willReturn(
+                aResponse()
+                    .withStatus(401)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        "{\"error\":\"invalid_client\","
+                            + "\"error_description\":\"Invalid client credentials\"}")));
   }
 
   public String getAuthorityHostUrl() {

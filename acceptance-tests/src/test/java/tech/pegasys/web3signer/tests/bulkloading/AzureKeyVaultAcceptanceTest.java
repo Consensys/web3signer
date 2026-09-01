@@ -260,11 +260,9 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   }
 
   /**
-   * Diagnostic: bulk-loads 500 SECP256K1 keys (own tag, so other tests here are unaffected) and
-   * logs elapsed time - {@code SecpAzureBulkLoader} creates a new {@code AzureKeyVault}/{@code
-   * HttpClient}/AAD token per key rather than caching per vault/credential set (unlike AWS' {@code
-   * CachedAwsKmsClientFactory}). Generous startup timeout keeps this a timing measurement, not a
-   * flaky gate.
+   * Diagnostic: bulk-loads 500 SECP256K1 keys with an isolated tag and logs elapsed time. The
+   * cached {@code AzureKeyVault} reuses its HTTP client, connection pool, and AAD token across all
+   * keys. The generous startup timeout keeps this a timing measurement rather than a flaky gate.
    */
   @Test
   void largeNumberOfSecpKeysCanBeBulkLoaded() {

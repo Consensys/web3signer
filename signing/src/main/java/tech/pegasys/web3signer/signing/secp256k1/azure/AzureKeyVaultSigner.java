@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.azure;
 
-import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
@@ -30,26 +29,23 @@ public class AzureKeyVaultSigner implements Signer {
 
   public static final String INACCESSIBLE_KEY_ERROR = "Failed to authenticate to vault.";
 
-  private final AzureConfig config;
   private final ECPublicKey publicKey;
   private final SignatureAlgorithm signingAlgo;
   private final boolean needsToHash; // Apply Hash.sha3(data) before signing
-  private final AzureKeyVault vault;
+  private final CryptographyClient cryptoClient;
 
   AzureKeyVaultSigner(
-      final AzureConfig config,
       final Bytes publicKey,
       final boolean needsToHash,
       final boolean useDeprecatedSignatureAlgorithm,
-      final AzureKeyVault azureKeyVault) {
-    this.config = config;
+      final CryptographyClient cryptoClient) {
     this.publicKey = EthPublicKeyUtils.bytesToECPublicKey(publicKey);
     this.needsToHash = needsToHash;
     this.signingAlgo =
         useDeprecatedSignatureAlgorithm
             ? SignatureAlgorithm.fromString("ECDSA256")
             : SignatureAlgorithm.ES256K;
-    this.vault = azureKeyVault;
+    this.cryptoClient = cryptoClient;
   }
 
   @Override
@@ -61,8 +57,6 @@ public class AzureKeyVaultSigner implements Signer {
   public Signature sign(final byte[] data, final boolean applyHash) {
     final byte[] dataToSign = applyHash ? Hash.sha3(data) : data;
 
-    final CryptographyClient cryptoClient =
-        vault.fetchKey(config.getKeyName(), config.getKeyVersion());
     final SignResult result = cryptoClient.sign(signingAlgo, dataToSign);
 
     final byte[] signature = result.getSignature();

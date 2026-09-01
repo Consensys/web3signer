@@ -80,21 +80,6 @@ public class AzureKeyVaultSignerFactory {
         Bytes.concatenate(Bytes.wrap(jsonWebKey.getX()), Bytes.wrap(jsonWebKey.getY()));
     final boolean useDeprecatedCurveName = DEPRECATED_CURVE_NAME.equals(curveName);
 
-    // Pin the resolved key version so a rotation between fetch and sign can't change it.
-    final AzureConfig resolvedConfig =
-        config.getKeyVersion().isEmpty()
-            ? new AzureConfig(
-                config.getKeyVaultName(),
-                config.getKeyName(),
-                cryptoClient.getKey().getProperties().getVersion(),
-                config.getClientId(),
-                config.getClientSecret(),
-                config.getTenantId(),
-                config.getTimeout(),
-                config.getAzureOverrides())
-            : config;
-
-    return new AzureKeyVaultSigner(
-        resolvedConfig, rawPublicKey, true, useDeprecatedCurveName, vault);
+    return new AzureKeyVaultSigner(rawPublicKey, true, useDeprecatedCurveName, cryptoClient);
   }
 }

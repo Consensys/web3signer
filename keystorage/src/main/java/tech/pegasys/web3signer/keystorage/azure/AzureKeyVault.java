@@ -78,11 +78,7 @@ public class AzureKeyVault {
       final ExecutorService executorService,
       final long timeout,
       final AzureOverrides azureOverrides) {
-    final String vaultUrl =
-        azureOverrides
-            .endpointOverride()
-            .map(URI::toString)
-            .orElseGet(() -> constructAzureKeyVaultUrl(vaultName));
+    final String vaultUrl = resolveVaultUrl(vaultName, azureOverrides);
     // Shared by the credential (MSAL token requests) and the vault clients below: Azure Identity
     // otherwise builds its own separate default HTTP client (its own connection pool/event
     // loop) for the token request if none is supplied, independent of the one used for the
@@ -95,14 +91,19 @@ public class AzureKeyVault {
             .clientSecret(clientSecret)
             .tenantId(tenantId)
             .executorService(executorService)
-            .httpClient(httpClient)
-            // The token endpoint is always the one explicitly configured below (or the real
-            // default); no need to re-validate it against Microsoft's known-authority list.
-            .disableInstanceDiscovery();
+            .httpClient(httpClient);
     azureOverrides
         .authorityHostOverride()
-        .ifPresent(uri -> credentialBuilder.authorityHost(uri.toString()));
-    return new AzureKeyVault(credentialBuilder.build(), vaultUrl, httpClient);
+        .ifPresent(
+            uri -> {
+              credentialBuilder.authorityHost(uri.toString());
+              credentialBuilder.disableInstanceDiscovery();
+            });
+    return new AzureKeyVault(
+        credentialBuilder.build(),
+        vaultUrl,
+        httpClient,
+        azureOverrides.endpointOverride().isPresent());
   }
 
   public static AzureKeyVault createUsingManagedIdentity(
@@ -115,8 +116,17 @@ public class AzureKeyVault {
     clientId.ifPresent(managedIdentityCredentialBuilder::clientId);
     return new AzureKeyVault(
         managedIdentityCredentialBuilder.build(),
-        constructAzureKeyVaultUrl(vaultName),
-        buildHttpClient(timeout, azureOverrides.trustCertificateOverride()));
+        resolveVaultUrl(vaultName, azureOverrides),
+        buildHttpClient(timeout, azureOverrides.trustCertificateOverride()),
+        azureOverrides.endpointOverride().isPresent());
+  }
+
+  private static String resolveVaultUrl(
+      final String vaultName, final AzureOverrides azureOverrides) {
+    return azureOverrides
+        .endpointOverride()
+        .map(URI::toString)
+        .orElseGet(() -> constructAzureKeyVaultUrl(vaultName));
   }
 
   /**
@@ -161,27 +171,29 @@ public class AzureKeyVault {
   }
 
   private AzureKeyVault(
-      final TokenCredential tokenCredential, final String vaultUrl, final HttpClient httpClient) {
+      final TokenCredential tokenCredential,
+      final String vaultUrl,
+      final HttpClient httpClient,
+      final boolean endpointOverridden) {
     this.tokenCredential = tokenCredential;
     this.httpClient = httpClient;
 
-    // The challenge-response resource is only guaranteed to match *.vault.azure.net; the
-    // vaultUrl above is already explicitly configured and trusted by the caller, so this check
-    // adds no safety here regardless of which endpoint it resolves to.
-    secretClient =
+    final SecretClientBuilder secretClientBuilder =
         new SecretClientBuilder()
             .httpClient(httpClient)
             .vaultUrl(vaultUrl)
-            .credential(tokenCredential)
-            .disableChallengeResourceVerification()
-            .buildClient();
-    keyClient =
+            .credential(tokenCredential);
+    final KeyClientBuilder keyClientBuilder =
         new KeyClientBuilder()
             .httpClient(httpClient)
             .vaultUrl(vaultUrl)
-            .credential(tokenCredential)
-            .disableChallengeResourceVerification()
-            .buildClient();
+            .credential(tokenCredential);
+    if (endpointOverridden) {
+      secretClientBuilder.disableChallengeResourceVerification();
+      keyClientBuilder.disableChallengeResourceVerification();
+    }
+    secretClient = secretClientBuilder.buildClient();
+    keyClient = keyClientBuilder.buildClient();
   }
 
   public Optional<String> fetchSecret(final String secretName) {
