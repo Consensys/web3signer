@@ -7,6 +7,7 @@
 
 ### Bugs Fixed
 - Azure Key Vault SECP256K1 signing now uses one version-resolved official Azure SDK `CryptographyClient` per key instead of a REST workaround, now that the upstream SDK bug requiring it is fixed.
+- Netty is upgraded to 4.2.17.Final to prevent io_uring read stalls on reused connections.
 
 ---
 ## 26.7.0

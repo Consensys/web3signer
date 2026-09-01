@@ -75,9 +75,6 @@ public class Web3SignerProcessRunner extends Web3SignerRunner {
     }
 
     javaOpts.add(createTrustStoreOptions());
-    // netty#17049: io_uring multishot poll_add intermittently stalls HTTP responses on Linux;
-    // disable it for the signer subprocess's Azure HTTP client.
-    javaOpts.add("-Dio.netty.iouring.pollAddMultishotEnabled=false");
 
     processBuilder.environment().put("JAVA_OPTS", javaOpts.toString());
 
