@@ -2,12 +2,16 @@
 
 ## Upcoming Release
 ### Features Added
-- Azure Key Vault acceptance tests now run against a local `ghcr.io/usmansaleem/azure-keyvault-emulator` Testcontainers instance instead of live Azure, requiring no external credentials or an Azure subscription.
-- Azure Key Vault connections are now cached per credential/vault set instead of rebuilt on every key load, reducing bulk-load time.
+- Azure Key Vault connections are now cached per credential/vault set instead of rebuilt on every key load, reducing bulk-load time. [#1222][PR_1222]
 
 ### Bugs Fixed
-- Azure Key Vault SECP256K1 signing now uses one version-resolved official Azure SDK `CryptographyClient` per key instead of a REST workaround, now that the upstream SDK bug requiring it is fixed.
-- Netty is upgraded to 4.2.17.Final to prevent io_uring read stalls on reused connections.
+- Azure Key Vault SECP256K1 signing now uses one official Azure SDK `CryptographyClient` per key instead of REST workaround. [#1222][PR_1222]
+- Netty is upgraded to `4.2.17.Final` to prevent io_uring read stalls on reused connections.[#1222][PR_1222]
+
+### CI/Build Enhancements
+- Azure Key Vault acceptance tests now run against local Azure emulator instance instead of live Azure.
+
+[PR_1222]: https://github.com/Consensys-Incorporated/web3signer/pull/1222/changes
 
 ---
 ## 26.7.0
