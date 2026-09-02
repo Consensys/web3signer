@@ -37,6 +37,10 @@ public interface AzureKeyVaultParameters {
   /**
    * Experimental Azure client overrides (endpoint, authority host, trust certificate); see {@link
    * AzureOverrides}.
+   *
+   * @return configured overrides, or {@link AzureOverrides#NONE} by default
    */
-  AzureOverrides getAzureOverrides();
+  default AzureOverrides getAzureOverrides() {
+    return AzureOverrides.NONE;
+  }
 }
