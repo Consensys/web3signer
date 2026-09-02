@@ -69,6 +69,7 @@ public class AzureKeyVault {
   private final SecretClient secretClient;
   private final KeyClient keyClient;
   private final HttpClient httpClient;
+  private final boolean endpointOverridden;
 
   public static AzureKeyVault createUsingClientSecretCredentials(
       final String clientId,
@@ -177,6 +178,7 @@ public class AzureKeyVault {
       final boolean endpointOverridden) {
     this.tokenCredential = tokenCredential;
     this.httpClient = httpClient;
+    this.endpointOverridden = endpointOverridden;
 
     final SecretClientBuilder secretClientBuilder =
         new SecretClientBuilder()
@@ -208,11 +210,15 @@ public class AzureKeyVault {
     final KeyVaultKey key = keyClient.getKey(keyName, keyVersion);
     final String keyId = key.getId();
 
-    return new CryptographyClientBuilder()
-        .httpClient(httpClient)
-        .credential(tokenCredential)
-        .keyIdentifier(keyId)
-        .buildClient();
+    final CryptographyClientBuilder cryptographyClientBuilder =
+        new CryptographyClientBuilder()
+            .httpClient(httpClient)
+            .credential(tokenCredential)
+            .keyIdentifier(keyId);
+    if (endpointOverridden) {
+      cryptographyClientBuilder.disableChallengeResourceVerification();
+    }
+    return cryptographyClientBuilder.buildClient();
   }
 
   public static String constructAzureKeyVaultUrl(final String keyVaultName) {
