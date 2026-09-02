@@ -179,6 +179,11 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Response response = signer.eth1Sign(azureKey.publicKeyHex(), DATA);
     final Bytes signature = verifyAndGetSignatureResponse(response);
     verifySignature(signature, azureKey.publicKeyHex());
+
+    final Bytes digest = Bytes.wrap(Hash.sha3(DATA.toArray()));
+    final Response digestResponse = signer.eth1Sign(azureKey.publicKeyHex(), digest, false);
+    verifyDigestSignature(
+        verifyAndGetSignatureResponse(digestResponse), digest, azureKey.publicKeyHex());
   }
 
   @Test
