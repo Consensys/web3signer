@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.restassured.http.ContentType;
@@ -49,7 +50,9 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   private static final Logger LOG = LogManager.getLogger();
@@ -164,9 +167,10 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     }
   }
 
-  @ParameterizedTest
-  @EnumSource(KeyType.class)
-  void ensureSecretsInKeyVaultAreLoadedAndReportedViaPublicKeysApi(final KeyType keyType) {
+  @ParameterizedTest(name = "{index} - {0} useConfigFile={1}")
+  @MethodSource("keyTypeAndConfigFileCombos")
+  void ensureSecretsInKeyVaultAreLoadedAndReportedViaPublicKeysApi(
+      final KeyType keyType, final boolean useConfigFile) {
     final List<String> expectedPubKeys =
         keyType == KeyType.BLS ? expectedBLSPubKeys() : expectedSECPPubKeys();
 
@@ -185,7 +189,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder()
             .withMode(calculateMode(keyType))
             .withAzureKeyVaultParameters(azureParams)
-            .withUseConfigFile(true)
+            .withUseConfigFile(useConfigFile)
             .withOverriddenCA(EMULATOR.getTlsCertificateDefinition());
 
     startSigner(configBuilder.build());
@@ -207,6 +211,14 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     final String jsonBody = healthcheckResponse.body().asString();
     final int keysLoaded = getHealtcheckKeysLoaded(jsonBody, KEYS_CHECK_AZURE_BULK_LOADING);
     assertThat(keysLoaded).isEqualTo(expectedPubKeys.size());
+  }
+
+  static Stream<Arguments> keyTypeAndConfigFileCombos() {
+    return Stream.of(
+        Arguments.of(KeyType.BLS, true),
+        Arguments.of(KeyType.BLS, false),
+        Arguments.of(KeyType.SECP256K1, true),
+        Arguments.of(KeyType.SECP256K1, false));
   }
 
   @ParameterizedTest(name = "{index} - KeyType: {0}")
