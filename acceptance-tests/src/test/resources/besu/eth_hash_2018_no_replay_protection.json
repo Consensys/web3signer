@@ -5,16 +5,18 @@
     "daoForkBlock": 0,
     "eip150Block": 0,
     "contractSizeLimit": 2147483647,
-    "ethash": {
-      "fixeddifficulty": 100
+    "qbft": {
+      "blockperiodseconds": 1,
+      "epochlength": 30000,
+      "requesttimeoutseconds": 5
     }
   },
-  "nonce": "0x42",
+  "nonce": "0x0",
   "timestamp": "0x0",
-  "extraData": "0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa",
+  "extraData": "0xf83aa00000000000000000000000000000000000000000000000000000000000000000d594627306090abab3a6e1400e9345bc60c78a8bef57c080c0",
   "gasLimit": "0x1fffffffffffff",
-  "difficulty": "0x10000",
-  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "difficulty": "0x1",
+  "mixHash": "0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365",
   "coinbase": "0x0000000000000000000000000000000000000000",
   "alloc": {
     "fe3b557e8fb62b89f4916b721be55ceb828dbd73": {
