@@ -174,7 +174,8 @@ public final class AzureKeyVaultEmulator {
               .withEnv(
                   "ASPNETCORE_Kestrel__Certificates__Default__Path", "/app/.certs/emulator.pfx")
               .withEnv("AUTH__TENANTID", TENANT_ID)
-              .waitingFor(Wait.forListeningPort());
+              .waitingFor(
+                  Wait.forHttps("/").forPort(EMULATOR_PORT).forStatusCode(200).allowInsecure());
       LOG.info(
           "Starting Azure Key Vault emulator container ({})...", IMAGE.asCanonicalNameString());
       container.start();
