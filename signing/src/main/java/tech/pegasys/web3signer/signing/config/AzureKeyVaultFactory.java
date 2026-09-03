@@ -142,5 +142,26 @@ public class AzureKeyVaultFactory implements Closeable {
       String tenantId,
       AzureAuthenticationMode mode,
       long httpClientTimeout,
-      AzureOverrides azureOverrides) {}
+      AzureOverrides azureOverrides) {
+
+    @Override
+    public String toString() {
+      return "AzureKeyVaultKey["
+          + "clientId="
+          + clientId
+          + ", clientSecret="
+          + (clientSecret != null ? "***" : "null")
+          + ", keyVaultName="
+          + keyVaultName
+          + ", tenantId="
+          + tenantId
+          + ", mode="
+          + mode
+          + ", httpClientTimeout="
+          + httpClientTimeout
+          + ", azureOverrides="
+          + azureOverrides
+          + ']';
+    }
+  }
 }

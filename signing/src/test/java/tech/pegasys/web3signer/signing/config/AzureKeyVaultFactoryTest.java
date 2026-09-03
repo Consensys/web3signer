@@ -223,4 +223,34 @@ class AzureKeyVaultFactoryTest {
     azureKeyVaultFactory.close();
     assertThat(azureKeyVaultFactory.getVaultCache().size()).isEqualTo(0);
   }
+
+  @Test
+  void azureKeyVaultKeyToStringMasksClientSecret() {
+    final AzureKeyVaultFactory.AzureKeyVaultKey keyWithSecret =
+        new AzureKeyVaultFactory.AzureKeyVaultKey(
+            "myClientId",
+            "superSecretValue",
+            "myVault",
+            "myTenantId",
+            AzureAuthenticationMode.CLIENT_SECRET,
+            DEFAULT_AZURE_TIMEOUT,
+            AzureOverrides.NONE);
+    assertThat(keyWithSecret.toString())
+        .contains("clientId=myClientId")
+        .contains("clientSecret=***")
+        .doesNotContain("superSecretValue")
+        .contains("keyVaultName=myVault")
+        .contains("tenantId=myTenantId");
+
+    final AzureKeyVaultFactory.AzureKeyVaultKey keyWithNullSecret =
+        new AzureKeyVaultFactory.AzureKeyVaultKey(
+            "myClientId",
+            null,
+            "myVault",
+            "myTenantId",
+            AzureAuthenticationMode.SYSTEM_ASSIGNED_MANAGED_IDENTITY,
+            DEFAULT_AZURE_TIMEOUT,
+            AzureOverrides.NONE);
+    assertThat(keyWithNullSecret.toString()).contains("clientSecret=null");
+  }
 }
