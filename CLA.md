@@ -12,7 +12,8 @@ Individual Contributor License Agreement.
 3. After creating your first pull request, you will see a merge
    pre-requisite requiring to you read and sign the CLA.
 
-If you have any questions, you can reach us on [Gitter].
+If you have any questions, you can reach us on [GitHub Discussions].
 
 [GitHub]: https://github.com/
+[GitHub Discussions]: https://github.com/Consensys-Incorporated/web3signer/discussions
 [the current version of the CLA]: https://gist.github.com/rojotek/978b48a5e8b68836856a8961d6887992
