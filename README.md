@@ -9,13 +9,13 @@ Web3Signer issues are tracked in GitHub.
 See our [contribution guidelines](CONTRIBUTING.md) for more detail on searching and creating issues.
 
 ## API
-* [API Documentation](https://consensys.github.io/web3signer/)
+* [API Documentation](https://consensys-incorporated.github.io/web3signer/)
 
 ## Users
 * [User documentation](https://docs.web3signer.consensys.net/)
 
-## Chat
-* [Discord server](https://discord.gg/KMh2Mjh)
+## Discussions
+* [GitHub Discussions](https://github.com/Consensys-Incorporated/web3signer/discussions)
 
 ## Developers
 * [Contribution Guidelines](CONTRIBUTING.md)

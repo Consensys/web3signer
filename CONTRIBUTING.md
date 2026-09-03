@@ -36,7 +36,7 @@ By participating, you are expected to uphold this code. Please report unacceptab
 > **Note:** Please don't file an issue to ask a question.  You'll get faster results by using the resources below.
 
 * [Web3Signer documentation]
-* [Discord]
+* [GitHub Discussions]
 
 ## How To Contribute
 ### Reporting Bugs
@@ -150,7 +150,7 @@ This facilitates social contribution, easy testing, and peer review.
 
 To contribute changes, use the following workflow:
 
-1. [**Fork the repository**](https://github.com/ConsenSys/web3signer/fork).
+1. [**Fork the repository**](https://github.com/Consensys-Incorporated/web3signer/fork).
 1. **Clone your fork** to your computer.
 1. **Create a topic branch** and name it appropriately.
 Starting the branch name with the issue number is a good practice and a reminder to fix only one issue in a 
@@ -243,8 +243,8 @@ These are not strictly enforced during the build, but should be adhered to and c
 | [`needs engineering approval`][search-label-needs-engineering-approval] | Pull requests which need to be approved from a technical person, mainly documentation PRs. |
 
 [private-quorum@consensys.net]: mailto:private-quorum@consensys.net
-[Discord]: https://discord.gg/KMh2Mjh
-[GitHub]: https://github.com/ConsenSys/web3signer
+[GitHub Discussions]: https://github.com/Consensys-Incorporated/web3signer/discussions
+[GitHub]: https://github.com/Consensys-Incorporated/web3signer
 [Web3Signer documentation]: https://docs.web3signer.consensys.net/en/latest/
 [CLA.md]: /CLA.md
 [MkDocs]: https://www.mkdocs.org/
