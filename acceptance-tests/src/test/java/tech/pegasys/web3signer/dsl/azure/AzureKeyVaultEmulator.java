@@ -28,7 +28,6 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.net.ssl.TrustManagerFactory;
@@ -289,15 +288,7 @@ public final class AzureKeyVaultEmulator {
 
   private static JsonWebKey toJsonWebKey(final String privateKeyHex) {
     final ECKeyPair ecKeyPair = ECKeyPair.create(Numeric.toBigInt(privateKeyHex));
-    final byte[] publicKeyXY = Numeric.toBytesPadded(ecKeyPair.getPublicKey(), 64);
-    final byte[] x = Arrays.copyOfRange(publicKeyXY, 0, 32);
-    final byte[] y = Arrays.copyOfRange(publicKeyXY, 32, 64);
-    return new JsonWebKey()
-        .setKeyType(KeyType.EC)
-        .setCurveName(KeyCurveName.P_256K)
-        .setD(Numeric.toBytesPadded(ecKeyPair.getPrivateKey(), 32))
-        .setX(x)
-        .setY(y);
+    return toJsonWebKey(EthPublicKeyUtils.web3JECKeypairToJavaKeyPair(ecKeyPair));
   }
 
   /**
