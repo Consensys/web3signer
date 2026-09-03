@@ -2,6 +2,7 @@
 
 ## Upcoming Release
 ### Features Added
+- Updated Glamsterdam (ePBS) signing support to a fork-versioned request format, matching [remote-signing-api#28](https://github.com/ethereum/remote-signing-api/pull/28).
 
 ### Bugs Fixed
 

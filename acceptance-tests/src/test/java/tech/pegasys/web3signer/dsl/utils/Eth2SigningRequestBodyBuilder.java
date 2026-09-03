@@ -23,6 +23,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoRev
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncAggregatorSelectionData;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncCommitteeMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ValidatorRegistration;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.VersionedRequest;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.AttestationData;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.BeaconBlock;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.VoluntaryExit;
@@ -51,11 +52,11 @@ public final class Eth2SigningRequestBodyBuilder {
   private SyncAggregatorSelectionData syncAggregatorSelectionData;
   private ContributionAndProof contributionAndProof;
   private ValidatorRegistration validatorRegistration;
-  private ExecutionPayloadBid executionPayloadBid;
-  private ExecutionPayloadEnvelope executionPayloadEnvelope;
-  private PayloadAttestationData payloadAttestationMessage;
-  private ProposerPreferences proposerPreferences;
-  private BuilderRequestAuth builderRequestAuth;
+  private VersionedRequest<ExecutionPayloadBid> executionPayloadBid;
+  private VersionedRequest<ExecutionPayloadEnvelope> executionPayloadEnvelope;
+  private VersionedRequest<PayloadAttestationData> payloadAttestationMessage;
+  private VersionedRequest<ProposerPreferences> proposerPreferences;
+  private VersionedRequest<BuilderRequestAuth> builderRequestAuth;
 
   private Eth2SigningRequestBodyBuilder() {}
 
@@ -144,31 +145,31 @@ public final class Eth2SigningRequestBodyBuilder {
   }
 
   public Eth2SigningRequestBodyBuilder withExecutionPayloadBid(
-      ExecutionPayloadBid executionPayloadBid) {
+      VersionedRequest<ExecutionPayloadBid> executionPayloadBid) {
     this.executionPayloadBid = executionPayloadBid;
     return this;
   }
 
   public Eth2SigningRequestBodyBuilder withExecutionPayloadEnvelope(
-      ExecutionPayloadEnvelope executionPayloadEnvelope) {
+      VersionedRequest<ExecutionPayloadEnvelope> executionPayloadEnvelope) {
     this.executionPayloadEnvelope = executionPayloadEnvelope;
     return this;
   }
 
   public Eth2SigningRequestBodyBuilder withPayloadAttestationMessage(
-      PayloadAttestationData payloadAttestationMessage) {
+      VersionedRequest<PayloadAttestationData> payloadAttestationMessage) {
     this.payloadAttestationMessage = payloadAttestationMessage;
     return this;
   }
 
   public Eth2SigningRequestBodyBuilder withProposerPreferences(
-      ProposerPreferences proposerPreferences) {
+      VersionedRequest<ProposerPreferences> proposerPreferences) {
     this.proposerPreferences = proposerPreferences;
     return this;
   }
 
   public Eth2SigningRequestBodyBuilder withBuilderRequestAuth(
-      BuilderRequestAuth builderRequestAuth) {
+      VersionedRequest<BuilderRequestAuth> builderRequestAuth) {
     this.builderRequestAuth = builderRequestAuth;
     return this;
   }

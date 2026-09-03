@@ -386,7 +386,8 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
       case EXECUTION_PAYLOAD_BID,
           EXECUTION_PAYLOAD_ENVELOPE,
           PAYLOAD_ATTESTATION_MESSAGE,
-          PROPOSER_PREFERENCES ->
+          PROPOSER_PREFERENCES,
+          BUILDER_REQUEST_AUTH ->
           setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.GLOAS);
       default -> setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.PHASE0);
     }

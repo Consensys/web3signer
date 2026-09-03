@@ -44,8 +44,12 @@ public record Eth2SigningRequestBody(
         SyncAggregatorSelectionData syncAggregatorSelectionData,
     @JsonProperty("contribution_and_proof") ContributionAndProof contributionAndProof,
     @JsonProperty("validator_registration") ValidatorRegistration validatorRegistration,
-    @JsonProperty("execution_payload_bid") ExecutionPayloadBid executionPayloadBid,
-    @JsonProperty("execution_payload_envelope") ExecutionPayloadEnvelope executionPayloadEnvelope,
-    @JsonProperty("payload_attestation_message") PayloadAttestationData payloadAttestationMessage,
-    @JsonProperty("proposer_preferences") ProposerPreferences proposerPreferences,
-    @JsonProperty("builder_request_auth") BuilderRequestAuth builderRequestAuth) {}
+    @JsonProperty("execution_payload_bid")
+        VersionedRequest<ExecutionPayloadBid> executionPayloadBid,
+    @JsonProperty("execution_payload_envelope")
+        VersionedRequest<ExecutionPayloadEnvelope> executionPayloadEnvelope,
+    @JsonProperty("payload_attestation_message")
+        VersionedRequest<PayloadAttestationData> payloadAttestationMessage,
+    @JsonProperty("proposer_preferences") VersionedRequest<ProposerPreferences> proposerPreferences,
+    @JsonProperty("builder_request_auth")
+        VersionedRequest<BuilderRequestAuth> builderRequestAuth) {}

@@ -38,6 +38,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncCommitteeMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ValidatorRegistration;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.VersionedRequest;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.AggregateAndProof;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.Attestation;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.schema.AttestationData;
@@ -479,7 +480,7 @@ public class Eth2RequestUtils {
         .withType(ArtifactType.EXECUTION_PAYLOAD_BID)
         .withSigningRoot(signingRoot)
         .withForkInfo(forkInfo)
-        .withExecutionPayloadBid(bid)
+        .withExecutionPayloadBid(new VersionedRequest<>(SpecMilestone.GLOAS, bid))
         .build();
   }
 
@@ -502,7 +503,7 @@ public class Eth2RequestUtils {
         .withType(ArtifactType.EXECUTION_PAYLOAD_ENVELOPE)
         .withSigningRoot(signingRoot)
         .withForkInfo(forkInfo)
-        .withExecutionPayloadEnvelope(envelope)
+        .withExecutionPayloadEnvelope(new VersionedRequest<>(SpecMilestone.GLOAS, envelope))
         .build();
   }
 
@@ -523,7 +524,8 @@ public class Eth2RequestUtils {
         .withType(ArtifactType.PAYLOAD_ATTESTATION_MESSAGE)
         .withSigningRoot(signingRoot)
         .withForkInfo(forkInfo)
-        .withPayloadAttestationMessage(payloadAttestationData)
+        .withPayloadAttestationMessage(
+            new VersionedRequest<>(SpecMilestone.GLOAS, payloadAttestationData))
         .build();
   }
 
@@ -545,7 +547,7 @@ public class Eth2RequestUtils {
         .withType(ArtifactType.PROPOSER_PREFERENCES)
         .withSigningRoot(signingRoot)
         .withForkInfo(forkInfo)
-        .withProposerPreferences(proposerPreferences)
+        .withProposerPreferences(new VersionedRequest<>(SpecMilestone.GLOAS, proposerPreferences))
         .build();
   }
 
@@ -561,7 +563,7 @@ public class Eth2RequestUtils {
     return Eth2SigningRequestBodyBuilder.anEth2SigningRequestBody()
         .withType(ArtifactType.BUILDER_REQUEST_AUTH)
         .withSigningRoot(signingRoot)
-        .withBuilderRequestAuth(builderRequestAuth)
+        .withBuilderRequestAuth(new VersionedRequest<>(SpecMilestone.GLOAS, builderRequestAuth))
         .build();
   }
 

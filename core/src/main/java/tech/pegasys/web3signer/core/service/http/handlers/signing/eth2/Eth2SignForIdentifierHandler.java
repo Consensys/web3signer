@@ -20,6 +20,7 @@ import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.computeDo
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.teku.spec.Spec;
+import tech.pegasys.teku.spec.SpecVersion;
 import tech.pegasys.teku.spec.constants.Domain;
 import tech.pegasys.teku.spec.datastructures.operations.versions.altair.SyncAggregatorSelectionDataSchema;
 import tech.pegasys.teku.spec.logic.common.util.SyncCommitteeUtil;
@@ -325,49 +326,64 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
             validatorRegistration.asInternalValidatorRegistration());
       }
       case EXECUTION_PAYLOAD_BID -> {
-        final ExecutionPayloadBid bid = body.executionPayloadBid();
-        checkArgument(bid != null, "executionPayloadBid is required");
+        final VersionedRequest<ExecutionPayloadBid> request = body.executionPayloadBid();
+        final SpecVersion specVersion = specVersionFor(request, "execution_payload_bid");
         return signingRootUtil.signingRootForSignExecutionPayloadBid(
-            bid.asInternalExecutionPayloadBid(eth2Spec.atSlot(bid.getSlot())),
+            request.data().asInternalExecutionPayloadBid(specVersion),
             body.forkInfo().asInternalForkInfo());
       }
       case EXECUTION_PAYLOAD_ENVELOPE -> {
-        final ExecutionPayloadEnvelope envelope = body.executionPayloadEnvelope();
-        checkArgument(envelope != null, "executionPayloadEnvelope is required");
+        final VersionedRequest<ExecutionPayloadEnvelope> request = body.executionPayloadEnvelope();
+        final SpecVersion specVersion = specVersionFor(request, "execution_payload_envelope");
         return signingRootUtil.signingRootForSignExecutionPayloadEnvelope(
-            envelope.asInternalExecutionPayloadEnvelope(eth2Spec.atSlot(envelope.getSlot())),
+            request.data().asInternalExecutionPayloadEnvelope(specVersion),
             body.forkInfo().asInternalForkInfo());
       }
       case PAYLOAD_ATTESTATION_MESSAGE -> {
-        final PayloadAttestationData payloadAttestationData = body.payloadAttestationMessage();
-        checkArgument(payloadAttestationData != null, "payloadAttestationMessage is required");
+        final VersionedRequest<PayloadAttestationData> request = body.payloadAttestationMessage();
+        final SpecVersion specVersion = specVersionFor(request, "payload_attestation_message");
         return signingRootUtil.signingRootForSignPayloadAttestationData(
-            payloadAttestationData.asInternalPayloadAttestationData(
-                eth2Spec.atSlot(payloadAttestationData.getSlot())),
+            request.data().asInternalPayloadAttestationData(specVersion),
             body.forkInfo().asInternalForkInfo());
       }
       case PROPOSER_PREFERENCES -> {
-        final ProposerPreferences proposerPreferences = body.proposerPreferences();
-        checkArgument(proposerPreferences != null, "proposerPreferences is required");
+        final VersionedRequest<ProposerPreferences> request = body.proposerPreferences();
+        final SpecVersion specVersion = specVersionFor(request, "proposer_preferences");
         return signingRootUtil.signingRootForSignProposerPreferences(
-            proposerPreferences.asInternalProposerPreferences(
-                eth2Spec.atSlot(proposerPreferences.getProposalSlot())),
+            request.data().asInternalProposerPreferences(specVersion),
             body.forkInfo().asInternalForkInfo());
       }
       case BUILDER_REQUEST_AUTH -> {
-        final BuilderRequestAuth builderRequestAuth = body.builderRequestAuth();
-        checkArgument(builderRequestAuth != null, "builderRequestAuth is required");
+        final VersionedRequest<BuilderRequestAuth> request = body.builderRequestAuth();
+        specVersionFor(request, "builder_request_auth");
         // Genesis fork version + zero genesis_validators_root, not the proposer's current fork.
         final Bytes32 domain =
             eth2Spec.getGenesisSpec().miscHelpers().computeDomain(Domain.REQUEST_AUTH);
         return eth2Spec
             .getGenesisSpec()
             .miscHelpers()
-            .computeSigningRoot(builderRequestAuth.asInternalBuilderRequestAuth(), domain);
+            .computeSigningRoot(request.data().asInternalBuilderRequestAuth(), domain);
       }
       default ->
           throw new IllegalStateException("Signing root unimplemented for type " + body.type());
     }
+  }
+
+  /**
+   * Validates a fork-versioned payload and resolves the {@link SpecVersion} for its declared
+   * milestone. Rejects requests whose milestone is not scheduled on the configured network.
+   */
+  private SpecVersion specVersionFor(final VersionedRequest<?> request, final String field) {
+    checkArgument(request != null, "%s is required", field);
+    checkArgument(request.version() != null, "%s.version is required", field);
+    checkArgument(request.data() != null, "%s.data is required", field);
+    final SpecVersion specVersion = eth2Spec.forMilestone(request.version());
+    checkArgument(
+        specVersion != null,
+        "%s.version %s is not scheduled on the configured network",
+        field,
+        request.version());
+    return specVersion;
   }
 
   private tech.pegasys.teku.spec.datastructures.operations.versions.altair
