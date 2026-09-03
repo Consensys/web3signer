@@ -356,13 +356,8 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       case BUILDER_REQUEST_AUTH -> {
         final VersionedRequest<BuilderRequestAuth> request = body.builderRequestAuth();
         specVersionFor(request, "builder_request_auth");
-        // Genesis fork version + zero genesis_validators_root, not the proposer's current fork.
-        final Bytes32 domain =
-            eth2Spec.getGenesisSpec().miscHelpers().computeDomain(Domain.REQUEST_AUTH);
-        return eth2Spec
-            .getGenesisSpec()
-            .miscHelpers()
-            .computeSigningRoot(request.data().asInternalBuilderRequestAuth(), domain);
+        return signingRootUtil.signingRootForSignBuilderRequestAuth(
+            request.data().asInternalBuilderRequestAuth());
       }
       default ->
           throw new IllegalStateException("Signing root unimplemented for type " + body.type());

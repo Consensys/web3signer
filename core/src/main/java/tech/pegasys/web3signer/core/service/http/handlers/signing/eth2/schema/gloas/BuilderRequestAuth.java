@@ -47,8 +47,8 @@ public class BuilderRequestAuth {
     return slot;
   }
 
-  public tech.pegasys.teku.spec.datastructures.builder.versions.gloas.RequestAuth
+  public tech.pegasys.teku.spec.datastructures.builder.versions.gloas.BuilderRequestAuth
       asInternalBuilderRequestAuth() {
-    return ApiSchemas.REQUEST_AUTH_SCHEMA.create(data, slot);
+    return ApiSchemas.BUILDER_REQUEST_AUTH_SCHEMA.create(data, slot);
   }
 }

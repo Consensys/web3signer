@@ -552,14 +552,12 @@ public class Eth2RequestUtils {
   }
 
   private static Eth2SigningRequestBody createBuilderRequestAuthRequest() {
-    final tech.pegasys.teku.spec.datastructures.builder.versions.gloas.RequestAuth
-        randomRequestAuth = GLOAS_DATA_STRUCTURE_UTIL.randomRequestAuth();
+    final tech.pegasys.teku.spec.datastructures.builder.versions.gloas.BuilderRequestAuth
+        randomRequestAuth = GLOAS_DATA_STRUCTURE_UTIL.randomBuilderRequestAuth();
     final BuilderRequestAuth builderRequestAuth =
         new BuilderRequestAuth(randomRequestAuth.getData().getBytes(), randomRequestAuth.getSlot());
-    final Bytes32 domain =
-        GLOAS_SPEC.getGenesisSpec().miscHelpers().computeDomain(Domain.REQUEST_AUTH);
     final Bytes signingRoot =
-        GLOAS_SPEC.getGenesisSpec().miscHelpers().computeSigningRoot(randomRequestAuth, domain);
+        GLOAS_SIGNING_ROOT_UTIL.signingRootForSignBuilderRequestAuth(randomRequestAuth);
     return Eth2SigningRequestBodyBuilder.anEth2SigningRequestBody()
         .withType(ArtifactType.BUILDER_REQUEST_AUTH)
         .withSigningRoot(signingRoot)
