@@ -1,6 +1,6 @@
-# Web3signer
+# Web3Signer
 
-An application able to sign Eth2 artefacts (attestations and blocks) using BLS12-381 private key.
+Web3Signer is an open-source signing service capable of signing for multiple platforms (Ethereum consensus and execution clients) using private keys stored in an external vault, or encrypted on a disk.
 
 ## Issues
 
